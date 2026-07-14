@@ -26,7 +26,7 @@ Markup pattern (adapt styling per page):
 <a href="index.html" class="author-line">made with ai by Slags</a>
 ```
 
-Note: link must be a plain relative `index.html` so it works both on GitHub Pages (`https://sslagsvol.github.io/experiements/`) and from `file://`.
+Note: link must be a plain relative `index.html` so it works both on GitHub Pages (`https://sslagsvol.github.io/experiments/`) and from `file://`.
 
 For the bundles, inject this into the **template string** markup (body, near the end), via the tooling script.
 

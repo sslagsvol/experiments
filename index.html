@@ -67,10 +67,25 @@
         }
 
         @media (min-width: 640px) {
+            main {
+                max-width: 760px;
+            }
+
             nav {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 1.25rem;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            main {
+                max-width: 1180px;
+            }
+
+            .card-label {
+                padding: 1.5rem 1.75rem;
+                font-size: 1.25rem;
             }
         }
 
@@ -150,38 +165,6 @@
                 radial-gradient(1px 1px at 78% 85%, rgba(255,255,255,0.3), transparent 60%),
                 radial-gradient(1px 1px at 5% 50%, rgba(255,255,255,0.35), transparent 60%),
                 radial-gradient(120% 160% at 68% 28%, #170B33 0%, #0B0518 55%, #07030F 100%);
-        }
-
-        .orbit-wrap {
-            position: absolute;
-            inset: 0;
-        }
-
-        .orbit {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            animation-name: spin;
-            animation-timing-function: linear;
-            animation-iteration-count: infinite;
-            animation-play-state: paused;
-        }
-
-        body:not(.page-hidden) .vignette.animate .orbit {
-            animation-play-state: running;
-        }
-
-        .orb {
-            position: absolute;
-            top: 0;
-            left: 0;
-            border-radius: 50%;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
 
         .sc-legend {
@@ -278,26 +261,46 @@
             </a>
             <a href="Scoville Index (Standalone).html" class="card">
                 <div class="vignette vignette-scoville" aria-hidden="true">
-                    <div class="orbit-wrap">
-                        <div class="orbit" style="animation-duration:8s;">
-                            <div class="orb" style="width:12px;height:12px;margin:-6px 0 0 -6px;transform:translate(16px,0);background:#FDBA74;box-shadow:0 0 10px 3px rgba(253,186,116,0.55);"></div>
-                        </div>
-                        <div class="orbit" style="animation-duration:9.5s;animation-delay:-2s;">
-                            <div class="orb" style="width:10px;height:10px;margin:-5px 0 0 -5px;transform:translate(28px,0);background:#FB7185;box-shadow:0 0 10px 2px rgba(251,113,133,0.5);"></div>
-                        </div>
-                        <div class="orbit" style="animation-duration:11s;animation-delay:-4.5s;">
-                            <div class="orb" style="width:8px;height:8px;margin:-4px 0 0 -4px;transform:translate(40px,0);background:#E879F9;box-shadow:0 0 10px 2px rgba(232,121,249,0.5);"></div>
-                        </div>
-                        <div class="orbit" style="animation-duration:12.5s;animation-delay:-6s;">
-                            <div class="orb" style="width:7px;height:7px;margin:-3.5px 0 0 -3.5px;transform:translate(54px,0);background:#818CF8;box-shadow:0 0 9px 2px rgba(129,140,248,0.45);"></div>
-                        </div>
-                        <div class="orbit" style="animation-duration:14s;animation-delay:-9s;">
-                            <div class="orb" style="width:6px;height:6px;margin:-3px 0 0 -3px;transform:translate(66px,0);background:#38BDF8;box-shadow:0 0 8px 2px rgba(56,189,248,0.45);"></div>
-                        </div>
-                        <div class="orbit" style="animation-duration:16s;animation-delay:-12s;">
-                            <div class="orb" style="width:5px;height:5px;margin:-2.5px 0 0 -2.5px;transform:translate(76px,0);background:#38BDF8;box-shadow:0 0 8px 2px rgba(56,189,248,0.4);"></div>
-                        </div>
-                    </div>
+                    <svg viewBox="0 0 240 100" preserveAspectRatio="xMidYMid meet">
+                        <g>
+                            <animateTransform attributeName="transform" type="rotate" values="-7 125 52;7 125 52;-7 125 52" dur="26s" repeatCount="indefinite"></animateTransform>
+                            <line x1="134.4" y1="52.0" x2="114.6" y2="55.9" stroke="rgba(65,183,248,0.22)" stroke-width="0.7"></line>
+                            <line x1="114.6" y1="55.9" x2="126.6" y2="44.4" stroke="rgba(82,172,248,0.22)" stroke-width="0.7"></line>
+                            <line x1="126.6" y1="44.4" x2="139.3" y2="59.5" stroke="rgba(99,160,248,0.22)" stroke-width="0.7"></line>
+                            <line x1="139.3" y1="59.5" x2="97.2" y2="50.0" stroke="rgba(116,149,248,0.22)" stroke-width="0.7"></line>
+                            <line x1="97.2" y1="50.0" x2="152.8" y2="44.9" stroke="rgba(135,139,248,0.22)" stroke-width="0.7"></line>
+                            <line x1="152.8" y1="44.9" x2="115.2" y2="66.7" stroke="rgba(159,134,248,0.22)" stroke-width="0.7"></line>
+                            <line x1="115.2" y1="66.7" x2="105.5" y2="36.8" stroke="rgba(184,130,249,0.22)" stroke-width="0.7"></line>
+                            <line x1="105.5" y1="36.8" x2="169.1" y2="58.5" stroke="rgba(208,125,249,0.22)" stroke-width="0.7"></line>
+                            <line x1="169.1" y1="58.5" x2="77.2" y2="60.0" stroke="rgba(232,121,249,0.22)" stroke-width="0.7"></line>
+                            <line x1="77.2" y1="60.0" x2="148.9" y2="31.3" stroke="rgba(236,119,222,0.22)" stroke-width="0.7"></line>
+                            <line x1="148.9" y1="31.3" x2="143.3" y2="75.6" stroke="rgba(241,117,194,0.22)" stroke-width="0.7"></line>
+                            <line x1="143.3" y1="75.6" x2="68.1" y2="38.7" stroke="rgba(245,115,167,0.22)" stroke-width="0.7"></line>
+                            <line x1="68.1" y1="38.7" x2="193.9" y2="45.9" stroke="rgba(250,113,140,0.22)" stroke-width="0.7"></line>
+                            <line x1="193.9" y1="45.9" x2="81.8" y2="76.9" stroke="rgba(251,126,130,0.22)" stroke-width="0.7"></line>
+                            <line x1="81.8" y1="76.9" x2="114.7" y2="20.0" stroke="rgba(252,143,126,0.22)" stroke-width="0.7"></line>
+                            <line x1="114.7" y1="20.0" x2="189.7" y2="74.0" stroke="rgba(252,160,122,0.22)" stroke-width="0.7"></line>
+                            <line x1="189.7" y1="74.0" x2="35.8" y2="53.5" stroke="rgba(253,177,118,0.22)" stroke-width="0.7"></line>
+                            <circle cx="134.4" cy="52.0" r="3.36" fill="rgba(56,189,248,0.22)"></circle><circle cx="134.4" cy="52.0" r="1.60" fill="rgba(56,189,248,0.95)"></circle>
+                            <circle cx="114.6" cy="55.9" r="3.63" fill="rgba(73,177,248,0.22)"></circle><circle cx="114.6" cy="55.9" r="1.73" fill="rgba(73,177,248,0.95)"></circle>
+                            <circle cx="126.6" cy="44.4" r="4.04" fill="rgba(90,166,248,0.22)"></circle><circle cx="126.6" cy="44.4" r="1.92" fill="rgba(90,166,248,0.95)"></circle>
+                            <circle cx="139.3" cy="59.5" r="4.51" fill="rgba(108,154,248,0.22)"></circle><circle cx="139.3" cy="59.5" r="2.15" fill="rgba(108,154,248,0.95)"></circle>
+                            <circle cx="97.2" cy="50.0" r="5.02" fill="rgba(125,143,248,0.22)"></circle><circle cx="97.2" cy="50.0" r="2.39" fill="rgba(125,143,248,0.95)"></circle>
+                            <circle cx="152.8" cy="44.9" r="5.58" fill="rgba(147,137,248,0.22)"></circle><circle cx="152.8" cy="44.9" r="2.66" fill="rgba(147,137,248,0.95)"></circle>
+                            <circle cx="115.2" cy="66.7" r="6.18" fill="rgba(171,132,248,0.22)"></circle><circle cx="115.2" cy="66.7" r="2.94" fill="rgba(171,132,248,0.95)"></circle>
+                            <circle cx="105.5" cy="36.8" r="6.81" fill="rgba(196,128,249,0.22)"></circle><circle cx="105.5" cy="36.8" r="3.24" fill="rgba(196,128,249,0.95)"></circle>
+                            <circle cx="169.1" cy="58.5" r="7.46" fill="rgba(220,123,249,0.22)"></circle><circle cx="169.1" cy="58.5" r="3.55" fill="rgba(220,123,249,0.95)"></circle>
+                            <circle cx="77.2" cy="60.0" r="8.14" fill="rgba(234,120,235,0.22)"></circle><circle cx="77.2" cy="60.0" r="3.87" fill="rgba(234,120,235,0.95)"></circle>
+                            <circle cx="148.9" cy="31.3" r="8.84" fill="rgba(239,118,208,0.22)"></circle><circle cx="148.9" cy="31.3" r="4.21" fill="rgba(239,118,208,0.95)"></circle>
+                            <circle cx="143.3" cy="75.6" r="9.56" fill="rgba(243,116,181,0.22)"></circle><circle cx="143.3" cy="75.6" r="4.55" fill="rgba(243,116,181,0.95)"></circle>
+                            <circle cx="68.1" cy="38.7" r="10.30" fill="rgba(248,114,153,0.22)"></circle><circle cx="68.1" cy="38.7" r="4.91" fill="rgba(248,114,153,0.95)"></circle>
+                            <circle cx="193.9" cy="45.9" r="11.06" fill="rgba(251,117,132,0.22)"></circle><circle cx="193.9" cy="45.9" r="5.27" fill="rgba(251,117,132,0.95)"></circle>
+                            <circle cx="81.8" cy="76.9" r="11.84" fill="rgba(252,134,128,0.22)"></circle><circle cx="81.8" cy="76.9" r="5.64" fill="rgba(252,134,128,0.95)"></circle>
+                            <circle cx="114.7" cy="20.0" r="12.64" fill="rgba(252,152,124,0.22)"></circle><circle cx="114.7" cy="20.0" r="6.02" fill="rgba(252,152,124,0.95)"></circle>
+                            <circle cx="189.7" cy="74.0" r="13.45" fill="rgba(253,169,120,0.22)"></circle><circle cx="189.7" cy="74.0" r="6.41" fill="rgba(253,169,120,0.95)"></circle>
+                            <circle cx="35.8" cy="53.5" r="14.28" fill="rgba(253,186,116,0.22)"></circle><circle cx="35.8" cy="53.5" r="6.80" fill="rgba(253,186,116,0.95)"></circle>
+                        </g>
+                    </svg>
                     <div class="sc-word">SCOVILLE³</div>
                     <div class="sc-legend"></div>
                 </div>
