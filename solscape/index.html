@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; background: #050507; overflow: hidden; }
+    a { color: #3E86FF; }
+    a:hover { color: #F2F3F5; }
+    @keyframes omPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+    @media (max-width: 880px) {
+      #om-stats { left: 16px !important; right: 16px !important; top: auto !important; bottom: 56px !important; max-height: 42vh !important; width: auto !important; overflow-y: auto; background: rgba(5,5,7,0.82); backdrop-filter: blur(10px); padding: 12px 14px !important; border: 1px solid rgba(242,243,245,0.12); }
+      #om-stats > div:nth-of-type(2) { font-size: 30px !important; margin: 6px 0 8px !important; }
+      #om-hints { display: none !important; }
+      #om-sub { display: none !important; }
+    }
+  </style>
+</helmet>
+
+<div data-screen-label="Solar System" style="position: relative; width: 100vw; height: 100vh; background: #050507; overflow: hidden; font-family: 'Space Grotesk', sans-serif;">
+
+  <!-- 3D viewport (canvas + in-space labels are owned by the sim) -->
+  <div ref="{{simRef}}" style="position: absolute; inset: 0;"></div>
+
+  <!-- header / wordmark / breadcrumb -->
+  <div style="position: absolute; top: 22px; left: 24px; z-index: 10; pointer-events: none;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div style="font-weight: 700; font-size: 17px; letter-spacing: 0.26em; color: #F2F3F5;">SOLSCAPE</div>
+      <div style="width: 6px; height: 6px; background: #3E86FF; border-radius: 50%;"></div>
+    </div>
+    <div id="om-sub" style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.18em; color: rgba(242,243,245,0.4); margin-top: 7px;">SOLAR SYSTEM MODEL &middot; 34 BODIES &middot; RELATIVE ORBITAL SPEEDS</div>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.16em; margin-top: 14px; display: flex; gap: 7px;">
+      <span style="color: rgba(242,243,245,0.45);">SYSTEM</span>
+      <sc-if value="{{hasSel}}" hint-placeholder-val="{{false}}">
+        <span style="color: rgba(242,243,245,0.3);">/</span>
+        <span style="color: #3E86FF;">{{crumbPath}}</span>
+      </sc-if>
+    </div>
+  </div>
+
+  <!-- body index rail -->
+  <div id="om-rail" style="position: absolute; top: 128px; left: 24px; z-index: 10; pointer-events: none; display: flex; flex-direction: column; align-items: flex-start;">
+    <button onClick="{{toggleRail}}" style="background: rgba(5,5,7,0.55); border: 1px solid rgba(242,243,245,0.25); border-radius: 1px; padding: 13px 20px; cursor: pointer; pointer-events: auto; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.24em; color: #F2F3F5;" style-hover="border-color: rgba(242,243,245,0.6); background: rgba(242,243,245,0.06);">{{railGlyph}} NAVIGATION</button>
+    <sc-if value="{{railOpen}}" hint-placeholder-val="{{false}}">
+      <div style="margin-top: 14px; max-height: calc(100vh - 330px); overflow-y: auto; overflow-x: hidden; pointer-events: auto; padding-right: 16px; scrollbar-width: thin; scrollbar-color: rgba(242,243,245,0.18) transparent;">
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+          <div style="margin-bottom: 16px;">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 8.5px; letter-spacing: 0.26em; color: rgba(242,243,245,0.32); margin-bottom: 7px;">{{g.title}}</div>
+            <div style="display: flex; flex-direction: column; align-items: stretch;">
+              <sc-for list="{{g.rows}}" as="row" hint-placeholder-count="4">
+                <button onClick="{{row.go}}" style="display: flex; align-items: baseline; gap: 8px; background: none; border: none; padding: 2.5px 0 2.5px {{row.pad}}; cursor: pointer; text-align: left;" style-hover="opacity: 0.72;">
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 8.5px; color: rgba(242,243,245,0.28); letter-spacing: 0.1em; width: 16px; flex: none;">{{row.num}}</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.16em; color: {{row.color}}; white-space: nowrap;">{{row.label}}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- controls: time + scale (top right) -->
+  <div id="om-controls" style="position: absolute; top: 22px; right: 28px; z-index: 11; display: flex; flex-direction: column; gap: 12px; padding: 12px 16px 14px; border: 1px solid rgba(242,243,245,0.14); border-radius: 2px; background: rgba(5,5,7,0.55); backdrop-filter: blur(6px); pointer-events: auto;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 8.5px; letter-spacing: 0.26em; color: rgba(242,243,245,0.38);">CONTROLS</div>
+    <div style="display: flex; flex-direction: column; gap: 9px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button onClick="{{togglePlay}}" style="background: none; border: 1px solid rgba(242,243,245,0.2); width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 8.5px; color: #F2F3F5; border-radius: 1px; flex: none;" style-hover="border-color: rgba(242,243,245,0.5);">{{playGlyph}}</button>
+        <button onClick="{{speedDown}}" style="background: none; border: 1px solid rgba(242,243,245,0.2); width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: rgba(242,243,245,0.6); border-radius: 1px; flex: none;" style-hover="border-color: rgba(242,243,245,0.5); color: #F2F3F5;">&minus;</button>
+        <div style="display: flex; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.28em; padding: 0 4px; user-select: none;">
+          <span style="color: #3E86FF;">{{arrowsLit}}</span><span style="color: rgba(242,243,245,0.16);">{{arrowsDim}}</span>
+        </div>
+        <button onClick="{{speedUp}}" style="background: none; border: 1px solid rgba(242,243,245,0.2); width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: rgba(242,243,245,0.6); border-radius: 1px; flex: none;" style-hover="border-color: rgba(242,243,245,0.5); color: #F2F3F5;">+</button>
+      </div>
+      <div style="display: flex; align-items: baseline; gap: 14px;">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.16em; color: #F2F3F5;">{{speedLabel}}</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: rgba(242,243,245,0.45); white-space: nowrap;">{{elapsed}}</span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 8.5px; letter-spacing: 0.26em; color: rgba(242,243,245,0.38);">SCALE</div>
+      <div style="display: flex; border: 1px solid rgba(242,243,245,0.18); border-radius: 1px;">
+        <button onClick="{{scaleTour}}" style="border: none; padding: 6px 11px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.18em; color: {{tourColor}}; background: {{tourBg}};">TOUR</button>
+        <button onClick="{{scaleTrue}}" style="border: none; padding: 6px 11px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.18em; color: {{trueColor}}; background: {{trueBg}};">TRUE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- selected body: key stats column -->
+  <sc-if value="{{hasSel}}" hint-placeholder-val="{{false}}">
+    <div id="om-stats" style="position: absolute; top: 172px; right: 28px; width: 300px; max-height: calc(100vh - 240px); overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: rgba(242,243,245,0.18) transparent; z-index: 10; pointer-events: auto; display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.26em; color: #3E86FF;">{{selType}}</div>
+        <div style="display: flex; gap: 6px;">
+          <button onClick="{{toggleCard}}" title="{{cardToggleTitle}}" style="background: none; border: 1px solid rgba(242,243,245,0.2); border-radius: 1px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: auto; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: rgba(242,243,245,0.55); flex: none;" style-hover="color: #F2F3F5; border-color: rgba(242,243,245,0.5);">{{cardGlyph}}</button>
+          <button onClick="{{closeSel}}" title="Close — Esc" style="background: none; border: 1px solid rgba(242,243,245,0.2); border-radius: 1px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: auto; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: rgba(242,243,245,0.55); flex: none;" style-hover="color: #F2F3F5; border-color: rgba(242,243,245,0.5);">&#10005;</button>
+        </div>
+      </div>
+      <div style="font-weight: 700; font-size: 54px; line-height: 0.95; color: #F2F3F5; letter-spacing: -0.01em; margin: 10px 0 12px; text-wrap: balance;">{{selName}}</div>
+      <sc-if value="{{cardOpen}}" hint-placeholder-val="{{true}}">
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; line-height: 1.65; letter-spacing: 0.04em; color: rgba(242,243,245,0.55); margin-bottom: 16px;">{{selFact}}</div>
+      <div style="height: 1px; background: rgba(242,243,245,0.16);"></div>
+      <sc-for list="{{selStats}}" as="st" hint-placeholder-count="6">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 7px 0; border-bottom: 1px solid rgba(242,243,245,0.09);">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 8.5px; letter-spacing: 0.2em; color: rgba(242,243,245,0.38); flex: none;">{{st.k}}</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #F2F3F5; text-align: right;">{{st.v}}</span>
+        </div>
+      </sc-for>
+      <div style="display: flex; gap: 20px; margin-top: 16px; pointer-events: auto;">
+        <sc-if value="{{showFreeBtn}}" hint-placeholder-val="{{false}}">
+          <button onClick="{{goFree}}" style="background: none; border: none; padding: 0; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.2em; color: #3E86FF;" style-hover="opacity: 0.7;">&#9678; FREE FLIGHT &mdash; F</button>
+        </sc-if>
+        <button onClick="{{closeSel}}" style="background: none; border: none; padding: 0; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.2em; color: rgba(242,243,245,0.5);" style-hover="color: #F2F3F5;">&#10005; CLOSE &mdash; ESC</button>
+      </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <!-- status stack (transit banner + true-scale warning), bottom-left above the time bar -->
+  <div style="position: absolute; left: 24px; bottom: 64px; z-index: 10; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; pointer-events: none;">
+    <sc-if value="{{inTransit}}" hint-placeholder-val="{{false}}">
+      <div onClick="{{skip}}" style="pointer-events: auto; cursor: pointer;">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.22em; color: #3E86FF; animation: omPulse 1.6s ease-in-out infinite; white-space: nowrap;">IN TRANSIT &rarr; {{transitName}} &middot; CLICK TO SKIP</span>
+      </div>
+    </sc-if>
+    <sc-if value="{{isTrue}}" hint-placeholder-val="{{false}}">
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 8.5px; letter-spacing: 0.16em; color: rgba(242,243,245,0.35);">TRUE SCALE &middot; PLANETS ARE NOW NEAR-INVISIBLE SPECKS &mdash; THAT IS THE POINT</div>
+    </sc-if>
+  </div>
+
+  <!-- free flight HUD -->
+  <sc-if value="{{isFree}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; left: 50%; top: 50%; z-index: 10; pointer-events: none;">
+      <div style="position: absolute; width: 26px; height: 1px; background: rgba(242,243,245,0.55); left: -13px; top: 0;"></div>
+      <div style="position: absolute; width: 1px; height: 26px; background: rgba(242,243,245,0.55); left: 0; top: -13px;"></div>
+    </div>
+    <div style="position: absolute; left: 50%; bottom: 78px; transform: translateX(-50%); z-index: 10; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 7px;">
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.2em; color: #3E86FF;">VEL {{freeVel}} U/S</div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.18em; color: rgba(242,243,245,0.4);">W A S D MOVE &middot; Q / E DOWN / UP &middot; SHIFT BOOST &middot; F EXIT</div>
+    </div>
+  </sc-if>
+
+  <!-- bottom bar: hints + display toggles -->
+  <div style="position: absolute; left: 24px; right: 24px; bottom: 18px; z-index: 10; display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; pointer-events: none;">
+    <div id="om-hints" style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.18em; color: rgba(242,243,245,0.32); white-space: nowrap; display: {{hintDisplay}};">{{hint}}</div>
+    <div style="display: flex; align-items: center; gap: 18px; pointer-events: auto; margin-left: auto;">
+      <button onClick="{{toggleOrbits}}" style="background: none; border: none; padding: 0; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.18em; color: {{orbitsColor}};" style-hover="opacity: 0.7;">{{orbitsLabel}}</button>
+      <button onClick="{{toggleLabels}}" style="background: none; border: none; padding: 0; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.18em; color: {{labelsColor}};" style-hover="opacity: 0.7;">{{labelsLabel}}</button>
+      <button onClick="{{toggleSound}}" style="background: none; border: none; padding: 0; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.18em; color: {{soundColor}};" style-hover="opacity: 0.7;">{{soundLabel}}</button>
+    </div>
+  </div>
+
+  <!-- loading overlay -->
+  <sc-if value="{{loading}}" hint-placeholder-val="{{true}}">
+    <div style="position: absolute; inset: 0; background: #050507; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; transition: opacity 0.65s ease; opacity: {{loadOpacity}}; pointer-events: {{loadPointer}};">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="width: 8px; height: 8px; background: #3E86FF; border-radius: 50%; animation: omPulse 1.4s ease-in-out infinite;"></div>
+        <div style="font-weight: 700; font-size: clamp(40px, 7vw, 76px); letter-spacing: 0.28em; color: #F2F3F5; margin-right: -0.28em;">SOLSCAPE</div>
+      </div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.22em; color: rgba(242,243,245,0.45);">{{progressText}}</div>
+      <div style="width: 240px; height: 1px; background: rgba(242,243,245,0.14);">
+        <div style="height: 1px; background: #3E86FF; width: {{progressPct}}; transition: width 0.3s ease;"></div>
+      </div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 8.5px; letter-spacing: 0.2em; color: rgba(242,243,245,0.28);">SUN &middot; 8 PLANETS &middot; 20 MOONS &middot; 5 DWARF PLANETS &middot; 1P/HALLEY</div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;glow&quot;: { &quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 1, &quot;min&quot;: 0.2, &quot;max&quot;: 2.5, &quot;step&quot;: 0.05, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Simulation&quot;, &quot;description&quot;: &quot;Sun glow intensity&quot; },
+  &quot;beltDensity&quot;: { &quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 1, &quot;min&quot;: 0.2, &quot;max&quot;: 1.6, &quot;step&quot;: 0.05, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Simulation&quot;, &quot;description&quot;: &quot;Asteroid + Kuiper belt particle density&quot; },
+  &quot;drift&quot;: { &quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 1, &quot;min&quot;: 0, &quot;max&quot;: 3, &quot;step&quot;: 0.1, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Simulation&quot;, &quot;description&quot;: &quot;System-view auto-drift speed&quot; }
+}">
+class Component extends DCLogic {
+  state = {
+    loading: true, fading: false, progressText: 'INITIALIZING', progressPct: '0%',
+    selectedId: null, mode: 'system', paused: false, speedIdx: 2, speedLabel: '1S = 1 DAY',
+    elapsed: 'T+ 000D 00H', scale: 'tour', orbits: true, labels: true, sound: true,
+    railOpen: false, cardOpen: window.innerWidth > 880, transitId: null, freeVel: '0.0', dataReady: false, isTouch: false,
+  };
+
+  async initSim(el) {
+    if (this._inited || !el) return;
+    this._inited = true;
+    const isTouch = matchMedia('(pointer: coarse)').matches;
+    this.setState({ isTouch });
+    try {
+      this.DATA = await import('./sim/bodies-data.js');
+      const mod = await import('./sim/app.js');
+      this.sim = mod.createSim(el, {
+        BODIES: this.DATA.BODIES, SPEEDS: this.DATA.SPEEDS, TEX: this.DATA.TEX,
+        settings: {
+          accent: '#3E86FF', speedIdx: 2, orbits: true, labels: true, sound: true,
+          glow: this.props.glow ?? 1, beltDensity: this.props.beltDensity ?? 1, drift: this.props.drift ?? 1,
+        },
+        on: {
+          progress: (n, t) => this.setState({ progressText: 'ASSEMBLING SYSTEM \u2014 ' + n + '/' + t + ' TEXTURES', progressPct: Math.round(n / t * 100) + '%' }),
+          ready: () => { this.setState({ fading: true }); setTimeout(() => this.setState({ loading: false }), 750); },
+          select: (id) => this.setState({ selectedId: id }),
+          hover: () => {},
+          mode: (m) => this.setState({ mode: m }),
+          clock: (c) => this.setState({ elapsed: c.elapsed, paused: c.paused, speedIdx: c.speedIdx, speedLabel: c.speedLabel }),
+          transit: (id) => this.setState({ transitId: id }),
+          freeHud: (h) => this.setState({ freeVel: h.vel }),
+        },
+      });
+      this.setState({ dataReady: true });
+    } catch (e) {
+      console.error('SOLSCAPE sim failed to start:', e);
+      this.setState({ progressText: 'FAILED TO START \u2014 ' + (e && e.message ? e.message.toUpperCase() : 'UNKNOWN ERROR') });
+    }
+  }
+
+  componentDidUpdate(prevProps) {
+    if (!this.sim) return;
+    if (prevProps.glow !== this.props.glow) this.sim.setGlow(this.props.glow ?? 1);
+    if (prevProps.beltDensity !== this.props.beltDensity) this.sim.setBeltDensity(this.props.beltDensity ?? 1);
+    if (prevProps.drift !== this.props.drift) this.sim.setDrift(this.props.drift ?? 1);
+  }
+
+  componentWillUnmount() {
+    if (this.sim) this.sim.dispose();
+  }
+
+  renderVals() {
+    const S = this.state;
+    const ACCENT = '#3E86FF';
+    const DIM = 'rgba(242,243,245,0.6)';
+    const FAINT = 'rgba(242,243,245,0.38)';
+    const B = this.DATA ? this.DATA.BODIES : [];
+    const byId = {};
+    B.forEach((b) => { byId[b.id] = b; });
+    const sel = S.selectedId ? byId[S.selectedId] : null;
+
+    const mkRow = (b, num, indent) => ({
+      num: num || '\u00b7',
+      label: b.name.toUpperCase(),
+      pad: indent ? '14px' : '0px',
+      color: S.selectedId === b.id ? ACCENT : (indent ? 'rgba(242,243,245,0.48)' : DIM),
+      go: () => { if (this.sim) this.sim.select(b.id); },
+    });
+
+    const groups = [];
+    if (B.length) {
+      groups.push({ title: 'STAR', rows: [mkRow(byId.sun, '00')] });
+      const planets = B.filter((b) => b.type === 'planet');
+      const prows = [];
+      planets.forEach((p, i) => {
+        prows.push(mkRow(p, '0' + (i + 1)));
+        const expanded = sel && (sel.id === p.id || sel.parent === p.id);
+        if (expanded) B.filter((m) => m.type === 'moon' && m.parent === p.id).forEach((m) => prows.push(mkRow(m, '', true)));
+      });
+      groups.push({ title: 'PLANETS', rows: prows });
+      const drows = [];
+      B.filter((b) => b.type === 'dwarf').forEach((d) => {
+        drows.push(mkRow(d, '\u25e6'));
+        const expanded = sel && (sel.id === d.id || sel.parent === d.id);
+        if (expanded) B.filter((m) => m.type === 'moon' && m.parent === d.id).forEach((m) => drows.push(mkRow(m, '', true)));
+      });
+      groups.push({ title: 'DWARF PLANETS', rows: drows });
+      groups.push({ title: 'COMETS', rows: [mkRow(byId.halley, '\u2604')] });
+    }
+
+    let crumbPath = '';
+    if (sel) {
+      const par = sel.parent && sel.parent !== 'sun' ? byId[sel.parent] : null;
+      crumbPath = (par ? par.name.toUpperCase() + ' / ' : '') + sel.name.toUpperCase();
+    }
+
+    const transitBody = S.transitId ? byId[S.transitId] : null;
+    const hint = S.isTouch
+      ? 'TAP A BODY TO FLY \u00b7 DRAG TO ORBIT \u00b7 PINCH TO ZOOM'
+      : (S.mode === 'orbit'
+        ? 'DRAG TO ORBIT \u00b7 SCROLL TO ZOOM \u00b7 F FREE FLIGHT \u00b7 ESC BACK \u00b7 [ ] NEXT BODY'
+        : 'CLICK A BODY TO FLY \u00b7 DRAG TO ORBIT \u00b7 SCROLL TO ZOOM \u00b7 KEYS 1\u20138 PLANETS');
+
+    const onCol = '#F2F3F5';
+    return {
+      simRef: (el) => this.initSim(el),
+      loading: S.loading,
+      loadOpacity: S.fading ? 0 : 1,
+      loadPointer: S.fading ? 'none' : 'auto',
+      progressText: S.progressText,
+      progressPct: S.progressPct,
+      groups,
+      railOpen: S.railOpen,
+      railGlyph: S.railOpen ? '\u2212' : '+',
+      toggleRail: () => this.setState({ railOpen: !S.railOpen }),
+      hasSel: !!sel,
+      crumbPath,
+      selType: sel ? sel.typeLine : '',
+      selName: sel ? sel.name : '',
+      selFact: sel ? sel.fact : '',
+      selStats: sel ? sel.stats.map(([k, v]) => ({ k, v })) : [],
+      cardOpen: S.cardOpen,
+      cardGlyph: S.cardOpen ? '\u2212' : '+',
+      cardToggleTitle: S.cardOpen ? 'Collapse details' : 'Expand details',
+      toggleCard: () => this.setState({ cardOpen: !S.cardOpen }),
+      showFreeBtn: !S.isTouch,
+      goFree: () => { if (this.sim) this.sim.toggleFree(true); },
+      closeSel: () => { if (this.sim) this.sim.clearSelection(); },
+      inTransit: !!transitBody,
+      transitName: transitBody ? transitBody.name.toUpperCase() : '',
+      skip: () => { if (this.sim) this.sim.skipTransit(); },
+      isFree: S.mode === 'free',
+      freeVel: S.freeVel,
+      playGlyph: S.paused ? '\u25b6' : '\u275a\u275a',
+      arrowsLit: '\u276f'.repeat(S.speedIdx + 1),
+      arrowsDim: '\u276f'.repeat(Math.max(0, (this.DATA ? this.DATA.SPEEDS.length : 6) - S.speedIdx - 1)),
+      togglePlay: () => { if (this.sim) this.sim.setPaused(!S.paused); },
+      speedLabel: S.speedLabel,
+      speedDown: () => { if (this.sim) this.sim.setSpeedIdx(S.speedIdx - 1); },
+      speedUp: () => { if (this.sim) this.sim.setSpeedIdx(S.speedIdx + 1); },
+      elapsed: S.elapsed,
+      hint,
+      hintDisplay: (sel || transitBody) ? 'none' : 'block',
+      orbitsLabel: (S.orbits ? '\u25cf' : '\u25cb') + ' ORBITS',
+      orbitsColor: S.orbits ? onCol : FAINT,
+      toggleOrbits: () => { this.setState({ orbits: !S.orbits }); if (this.sim) this.sim.setOrbits(!S.orbits); },
+      labelsLabel: (S.labels ? '\u25cf' : '\u25cb') + ' LABELS',
+      labelsColor: S.labels ? onCol : FAINT,
+      toggleLabels: () => { this.setState({ labels: !S.labels }); if (this.sim) this.sim.setLabels(!S.labels); },
+      soundLabel: (S.sound ? '\u25cf' : '\u25cb') + ' SOUND',
+      soundColor: S.sound ? onCol : FAINT,
+      toggleSound: () => { this.setState({ sound: !S.sound }); if (this.sim) this.sim.setSound(!S.sound); },
+      isTrue: S.scale === 'true',
+      tourColor: S.scale === 'tour' ? ACCENT : FAINT,
+      tourBg: S.scale === 'tour' ? 'rgba(62,134,255,0.14)' : 'transparent',
+      trueColor: S.scale === 'true' ? ACCENT : FAINT,
+      trueBg: S.scale === 'true' ? 'rgba(62,134,255,0.14)' : 'transparent',
+      scaleTour: () => { this.setState({ scale: 'tour' }); if (this.sim) this.sim.setScale('tour'); },
+      scaleTrue: () => { this.setState({ scale: 'true' }); if (this.sim) this.sim.setScale('true'); },
+    };
+  }
+}
+</script>
+</body>
+</html>

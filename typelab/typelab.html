@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<style>
+html,body{margin:0;padding:0;height:100%;background:#050505;overflow:hidden}
+*{box-sizing:border-box}
+a{color:inherit}a:hover{opacity:.7}
+::selection{background:#888;color:#fff}
+</style>
+</helmet>
+<div data-screen-label="Liquid Type Lab" onPointerMove="{{ onMove }}" onPointerDown="{{ onDown }}" onPointerUp="{{ onUp }}" onPointerLeave="{{ onLeave }}" style="position:fixed;inset:0;overflow:hidden;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;touch-action:none;cursor:crosshair;background:#050505;user-select:none">
+  <canvas ref="{{ setCanvas }}" style="position:absolute;inset:0;width:100%;height:100%;display:block"></canvas>
+  <sc-if value="{{ noGL }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#999;font-size:12px;letter-spacing:.14em">WEBGL2 UNAVAILABLE — OPEN IN A CURRENT BROWSER</div>
+  </sc-if>
+  <div style="position:absolute;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;gap:12px 26px;flex-wrap:wrap;padding:14px 22px;background:{{ ui.bg }};border-top:1px solid {{ ui.line }};color:{{ ui.fg }}">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.24em">LIQUID TYPE LAB</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap">
+      <sc-for list="{{ modes }}" as="m" hint-placeholder-count="9">
+        <button onClick="{{ m.pick }}" style="background:none;border:none;padding:2px 0;cursor:pointer;color:{{ ui.fg }};opacity:{{ m.op }};font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:10px;letter-spacing:.16em;border-bottom:1px solid {{ m.line }}" style-hover="opacity:1">{{ m.label }}</button>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:7px;font-size:9px;letter-spacing:.18em;opacity:.75">AREA<input type="range" min="0.4" max="1.45" step="0.05" value="{{ radius }}" onChange="{{ setRadius }}" style="width:60px;accent-color:{{ ui.fg }};cursor:pointer"></label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:9px;letter-spacing:.18em;opacity:.75">FORCE<input type="range" min="0.3" max="1.15" step="0.05" value="{{ power }}" onChange="{{ setPower }}" style="width:60px;accent-color:{{ ui.fg }};cursor:pointer"></label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:9px;letter-spacing:.18em;opacity:.75">HEAL<input type="range" min="0" max="3" step="0.05" value="{{ heal }}" onChange="{{ setHeal }}" style="width:60px;accent-color:{{ ui.fg }};cursor:pointer"></label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:9px;letter-spacing:.18em;opacity:.75">HUE<input type="range" min="0" max="1" step="0.01" value="{{ hue }}" onChange="{{ setHue }}" style="width:60px;accent-color:{{ ui.fg }};cursor:pointer"></label>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;filter:hue-rotate({{ hueCss }})">
+      <div style="font-size:9px;letter-spacing:.2em;opacity:.5">{{ palName }}</div>
+      <sc-for list="{{ pals }}" as="p" hint-placeholder-count="5">
+        <button onClick="{{ p.pick }}" title="{{ p.name }}" style="width:{{ p.size }};height:{{ p.size }};border-radius:50%;cursor:pointer;padding:0;background:{{ p.bg }};border:1px solid {{ p.ring }};outline:1px solid {{ ui.line }};outline-offset:2px;transition:width .25s ease,height .25s ease"></button>
+      </sc-for>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <input ref="{{ setInput }}" onInput="{{ onWordInput }}" onKeyDown="{{ onWordKey }}" placeholder="TYPE A WORD" style="background:transparent;border:none;border-bottom:1px solid {{ ui.line }};color:{{ ui.fg }};font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:.16em;width:120px;padding:3px 0;outline:none" style-focus="border-bottom:1px solid {{ ui.fg }}">
+      <button onClick="{{ reset }}" style="background:none;border:none;cursor:pointer;color:{{ ui.fg }};font-family:inherit;font-size:10px;letter-spacing:.2em;opacity:.6;padding:2px 0" style-hover="opacity:1">RESET</button>
+      <button onClick="{{ savePNG }}" style="background:none;border:none;cursor:pointer;color:{{ ui.fg }};font-family:inherit;font-size:10px;letter-spacing:.2em;opacity:.6;padding:2px 0" style-hover="opacity:1">PNG</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;grain&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Canvas&quot;},&quot;cursorRing&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Canvas&quot;}}">
+class Component extends DCLogic {
+  state = { mode: 1, pal: 0, noGL: false, uiDark: null, trip: 0, radius: 1.05, power: 0.8, heal: 1, hue: 0 };
+  MODES = ['FLAME','ACID','WIND','THERMAL','CHROMA','FERRO','INK'];
+  MODEIDS = [1,2,3,4,5,6,7];
+  FLOWSPD = [.55,.75,1,.95,.85,.9,.45,.7,.5];
+  flowAng = Math.random()*Math.PI*2;
+  setMode = (i) => {
+    this.flowAng = Math.random()*Math.PI*2;
+    const pool = this.WORDS.filter(w => w !== this.word);
+    this.word = pool[Math.floor(Math.random()*pool.length)];
+    if(this.inp) this.inp.value = this.word;
+    this.setState({mode: i});
+    if(this.gl) this.rasterize();
+  };
+  PALS = [
+    {name:'ACID GREEN',bg0:'#0a2410',bg1:'#02090b',ink:'#2833c8',ga:'#8dff37',gb:'#2affd0',rainbow:0,dark:0},
+    {name:'GHOST CYAN',bg0:'#141447',bg1:'#050518',ink:'#41e4ff',ga:'#2a6bff',gb:'#d6faff',rainbow:0,dark:0},
+    {name:'PRISM',bg0:'#150317',bg1:'#010101',ink:'#f2f2f2',ga:'#ff47c8',gb:'#47c8ff',rainbow:1,dark:0},
+    {name:'INFRARED',bg0:'#472b9c',bg1:'#6e1d84',ink:'#ffe95c',ga:'#ff6b1a',gb:'#39e6d8',rainbow:0,dark:0},
+    {name:'VIGNELLI',bg0:'#f5f5f2',bg1:'#e6e6e2',ink:'#101010',ga:'#5a5a5a',gb:'#a8a8a8',rainbow:0,dark:1},
+  ];
+  WORDS = ['PLAY','TINKER','TOY','FIDDLE','DABBLE','NOODLE','RIFF','JAM','PROBE','EXPERIMENT'];
+  word = this.WORDS[Math.floor(Math.random()*this.WORDS.length)];
+  m = [0.5,0.5]; mv = [0,0]; smv = [0,0]; active = 0; press = 0;
+
+  // ---- shared GLSL ----
+  CH = `#version 300 es
+precision highp float;
+out vec4 O;
+uniform vec2 u_res;uniform float u_time,u_aspect,u_dt,u_intensity,u_mode,u_active,u_press,u_trip,u_heal,u_hue;
+vec3 rgb2hsv(vec3 c){vec4 K=vec4(0.,-1./3.,2./3.,-1.);vec4 p=mix(vec4(c.bg,K.wz),vec4(c.gb,K.xy),step(c.b,c.g));vec4 q=mix(vec4(p.xyw,c.r),vec4(c.r,p.yzx),step(p.x,c.r));float d=q.x-min(q.w,q.y);float e=1e-10;return vec3(abs(q.z+(q.w-q.y)/(6.*d+e)),d/(q.x+e),q.x);}
+vec3 hsv2rgb(vec3 c){vec4 K=vec4(1.,2./3.,1./3.,3.);vec3 p=abs(fract(c.xxx+K.xyz)*6.-K.www);return c.z*mix(K.xxx,clamp(p-K.xxx,0.,1.),c.y);}
+uniform vec2 u_mouse,u_mvel,u_flow;
+uniform float u_rad;
+vec2 h2(vec2 p){p=vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3)));return fract(sin(p)*43758.5453)*2.-1.;}
+float n2(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.-2.*f);
+return mix(mix(dot(h2(i),f),dot(h2(i+vec2(1,0)),f-vec2(1,0)),u.x),mix(dot(h2(i+vec2(0,1)),f-vec2(0,1)),dot(h2(i+vec2(1,1)),f-1.),u.x),u.y);}
+float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<3;i++){v+=a*n2(p);p=p*2.13+7.7;a*=.5;}return v;}
+vec2 curl(vec2 p){float e=.06;float a=fbm(p+vec2(0.,e)),b=fbm(p-vec2(0.,e)),c=fbm(p+vec2(e,0.)),d=fbm(p-vec2(e,0.));return vec2(a-b,d-c)/(2.*e);}
+float hs(vec2 p){return fract(sin(dot(p,vec2(41.3,289.1)))*43758.55);}
+`;
+
+  setCanvas = (el) => { if(el){ this.cv = el; if(!this.gl) this.initGL(); } };
+  setInput = (el) => { this.inp = el; if(el && !el.value) el.value = this.word; };
+
+  componentDidMount(){
+    if(this.cv && !this.gl) this.initGL();
+    window.addEventListener('resize', this.onResize);
+    window.addEventListener('keydown', this.onKey);
+  }
+  componentWillUnmount(){
+    cancelAnimationFrame(this.raf);
+    window.removeEventListener('resize', this.onResize);
+    window.removeEventListener('keydown', this.onKey);
+  }
+
+  onKey = (e) => {
+    if(e.target && e.target.tagName === 'INPUT') return;
+    const n = parseInt(e.key, 10);
+    if(n >= 1 && n <= this.MODES.length) this.setMode(n-1);
+    else if(e.key === 'r' || e.key === 'R') this.resetSim();
+  };
+  onMove = (e) => {
+    if(!this.cv) return;
+    const r = this.cv.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width, y = 1 - (e.clientY - r.top) / r.height;
+    const now = performance.now();
+    if(this.mT){
+      const dt = Math.max((now - this.mT) / 1000, 1e-3);
+      const cl = v => Math.max(-4, Math.min(4, v));
+      this.mv = [cl((x - this.m[0]) / dt), cl((y - this.m[1]) / dt)];
+    }
+    this.m = [x, y]; this.mT = now; this.active = 1;
+    this.press = e.buttons ? 1 : 0;
+  };
+  onDown = (e) => {
+    const t = e.target.tagName;
+    if(t === 'BUTTON' || t === 'INPUT' || (e.target.closest && e.target.closest('button,input'))) return;
+    try{ e.currentTarget.setPointerCapture(e.pointerId); }catch(_){}
+    this.press = 1; this.active = 1; this.onMove(e);
+  };
+  onUp = () => { this.press = 0; };
+  onLeave = () => { this.active = 0; this.press = 0; };
+  onWordKey = (e) => { e.stopPropagation(); if(e.key === 'Enter') e.target.blur(); };
+  onWordInput = (e) => { this.word = e.target.value || 'PLAY'; if(this.gl) this.rasterize(); };
+  savePNG = () => {
+    if(!this.cv) return;
+    const a = document.createElement('a');
+    a.download = (this.word || 'liquid').toLowerCase().replace(/\s+/g,'-') + '-' + this.MODES[this.state.mode].toLowerCase() + '.png';
+    a.href = this.cv.toDataURL('image/png');
+    a.click();
+  };
+
+  rgb(h){ h = h.replace('#',''); if(h.length === 3) h = h.split('').map(c=>c+c).join(''); const n = parseInt(h,16); return [(n>>16&255)/255,(n>>8&255)/255,(n&255)/255]; }
+
+  mkProg(fs){
+    const gl = this.gl, self = this;
+    const sh = (t, src) => { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s);
+      if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error('shader:', gl.getShaderInfoLog(s)); return s; };
+    const p = gl.createProgram();
+    gl.attachShader(p, sh(gl.VERTEX_SHADER, this.VS));
+    gl.attachShader(p, sh(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    if(!gl.getProgramParameter(p, gl.LINK_STATUS)) console.error('link:', gl.getProgramInfoLog(p));
+    return { p, u:{}, loc(n){ if(!(n in this.u)) this.u[n] = self.gl.getUniformLocation(this.p, n); return this.u[n]; } };
+  }
+  mkTex(w,h,fl){
+    const gl = this.gl, t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    if(fl && this.hf) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, w, h, 0, gl.RGBA, gl.HALF_FLOAT, null);
+    else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    this.resList.push({tex:t});
+    return t;
+  }
+  mkTarget(w,h,fl){
+    const gl = this.gl, tex = this.mkTex(w,h,fl), fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    const r = {tex, fb}; this.resList.push(r); return r;
+  }
+  freeRes(){
+    const gl = this.gl;
+    (this.resList||[]).forEach(r => { if(r.fb) gl.deleteFramebuffer(r.fb); if(r.tex) gl.deleteTexture(r.tex); });
+    this.resList = [];
+  }
+  draw(prog, fbo, w, h, tex, unis){
+    const gl = this.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.viewport(0, 0, w, h);
+    gl.useProgram(prog.p);
+    let unit = 0;
+    for(const n in tex){ gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tex[n]); const l = prog.loc(n); if(l) gl.uniform1i(l, unit); unit++; }
+    const lr = prog.loc('u_res'); if(lr) gl.uniform2f(lr, w, h);
+    for(const n in (unis||{})){
+      const l = prog.loc(n); if(l == null) continue;
+      const v = unis[n];
+      if(typeof v === 'number') gl.uniform1f(l, v);
+      else if(v.length === 2) gl.uniform2f(l, v[0], v[1]);
+      else if(v.length === 3) gl.uniform3f(l, v[0], v[1], v[2]);
+    }
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  initGL(){
+    const gl = this.cv.getContext('webgl2', {antialias:false, preserveDrawingBuffer:true});
+    if(!gl){ this.setState({noGL:true}); return; }
+    this.gl = gl;
+    this.resList = [];
+    this.hf = !!gl.getExtension('EXT_color_buffer_float');
+    this.vao = gl.createVertexArray();
+    gl.bindVertexArray(this.vao);
+    this.VS = '#version 300 es\nvoid main(){vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));gl_Position=vec4(p*2.-1.,0.,1.);}';
+
+    this.progBlur = this.mkProg(this.CH + `
+uniform sampler2D u_src;uniform vec2 u_dir;
+void main(){vec2 uv=gl_FragCoord.xy/u_res;
+vec3 acc=texture(u_src,uv).rgb*.227;
+vec2 o=u_dir;
+acc+=(texture(u_src,uv+o).rgb+texture(u_src,uv-o).rgb)*.194;
+acc+=(texture(u_src,uv+o*2.).rgb+texture(u_src,uv-o*2.).rgb)*.121;
+acc+=(texture(u_src,uv+o*3.).rgb+texture(u_src,uv-o*3.).rgb)*.054;
+acc+=(texture(u_src,uv+o*4.).rgb+texture(u_src,uv-o*4.).rgb)*.016;
+O=vec4(acc,1.);}`);
+
+    this.progCopy = this.mkProg(this.CH + `
+uniform sampler2D u_src;
+void main(){float t=texture(u_src,gl_FragCoord.xy/u_res).r;O=vec4(t,t,t,0.);}`);
+
+    this.progSim = this.mkProg(this.CH + `
+uniform sampler2D u_prev,u_text;
+void main(){
+vec2 uv=gl_FragCoord.xy/u_res;
+vec4 s=texture(u_prev,uv);
+vec2 v=(s.ba-.5)*20.;
+vec4 sb=texture(u_prev,uv-v*u_dt);
+vec2 va=(sb.ba-.5)*20.;
+float heat=sb.r;float ch=s.g;float M=u_mode;
+va*=.985;
+if(length(va)<.3)va*=.93;
+vec2 cn=curl(uv*vec2(u_aspect,1.)*3.+u_flow*u_time*.7+u_time*.15);
+float act=clamp(heat*4.+length(va)*2.,0.,1.);
+va+=cn*(M==2.?.6:M==7.?.2:.06)*(1.+u_trip*2.5)*u_dt*(1.+heat*(M==7.?14.:1.))*act+u_flow*u_dt*smoothstep(.35,1.,heat);
+vec2 d=uv-u_mouse;d.x*=u_aspect;
+float g=exp(-dot(d,d)/(.006*u_rad));
+float boost=1.+u_press*.9;
+if(u_active>.5){
+ va=mix(va,u_mvel*(M==2.?1.7:1.1)*boost,g*clamp(u_dt*10.,0.,1.));
+ float hk=M==1.?2.4:M==3.?1.7:M==4.?2.:M==6.?1.5:M==7.?1.8:M==8.?2.2:0.;
+ heat+=g*hk*u_dt*u_intensity*boost;
+}
+if(M==1.)va.y+=heat*.5*u_dt;
+if(M==3.)va=mix(va,normalize(u_flow+vec2(1e-4,0.))*heat*1.6,smoothstep(.2,1.,heat)*clamp(u_dt*6.,0.,1.));
+if(M==6.&&u_active>.5){float rr2=max(length(d),1e-3);float ang=atan(d.y,d.x);float sp2=.35+.65*pow(.5+.5*sin(ang*7.+u_time*.8),2.);float gw=exp(-dot(d,d)/(.03*u_rad));va=mix(va,-d/rr2*(2.2+2.*u_press)*sp2,gw*clamp(u_dt*9.,0.,1.));}
+vec2 px=1./u_res;
+float hn=(texture(u_prev,uv+vec2(px.x,0.)).r+texture(u_prev,uv-vec2(px.x,0.)).r+texture(u_prev,uv+vec2(0.,px.y)).r+texture(u_prev,uv-vec2(0.,px.y)).r)*.25;
+heat=mix(heat,hn,.3);
+float dec=M==3.?1.:M==1.?1.6:M==6.?1.8:M==7.?.5:M==8.?.8:1.1;
+heat*=exp(-dec*u_dt);
+float txt=texture(u_text,uv).r;
+if(M==1.){
+ float cnb=(texture(u_prev,uv+vec2(px.x,0.)).g+texture(u_prev,uv-vec2(px.x,0.)).g+texture(u_prev,uv+vec2(0.,px.y)).g+texture(u_prev,uv-vec2(0.,px.y)).g)*.25;
+ ch=clamp(ch+(smoothstep(.35,1.,heat)*1.2+cnb*.5*smoothstep(.03,.2,cnb))*txt*u_dt*u_intensity,0.,1.);
+ heat+=ch*(1.-ch)*1.5*u_dt;
+ ch*=exp(-.25*u_heal*u_dt);
+}
+va=clamp(va,-9.,9.);
+O=vec4(max(heat,0.),ch,va*.05+.5);
+}`);
+
+    this.progDye = this.mkProg(this.CH + `
+uniform sampler2D u_prev,u_sim,u_text;
+void main(){
+vec2 uv=gl_FragCoord.xy/u_res;
+vec4 sim=texture(u_sim,uv);
+vec2 v=(sim.ba-.5)*20.;
+float heat=sim.r;float M=u_mode;
+vec2 ve=v;
+if(M==4.){ve.y-=heat*.8;ve.x+=n2(vec2(uv.x*36.,u_time*.5))*heat*.2;}
+float spr=(M==5.?.3:M==2.?.09:M==3.?.14:.02)*(1.+u_trip*2.);
+ve*=1.+u_trip*.8;
+vec2 pb=uv-ve*u_dt;
+float rr=texture(u_prev,uv-ve*(1.+spr)*u_dt).r;
+float gg=texture(u_prev,pb).g;
+float bb=texture(u_prev,uv-ve*(1.-spr)*u_dt).b;
+float a=texture(u_prev,pb).a;
+a=clamp(a+max(length(ve)-length(u_flow)*1.2,0.)*u_dt*2.5+((M==3.||M==4.)?heat*u_dt*1.2:0.),0.,1.);
+if(M==7.){vec2 px=1./u_res;float nb=(texture(u_prev,pb+vec2(px.x,0.)).g+texture(u_prev,pb-vec2(px.x,0.)).g+texture(u_prev,pb+vec2(0.,px.y)).g+texture(u_prev,pb-vec2(0.,px.y)).g)*.25;gg=mix(gg,nb,clamp(heat*1.5,0.,.5));rr=gg;bb=gg;}
+float txt=texture(u_text,uv).r;
+float hr=1.-exp(-.22*u_heal*u_dt);
+rr=mix(rr,txt,hr);gg=mix(gg,txt,hr);bb=mix(bb,txt,hr);
+a*=exp(-.3*u_heal*u_dt);
+O=vec4(rr,gg,bb,a);
+}`);
+
+    this.progRender = this.mkProg(this.CH + `
+uniform sampler2D u_text,u_blur,u_sim,u_dye;
+uniform vec3 u_bg0,u_bg1,u_ink,u_ga,u_gb,u_fg;
+uniform float u_rainbow,u_grain,u_ring;
+vec3 rain(float t){return .55+.45*cos(6.2832*(t+vec3(0.,.33,.67)));}
+void main(){
+vec2 uv=gl_FragCoord.xy/u_res;
+float M=u_mode;
+uv+=curl(uv*vec2(u_aspect,1.)*(2.5+u_trip*2.)+u_flow*u_time*.8+u_time*.12)*(length(u_flow)*.05+u_trip*.015);
+float txt=texture(u_text,uv).r;
+float blr=texture(u_blur,uv).r;
+vec4 sim=texture(u_sim,uv);
+vec4 dye=texture(u_dye,uv);
+float heat=sim.r,ch=sim.g;
+float k=smoothstep(.02,.3,dye.a);
+vec3 dm=mix(vec3(txt),dye.rgb,k);
+vec3 col=mix(u_bg1,u_bg0,uv.y);
+vec2 md=uv-u_mouse;md.x*=u_aspect;float mr=length(md);
+float rim=blr*(1.-blr)*4.;
+if(M==0.){
+ float prox=exp(-mr*mr/(.09*u_rad))*u_active+.1;
+ vec2 dir=mr>1e-4?md/mr:vec2(0.,1.);
+ vec2 cw=curl(uv*vec2(u_aspect,1.)*4.+u_flow*u_time*.7+u_time*.4);
+ float amt=0.;vec3 tint=vec3(0.);
+ for(int i=0;i<16;i++){
+  float fi=(float(i)+.5)/16.;
+  vec2 sp=uv-dir*fi*.2*(1.+u_trip*2.)*min(prox,1.)/vec2(u_aspect,1.);
+  sp+=cw*(.01+.05*fi)*prox;
+  sp.x+=sin(fi*18.+u_time*2.+uv.y*24.)*.004;
+  float b=texture(u_blur,sp).r;
+  float e=b*(1.-b)*4.;
+  float f=1.-fi;
+  amt+=e*f;tint+=mix(u_ga,u_gb,fi)*e*f;
+ }
+ tint/=max(amt,1e-4);
+ float a=clamp(amt*.16*prox*u_intensity,0.,1.);
+ col=mix(col,tint,a);
+ float ink=texture(u_text,uv+cw*.006*prox).r;
+ col=mix(col,u_ink,ink);
+ col=mix(col,u_gb,rim*clamp(prox,0.,1.)*.5);
+}else if(M==1.){
+ float nz=fbm(uv*vec2(u_aspect,1.)*16.);
+ float cc=ch+nz*.3;
+ float alpha=txt*(1.-smoothstep(.5,.72,cc));
+ vec3 inkc=mix(u_ink,vec3(.04),smoothstep(.12,.55,cc));
+ vec2 cw=curl(uv*3.+u_time*.25);
+ float smoke=texture(u_blur,uv+vec2(cw.x*.03,-.07)).r*smoothstep(.06,.6,heat+ch*.4)*.4;
+ col=mix(col,vec3(.4),smoke*.5);
+ col=mix(col,inkc,alpha);
+ float front=smoothstep(.3,.5,cc)*(1.-smoothstep(.52,.75,cc))*txt;
+ vec3 ember=mix(u_ga,u_gb,hs(floor(uv*u_res*.25)+floor(u_time*7.)*.13));
+ col=mix(col,ember,front);
+ col=mix(col,u_ga,clamp(heat,0.,1.)*.14*(1.-alpha));
+ float sp=step(.9975,hs(floor(uv*u_res*.5)+floor(u_time*24.)))*step(.05,front);
+ col=mix(col,u_gb,sp);
+ col=mix(col,u_ga,rim*.15);
+}else if(M==2.){
+ float m=dm.g;
+ col=mix(col,u_ink,smoothstep(.25,.6,m));
+ float fr=max(dm.r-dm.b,0.),fb2=max(dm.b-dm.r,0.);
+ col=mix(col,u_ga,clamp(fr*1.8,0.,1.));
+ col=mix(col,u_gb,clamp(fb2*1.8,0.,1.));
+ vec2 gr=vec2(dFdx(m),dFdy(m))*u_res;
+ float spec=clamp(length(gr)*.12,0.,1.)*k;
+ vec3 sheen=u_rainbow>.5?rain(m*.8+uv.x*.5):mix(u_ga,u_gb,clamp(m*1.2,0.,1.));
+ col=mix(col,sheen,spec*.55);
+ col=mix(col,u_ga,rim*.2*(1.-k));
+}else if(M==3.){
+ float m=dm.g;
+ col=mix(col,u_ink,smoothstep(.25,.6,m));
+ float fr=max(dm.r-dm.b,0.),fb2=max(dm.b-dm.r,0.);
+ col=mix(col,u_ga,clamp(fr*2.,0.,1.));
+ col=mix(col,u_gb,clamp(fb2*2.,0.,1.));
+ vec2 wd=normalize(u_flow+vec2(1e-4,0.));
+ vec2 ac=uv*vec2(u_aspect,1.);
+ float st=n2(vec2(dot(ac,vec2(-wd.y,wd.x))*90.,dot(ac,wd)*6.-u_time*1.6));
+ col=mix(col,mix(u_ga,u_gb,.5+.5*st),clamp(abs(st)*heat*1.4,0.,1.)*k*.55);
+ col=mix(col,u_ga,rim*.2*(1.-k));
+}else if(M==4.){
+ float m=smoothstep(.28,.6,dm.g);
+ float tt=clamp(heat*1.1+dye.a*.85,0.,1.);
+ vec3 hot=u_rainbow>.5?rain(tt*.85+uv.y*.1):mix(u_ga,u_gb,tt);
+ vec3 body=mix(u_ink,hot,clamp(tt*1.6,0.,1.));
+ col=mix(col,body,m);
+ col=mix(col,hot,clamp(heat,0.,1.)*.15*(1.-m));
+ col=mix(col,u_ga,rim*.15*(1.-k));
+}else if(M==5.){
+ col=mix(col,u_ink,smoothstep(.2,.7,dm.g));
+ col=mix(col,u_ga,clamp((dm.r-dm.g)*2.2,0.,1.));
+ col=mix(col,u_gb,clamp((dm.b-dm.g)*2.2,0.,1.));
+ col=mix(col,rain(uv.x+dm.r-dm.b),k*.18);
+ col=mix(col,u_gb,rim*.2*(1.-k));
+}else if(M==6.){
+ float m=smoothstep(.3,.62,dm.g);
+ vec2 gr=vec2(dFdx(dm.g),dFdy(dm.g))*u_res*.6;
+ vec3 n=normalize(vec3(-gr,1.));
+ vec3 body=vec3(.03)+u_ink*.12;
+ body+=u_gb*pow(clamp(n.y*.5+.5,0.,1.),6.)*1.1;
+ body+=u_ga*pow(clamp(1.-abs(n.x),0.,1.),9.)*.2;
+ col=mix(col,body,m);
+ col=mix(col,u_ga,rim*.18*(1.-k));
+}else if(M==7.){
+ float m=dm.g;
+ float a2=1.-exp(-m*2.4);
+ col=mix(col,u_ink,a2*.95);
+ col=mix(col,u_ga,clamp(m*(1.-m)*2.,0.,1.)*k*.35);
+}else{
+ float grid=26.;
+ vec2 gv=uv*vec2(u_aspect,1.)*grid;
+ vec2 cid=floor(gv);
+ vec2 rnd=h2(cid);
+ vec2 cc=(cid+.5)/grid;cc.x/=u_aspect;
+ float hh=texture(u_sim,cc).r;
+ vec2 dirc=cc-u_mouse;dirc.x*=u_aspect;float lr=max(length(dirc),1e-3);
+ vec2 off=(dirc/lr*(.5+.5*rnd.x)+rnd*.6)*hh*.12;
+ off.x/=u_aspect;
+ float m=texture(u_text,uv-off).r;
+ float e=min(min(fract(gv).x,1.-fract(gv).x),min(fract(gv).y,1.-fract(gv).y));
+ float crack=smoothstep(.04,.12,e);
+ m*=mix(1.,crack,clamp(hh*3.,0.,1.));
+ col=mix(col,u_ink,m);
+ col=mix(col,u_gb,(1.-crack)*clamp(hh*2.,0.,1.)*m*.5);
+ col=mix(col,u_ga,rim*.15*clamp(1.-hh*2.,0.,1.));
+}
+float wn=fbm(uv*vec2(u_aspect,1.)*(2.+u_trip*3.)+u_flow*u_time*.9+u_time*.07);
+vec3 wash=u_rainbow>.5?rain(wn*1.2+uv.x*.4+u_time*.04):mix(mix(u_ga,u_gb,.5+.5*sin(wn*6.28+u_time*.25)),u_ink,.15);
+float ww=clamp(u_trip*u_trip*.5+u_trip*clamp(blr*2.2+dye.a*1.3+heat,0.,1.)*.55,0.,.8);
+col=mix(col,wash,ww);
+if(u_hue>.002){vec3 hh=rgb2hsv(clamp(col,0.,1.));hh.x=fract(hh.x+u_hue);col=hsv2rgb(hh);}
+col+=(hs(uv*u_res+fract(u_time)*7.)-.5)*.06*u_grain;
+float ring=(1.-smoothstep(.004,.007,abs(mr-.018*sqrt(u_rad))))*u_active*u_ring;
+col=mix(col,u_fg,ring*.6);
+O=vec4(col,1.);
+}`);
+
+    this.onResize();
+    this.t0 = performance.now(); this.lastT = this.t0;
+    this.raf = requestAnimationFrame(this.loop);
+  }
+
+  onResize = () => {
+    const gl = this.gl; if(!gl || !this.cv) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    let w = Math.max(2, Math.round(this.cv.clientWidth * dpr));
+    let h = Math.max(2, Math.round(this.cv.clientHeight * dpr));
+    if(w > 1920){ h = Math.round(h * 1920 / w); w = 1920; }
+    this.cv.width = w; this.cv.height = h;
+    this.W = w; this.H = h; this.SW = w >> 1; this.SH = h >> 1;
+    this.freeRes();
+    this.textTex = this.mkTex(w, h, false);
+    const gl2 = this.gl;
+    gl2.bindTexture(gl2.TEXTURE_2D, this.textTex);
+    gl2.texImage2D(gl2.TEXTURE_2D, 0, gl2.RGBA, w, h, 0, gl2.RGBA, gl2.UNSIGNED_BYTE, null);
+    this.blurA = this.mkTarget(this.SW, this.SH, false);
+    this.blurB = this.mkTarget(this.SW, this.SH, false);
+    this.sim = { a: this.mkTarget(this.SW, this.SH, true), b: this.mkTarget(this.SW, this.SH, true) };
+    this.dye = { a: this.mkTarget(this.SW, this.SH, true), b: this.mkTarget(this.SW, this.SH, true) };
+    this.rasterize();
+  };
+
+  rasterize(){
+    const {gl, W, H} = this; if(!gl) return;
+    const c = this.tc || (this.tc = document.createElement('canvas'));
+    c.width = W; c.height = H;
+    const x = c.getContext('2d');
+    x.fillStyle = '#000'; x.fillRect(0, 0, W, H);
+    const word = this.word || 'LIQUID';
+    x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'alphabetic';
+    try{ x.letterSpacing = '-0.02em'; }catch(_){}
+    let fs = Math.round(H * 0.42);
+    const set = s => { x.font = '700 ' + s + 'px "Helvetica Neue",Helvetica,Arial,sans-serif'; };
+    set(fs);
+    const tw = x.measureText(word).width, maxW = W * 0.84;
+    if(tw > maxW){ fs = Math.max(8, Math.floor(fs * maxW / tw)); set(fs); }
+    const m = x.measureText(word);
+    const asc = m.actualBoundingBoxAscent || fs * 0.7, desc = m.actualBoundingBoxDescent || 0;
+    x.fillText(word, W / 2, H / 2 + (asc - desc) / 2);
+    gl.bindTexture(gl.TEXTURE_2D, this.textTex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    this.blurAll();
+    this.resetSim();
+  }
+  blurAll(){
+    const w = this.SW, h = this.SH;
+    let src = this.textTex;
+    for(let i = 0; i < 2; i++){
+      this.draw(this.progBlur, this.blurA.fb, w, h, {u_src: src}, {u_dir: [2.2 / w, 0]});
+      this.draw(this.progBlur, this.blurB.fb, w, h, {u_src: this.blurA.tex}, {u_dir: [0, 2.2 / h]});
+      src = this.blurB.tex;
+    }
+  }
+  resetSim = () => {
+    const gl = this.gl; if(!gl) return;
+    for(const t of [this.sim.a, this.sim.b]){
+      gl.bindFramebuffer(gl.FRAMEBUFFER, t.fb);
+      gl.viewport(0, 0, this.SW, this.SH);
+      gl.clearColor(0, 0, 0.5, 0.5);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+    }
+    for(const t of [this.dye.a, this.dye.b])
+      this.draw(this.progCopy, t.fb, this.SW, this.SH, {u_src: this.textTex}, {});
+  };
+
+  loop = (now) => {
+    this.raf = requestAnimationFrame(this.loop);
+    const gl = this.gl; if(!gl) return;
+    const t = (now - this.t0) / 1000;
+    const dt = Math.min(Math.max((now - this.lastT) / 1000, 1e-4), 0.033);
+    this.lastT = now;
+    this.smv[0] += (this.mv[0] - this.smv[0]) * 0.3;
+    this.smv[1] += (this.mv[1] - this.smv[1]) * 0.3;
+    this.mv = [this.mv[0] * 0.82, this.mv[1] * 0.82];
+    const mode = this.MODEIDS[this.state.mode], pal = this.PALS[this.state.pal];
+    const I = +(this.state.power ?? this.props.intensity ?? 1);
+    const fl = this.FLOWSPD[mode] * (0.2 + this.state.trip * 1.6) * 0.35;
+    const rad = this.state.radius;
+    const base = {
+      u_time: t, u_dt: dt, u_aspect: this.W / this.H, u_mouse: this.m, u_mvel: this.smv,
+      u_active: this.active, u_press: this.press, u_mode: mode, u_intensity: I,
+      u_flow: [Math.cos(this.flowAng) * fl, Math.sin(this.flowAng) * fl], u_rad: rad * rad, u_trip: this.state.trip, u_heal: this.state.heal, u_hue: this.state.hue
+    };
+    this.draw(this.progSim, this.sim.b.fb, this.SW, this.SH,
+      {u_prev: this.sim.a.tex, u_text: this.textTex}, base);
+    let s = this.sim.a; this.sim.a = this.sim.b; this.sim.b = s;
+    this.draw(this.progDye, this.dye.b.fb, this.SW, this.SH,
+      {u_prev: this.dye.a.tex, u_sim: this.sim.a.tex, u_text: this.textTex}, base);
+    s = this.dye.a; this.dye.a = this.dye.b; this.dye.b = s;
+    const eff = this.state.uiDark == null ? !!pal.dark : this.state.uiDark;
+    const fg = eff ? '#101010' : '#f4f4f2';
+    this.draw(this.progRender, null, this.W, this.H,
+      {u_text: this.textTex, u_blur: this.blurB.tex, u_sim: this.sim.a.tex, u_dye: this.dye.a.tex},
+      Object.assign({}, base, {
+        u_bg0: this.rgb(pal.bg0), u_bg1: this.rgb(pal.bg1), u_ink: this.rgb(pal.ink),
+        u_ga: this.rgb(pal.ga), u_gb: this.rgb(pal.gb), u_fg: this.rgb(fg),
+        u_rainbow: pal.rainbow, u_grain: (this.props.grain ?? true) ? 1 : 0,
+        u_ring: (this.props.cursorRing ?? true) ? 1 : 0
+      }));
+  };
+
+  renderVals(){
+    const pal = this.PALS[this.state.pal];
+    const eff = this.state.uiDark == null ? !!pal.dark : this.state.uiDark;
+    const fg = eff ? '#101010' : '#f4f4f2';
+    const line = eff ? 'rgba(16,16,16,.25)' : 'rgba(244,244,242,.25)';
+    const bg = eff ? '#f4f4f2' : '#0a0a0a';
+    return {
+      noGL: this.state.noGL,
+      ui: {fg, line, bg},
+      palName: pal.name,
+      modes: this.MODES.map((m, i) => ({
+        label: m, num: '0' + (i + 1),
+        op: i === this.state.mode ? '1' : '0.42',
+        line: i === this.state.mode ? fg : 'transparent',
+        pick: () => this.setMode(i)
+      })),
+      pals: this.PALS.map((p, i) => ({
+        name: p.name,
+        bg: 'linear-gradient(135deg, ' + p.ga + ' 0%, ' + p.ink + ' 55%, ' + p.bg1 + ' 100%)',
+        ring: i === this.state.pal ? fg : 'transparent',
+        size: i === this.state.pal ? '52px' : '13px',
+        pick: () => this.setState({pal: i})
+      })),
+      onMove: this.onMove, onDown: this.onDown, onUp: this.onUp, onLeave: this.onLeave,
+      onWordKey: this.onWordKey, onWordInput: this.onWordInput,
+      trip: this.state.trip, radius: this.state.radius, power: this.state.power, heal: this.state.heal,
+      setHeal: (e) => this.setState({heal: +e.target.value}),
+      hue: this.state.hue, hueCss: Math.round(this.state.hue * 360) + 'deg',
+      setHue: (e) => this.setState({hue: +e.target.value}),
+      setTrip: (e) => this.setState({trip: +e.target.value}),
+      setRadius: (e) => this.setState({radius: +e.target.value}),
+      setPower: (e) => this.setState({power: +e.target.value}),
+      reset: this.resetSim, savePNG: this.savePNG,
+      setCanvas: this.setCanvas, setInput: this.setInput
+    };
+  }
+}
+</script>
+</body>
+</html>
