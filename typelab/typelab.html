@@ -21,7 +21,7 @@ a{color:inherit}a:hover{opacity:.7}
   <sc-if value="{{ noGL }}" hint-placeholder-val="{{ false }}">
     <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#999;font-size:12px;letter-spacing:.14em">WEBGL2 UNAVAILABLE — OPEN IN A CURRENT BROWSER</div>
   </sc-if>
-  <div style="position:absolute;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;gap:12px 26px;flex-wrap:wrap;padding:14px 22px;background:{{ ui.bg }};border-top:1px solid {{ ui.line }};color:{{ ui.fg }}">
+  <div ref="{{ setBar }}" style="position:absolute;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;gap:12px 26px;flex-wrap:wrap;padding:14px 22px;background:{{ ui.bg }};border-top:1px solid {{ ui.line }};color:{{ ui.fg }}">
     <div style="font-size:11px;font-weight:700;letter-spacing:.24em">LIQUID TYPE LAB</div>
     <div style="display:flex;gap:16px;flex-wrap:wrap">
       <sc-for list="{{ modes }}" as="m" hint-placeholder-count="9">
@@ -93,6 +93,7 @@ float hs(vec2 p){return fract(sin(dot(p,vec2(41.3,289.1)))*43758.55);}
 
   setCanvas = (el) => { if(el){ this.cv = el; if(!this.gl) this.initGL(); } };
   setInput = (el) => { this.inp = el; if(el && !el.value) el.value = this.word; };
+  setBar = (el) => { this.barEl = el; if(el && !this.barRO && 'ResizeObserver' in window){ this.barRO = new ResizeObserver(this.onBarResize); this.barRO.observe(el); } };
 
   componentDidMount(){
     if(this.cv && !this.gl) this.initGL();
@@ -103,7 +104,17 @@ float hs(vec2 p){return fract(sin(dot(p,vec2(41.3,289.1)))*43758.55);}
     cancelAnimationFrame(this.raf);
     window.removeEventListener('resize', this.onResize);
     window.removeEventListener('keydown', this.onKey);
+    if(this.barRO) this.barRO.disconnect();
   }
+
+  onBarResize = () => {
+    if(!this.gl || !this.cv || !this.barEl) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    const newBarPx = Math.round(this.barEl.getBoundingClientRect().height * dpr);
+    if(newBarPx === this.barPx) return;
+    this.barPx = newBarPx;
+    this.rasterize();
+  };
 
   onKey = (e) => {
     if(e.target && e.target.tagName === 'INPUT') return;
@@ -435,6 +446,7 @@ O=vec4(col,1.);
     if(w > 1920){ h = Math.round(h * 1920 / w); w = 1920; }
     this.cv.width = w; this.cv.height = h;
     this.W = w; this.H = h; this.SW = w >> 1; this.SH = h >> 1;
+    this.barPx = this.barEl ? Math.round(this.barEl.getBoundingClientRect().height * dpr) : (this.barPx || 0);
     this.freeRes();
     this.textTex = this.mkTex(w, h, false);
     const gl2 = this.gl;
@@ -456,14 +468,15 @@ O=vec4(col,1.);
     const word = this.word || 'LIQUID';
     x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'alphabetic';
     try{ x.letterSpacing = '-0.02em'; }catch(_){}
-    let fs = Math.round(H * 0.42);
+    const availH = Math.max(H - (this.barPx || 0), H * 0.35);
+    let fs = Math.round(availH * 0.42);
     const set = s => { x.font = '700 ' + s + 'px "Helvetica Neue",Helvetica,Arial,sans-serif'; };
     set(fs);
     const tw = x.measureText(word).width, maxW = W * 0.84;
     if(tw > maxW){ fs = Math.max(8, Math.floor(fs * maxW / tw)); set(fs); }
     const m = x.measureText(word);
     const asc = m.actualBoundingBoxAscent || fs * 0.7, desc = m.actualBoundingBoxDescent || 0;
-    x.fillText(word, W / 2, H / 2 + (asc - desc) / 2);
+    x.fillText(word, W / 2, availH / 2 + (asc - desc) / 2);
     gl.bindTexture(gl.TEXTURE_2D, this.textTex);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
@@ -561,7 +574,7 @@ O=vec4(col,1.);
       setRadius: (e) => this.setState({radius: +e.target.value}),
       setPower: (e) => this.setState({power: +e.target.value}),
       reset: this.resetSim, savePNG: this.savePNG,
-      setCanvas: this.setCanvas, setInput: this.setInput
+      setCanvas: this.setCanvas, setInput: this.setInput, setBar: this.setBar
     };
   }
 }
