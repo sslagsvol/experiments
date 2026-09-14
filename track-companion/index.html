@@ -13,16 +13,20 @@
   <h1>Track Companion</h1>
   <div class="sub">ACC · Monza</div>
 
-  <label>Car</label>
-  <div class="option-row" id="car-options"></div>
+  <label for="car-select">Car</label>
+  <div class="select-wrap">
+    <select class="styled-select" id="car-select"></select>
+  </div>
 
-  <label>Track</label>
-  <div class="option-row">
-    <div class="option selected">Monza</div>
+  <label for="track-select">Track</label>
+  <div class="select-wrap">
+    <select class="styled-select" id="track-select">
+      <option value="monza" selected>Monza</option>
+    </select>
   </div>
 
   <label for="lap-time-input">Target lap time</label>
-  <input class="lap-time-input" id="lap-time-input" type="text" inputmode="decimal" value="1:54.0">
+  <input class="lap-time-input" id="lap-time-input" type="text" inputmode="decimal" autocomplete="off" value="1:54.0">
   <div class="setup-error" id="setup-error"></div>
 
   <label>Sector balance (drag to bias timing)</label>
@@ -77,6 +81,7 @@
   </div>
 </div>
 
+<script src="data/monza-corners.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

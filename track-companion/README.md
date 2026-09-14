@@ -15,11 +15,11 @@ starting layout. Next step is a working build.
 
 ## What to build next (MVP)
 
-1. **Car select:** Porsche 992 GT3 R, Ferrari 488 GT3 (see `data/monza-corners.json` → `cars`)
+1. **Car select:** Porsche 992 GT3 R, Ferrari 488 GT3 (see `data/monza-corners.js` → `cars`)
 2. **Track select:** Monza only for now
 3. **Lap time input** (default 1:54.0, freely editable)
 4. **3 sector sliders**, even split by default, biasing the proportional timing split within
-   each sector's corners (sector ranges are in `data/monza-corners.json` → `sectors`)
+   each sector's corners (sector ranges are in `data/monza-corners.js` → `sectors`)
 5. **Start button** — zeroes a timer, begins scaled playback of each complex at its
    `position_pct * target_lap_time`
 6. **Lap button** — re-zeros the timer at the start/finish line each lap (prevents drift
@@ -31,7 +31,7 @@ starting layout. Next step is a working build.
 
 ## Data files
 
-- `data/monza-corners.json` — the 7 Monza "complexes" (grouped corners — chicanes are one
+- `data/monza-corners.js` — the 7 Monza "complexes" (grouped corners — chicanes are one
   unit, not split into individual turns), each with position %, sector, gear, and notes.
   Position percentages are estimates based on typical GT3 pace distribution, not measured
   data — expect to tune after real sessions.

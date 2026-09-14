@@ -1,4 +1,11 @@
-{
+"use strict";
+
+/* Monza timing template — position_pct is a corner's timestamp as a fraction
+   of total lap time (0-1), not a fixed second count. See docs/PROJECT_PLAN.md
+   for the proportional-scaling rationale. Loaded as a plain script (not
+   fetched as JSON) so the app works when opened directly from disk, with no
+   server. */
+const TRACK_DATA = {
   "track": "monza",
   "sectors": [
     { "id": 1, "range": [0, 0.31] },
@@ -89,4 +96,4 @@
       "note": "Doesn't rotate for you. Create rotation through braking and weight transfer; be early and progressive on throttle."
     }
   }
-}
+};

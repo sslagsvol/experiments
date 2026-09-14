@@ -28,9 +28,8 @@ const SLIDER_BIAS_STRENGTH = 0.4; // max +/-40% share shift at full slider defle
 
 init();
 
-async function init() {
-  const res = await fetch("data/monza-corners.json");
-  state.track = await res.json();
+function init() {
+  state.track = TRACK_DATA;
 
   renderCarOptions();
   wireSetupScreen();
@@ -43,32 +42,29 @@ async function init() {
 /* ---------------------------------------------------------------------- */
 
 function renderCarOptions() {
-  const row = document.getElementById("car-options");
+  const select = document.getElementById("car-select");
   const carIds = Object.keys(state.track.cars);
   state.selectedCarId = carIds[0];
 
-  row.innerHTML = "";
+  select.innerHTML = "";
   carIds.forEach((id) => {
     const car = state.track.cars[id];
-    const el = document.createElement("div");
-    el.className = "option" + (id === state.selectedCarId ? " selected" : "");
-    el.textContent = car.display_name;
-    el.dataset.carId = id;
-    row.appendChild(el);
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = car.display_name;
+    select.appendChild(opt);
   });
 
-  row.addEventListener("click", (e) => {
-    const opt = e.target.closest(".option");
-    if (!opt) return;
-    row.querySelectorAll(".option").forEach((o) => o.classList.remove("selected"));
-    opt.classList.add("selected");
-    state.selectedCarId = opt.dataset.carId;
+  select.addEventListener("change", () => {
+    state.selectedCarId = select.value;
   });
 }
 
 function wireSetupScreen() {
   const lapTimeInput = document.getElementById("lap-time-input");
   const errorEl = document.getElementById("setup-error");
+
+  lapTimeInput.addEventListener("focus", () => lapTimeInput.select());
 
   [1, 2, 3].forEach((n) => {
     const slider = document.getElementById(`slider-${n}`);
