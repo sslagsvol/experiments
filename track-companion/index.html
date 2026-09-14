@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Track Companion</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- SCREEN 1: Setup -->
+<div class="screen active" id="setup">
+  <h1>Track Companion</h1>
+  <div class="sub">ACC · Monza</div>
+
+  <label>Car</label>
+  <div class="option-row" id="car-options"></div>
+
+  <label>Track</label>
+  <div class="option-row">
+    <div class="option selected">Monza</div>
+  </div>
+
+  <label for="lap-time-input">Target lap time</label>
+  <input class="lap-time-input" id="lap-time-input" type="text" inputmode="decimal" value="1:54.0">
+  <div class="setup-error" id="setup-error"></div>
+
+  <label>Sector balance (drag to bias timing)</label>
+
+  <div class="slider-row">
+    <div class="label-line"><span>Sector 1</span><span class="bias-readout" id="bias-1">even</span></div>
+    <input type="range" min="0" max="100" value="50" id="slider-1">
+  </div>
+  <div class="slider-row">
+    <div class="label-line"><span>Sector 2</span><span class="bias-readout" id="bias-2">even</span></div>
+    <input type="range" min="0" max="100" value="50" id="slider-2">
+  </div>
+  <div class="slider-row">
+    <div class="label-line"><span>Sector 3</span><span class="bias-readout" id="bias-3">even</span></div>
+    <input type="range" min="0" max="100" value="50" id="slider-3">
+  </div>
+
+  <button class="btn" id="start-btn">Start Session →</button>
+</div>
+
+<!-- SCREEN 2: Drive -->
+<div class="screen drive-screen" id="drive">
+  <div class="top-bar">
+    <button class="pause-btn" id="pause-btn">Pause</button>
+    <div class="lap-time-readout">
+      <div class="label">EST. LAP TIME</div>
+      <div class="value" id="drive-lap-time">1:54.0</div>
+    </div>
+    <button class="exit-btn" id="exit-btn">Exit</button>
+  </div>
+
+  <div class="sector-strip" id="sector-strip">
+    <div class="sector" data-sector="1">
+      <div class="s-label">S1</div>
+      <div class="s-value" id="sector-target-1">0.00</div>
+    </div>
+    <div class="sector" data-sector="2">
+      <div class="s-label">S2</div>
+      <div class="s-value" id="sector-target-2">0.00</div>
+    </div>
+    <div class="sector" data-sector="3">
+      <div class="s-label">S3</div>
+      <div class="s-value" id="sector-target-3">0.00</div>
+    </div>
+  </div>
+
+  <div class="card-stack" id="card-stack"></div>
+
+  <div class="controls">
+    <button class="lap-btn" id="lap-btn">Lap <span id="lap-count">1</span></button>
+    <button class="stop-btn" id="stop-btn">Stop</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

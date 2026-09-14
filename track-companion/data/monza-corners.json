@@ -1,0 +1,92 @@
+{
+  "track": "monza",
+  "sectors": [
+    { "id": 1, "range": [0, 0.31] },
+    { "id": 2, "range": [0.31, 0.68] },
+    { "id": 3, "range": [0.68, 1.0] }
+  ],
+  "complexes": [
+    {
+      "id": "rettifilo",
+      "name": "Rettifilo Chicane",
+      "corners": "T1-2",
+      "position_pct": 0.09,
+      "sector": 1,
+      "gear": "2nd",
+      "note": "Heavy braking off the main straight.",
+      "curb_note": "Don't clip the exit curb hard."
+    },
+    {
+      "id": "curva-grande",
+      "name": "Curva Grande",
+      "corners": "T3",
+      "position_pct": 0.20,
+      "sector": 1,
+      "gear": "6th",
+      "note": "Flat-out or near it, just a lift.",
+      "curb_note": ""
+    },
+    {
+      "id": "della-roggia",
+      "name": "Della Roggia Chicane",
+      "corners": "T4-5",
+      "position_pct": 0.31,
+      "sector": 1,
+      "gear": "2nd-3rd",
+      "note": "Second chicane. Compression on entry curb.",
+      "curb_note": "Be ready for the compression on entry."
+    },
+    {
+      "id": "lesmo-1",
+      "name": "Lesmo 1",
+      "corners": "T6",
+      "position_pct": 0.40,
+      "sector": 2,
+      "gear": "3rd",
+      "note": "Blind-ish entry. Patience on throttle.",
+      "curb_note": ""
+    },
+    {
+      "id": "lesmo-2",
+      "name": "Lesmo 2",
+      "corners": "T7",
+      "position_pct": 0.45,
+      "sector": 2,
+      "gear": "3rd",
+      "note": "Tighter than it looks. Sets up the back straight.",
+      "curb_note": ""
+    },
+    {
+      "id": "ascari",
+      "name": "Ascari Chicane",
+      "corners": "T8-10",
+      "position_pct": 0.68,
+      "sector": 2,
+      "gear": "3rd",
+      "note": "Left-right-left. Rhythm matters more than any single apex.",
+      "curb_note": "Watch the exit curb, don't ride it hard."
+    },
+    {
+      "id": "parabolica",
+      "name": "Parabolica",
+      "corners": "T11",
+      "position_pct": 0.90,
+      "sector": 3,
+      "gear": "3rd to 5th",
+      "note": "Long and patient. Unwinds onto the front straight.",
+      "curb_note": ""
+    }
+  ],
+  "cars": {
+    "porsche-992-gt3r": {
+      "display_name": "Porsche 992 GT3 R",
+      "layout": "rear-engine",
+      "note": "Exceptional exit traction. Punishing if you brake while turning — brake in a straight line, let it settle, then turn."
+    },
+    "ferrari-488-gt3": {
+      "display_name": "Ferrari 488 GT3",
+      "layout": "mid-engine",
+      "note": "Doesn't rotate for you. Create rotation through braking and weight transfer; be early and progressive on throttle."
+    }
+  }
+}

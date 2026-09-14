@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Track Companion — Wireframe</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #111;
+    color: #eee;
+    min-height: 100vh;
+  }
+  .screen {
+    display: none;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px 20px 40px;
+    min-height: 100vh;
+  }
+  .screen.active { display: block; }
+
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: #888; font-size: 14px; margin-bottom: 24px; }
+
+  label { display: block; font-size: 13px; color: #aaa; margin: 20px 0 8px; }
+
+  .option-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .option {
+    flex: 1;
+    min-width: 130px;
+    padding: 14px 12px;
+    border: 1px solid #333;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .option.selected { border-color: #4a9eff; background: #16233a; }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 14px;
+    font-size: 20px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    color: #eee;
+    text-align: center;
+  }
+
+  .slider-row { margin-bottom: 16px; }
+  .slider-row .label-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #aaa;
+    margin-bottom: 4px;
+  }
+  input[type="range"] { width: 100%; }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    margin-top: 28px;
+    background: #4a9eff;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn.secondary { background: #333; }
+  .btn.wide-gap { margin-top: 12px; }
+
+  /* --- Drive screen --- */
+  .drive-screen { padding: 0; max-width: 480px; }
+  .timer-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    color: #888;
+    font-size: 13px;
+    border-bottom: 1px solid #222;
+  }
+  .timer-bar .time { font-size: 18px; color: #eee; font-variant-numeric: tabular-nums; }
+
+  .strip {
+    padding: 40px 20px 20px;
+    text-align: center;
+  }
+  .next-up {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    color: #666;
+    font-size: 14px;
+    margin-top: 28px;
+  }
+  .next-up .item { opacity: 0.7; }
+  .next-up .item:first-child { opacity: 0.85; font-size: 15px; }
+
+  .current-name { font-size: 15px; color: #4a9eff; letter-spacing: 0.3px; margin-bottom: 6px; }
+  .current-gear { font-size: 64px; font-weight: 700; line-height: 1; margin: 8px 0; }
+  .current-note { font-size: 16px; color: #ccc; max-width: 320px; margin: 8px auto 0; line-height: 1.4; }
+  .current-curb { font-size: 13px; color: #d97757; margin-top: 10px; }
+
+  .controls {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    gap: 1px;
+    background: #222;
+  }
+  .controls button {
+    flex: 1;
+    padding: 20px;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+  }
+  .controls .lap-btn { background: #1a1a1a; }
+  .controls .stop-btn { background: #4a1a1a; }
+
+  .note {
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    margin-top: 40px;
+    line-height: 1.5;
+  }
+
+  .top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .back-link { color: #666; font-size: 13px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<!-- SCREEN 1: Setup -->
+<div class="screen active" id="setup">
+  <h1>Track Companion</h1>
+  <div class="sub">Wireframe — not wired to real timing yet</div>
+
+  <label>Car</label>
+  <div class="option-row">
+    <div class="option selected">Porsche 992 GT3 R</div>
+    <div class="option">Ferrari 488 GT3</div>
+  </div>
+
+  <label>Track</label>
+  <div class="option-row">
+    <div class="option selected">Monza</div>
+  </div>
+
+  <label>Target lap time</label>
+  <input type="text" value="1:54.0">
+
+  <label>Sector balance (drag to bias timing)</label>
+
+  <div class="slider-row">
+    <div class="label-line"><span>Sector 1</span><span>even</span></div>
+    <input type="range" min="0" max="100" value="50">
+  </div>
+  <div class="slider-row">
+    <div class="label-line"><span>Sector 2</span><span>even</span></div>
+    <input type="range" min="0" max="100" value="50">
+  </div>
+  <div class="slider-row">
+    <div class="label-line"><span>Sector 3</span><span>even</span></div>
+    <input type="range" min="0" max="100" value="50">
+  </div>
+
+  <button class="btn" onclick="showScreen('drive')">Start Session →</button>
+</div>
+
+<!-- SCREEN 2: Drive -->
+<div class="screen drive-screen" id="drive">
+  <div class="timer-bar">
+    <span class="back-link" onclick="showScreen('setup')">← Setup</span>
+    <span class="time">0:41.2</span>
+    <span>Lap 3</span>
+  </div>
+
+  <div class="strip">
+    <div class="current-name">ASCARI CHICANE — T8–10</div>
+    <div class="current-gear">3rd</div>
+    <div class="current-note">Left–right–left. Rhythm matters more than any single apex.</div>
+    <div class="current-curb">Watch the exit curb — don't ride it hard</div>
+
+    <div class="next-up">
+      <div class="item">next: Parabolica · 3rd→5th</div>
+      <div class="item">then: Rettifilo · 2nd</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="lap-btn" onclick="alert('Would re-zero timer at start/finish line')">Lap</button>
+    <button class="stop-btn" onclick="showScreen('setup')">Stop</button>
+  </div>
+</div>
+
+<div class="note" style="max-width:480px;margin-left:auto;margin-right:auto;" id="footnote">
+  This is a static wireframe. Screens, spacing, and copy are placeholders for review — no timing logic, audio, or data persistence is implemented yet.
+</div>
+
+<script>
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.getElementById('footnote').style.display = id === 'drive' ? 'none' : 'block';
+  }
+
+  document.querySelectorAll('.option-row').forEach(row => {
+    row.addEventListener('click', e => {
+      if (!e.target.classList.contains('option')) return;
+      row.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+      e.target.classList.add('selected');
+    });
+  });
+</script>
+
+</body>
+</html>

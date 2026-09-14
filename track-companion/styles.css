@@ -1,0 +1,314 @@
+/* ==========================================================================
+   Design tokens
+   Placeholder values eyeballed from wireframes/design.png. Replace with the
+   real Figma variables export when available — every color/spacing/type
+   value below should map to a token.
+   ========================================================================== */
+:root {
+  --color-bg: #0a0a0a;
+  --color-surface: #171717;
+  --color-surface-raised: #1e1e1e;
+  --color-border: #2a2a2a;
+
+  --color-text: #f2f2f2;
+  --color-text-dim: #8a8a8a;
+  --color-text-faint: #5a5a5a;
+
+  --color-accent: #4a9eff;
+  --color-accent-bg: #16233a;
+  --color-danger: #d0342c;
+  --color-danger-bg: #3a1a1a;
+
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-family);
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, input {
+  font-family: inherit;
+}
+
+.screen {
+  display: none;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+.screen.active { display: block; }
+
+/* ---------------------------------------------------------------------- */
+/* Setup screen (kept close to the wireframe layout, restyled with tokens) */
+/* ---------------------------------------------------------------------- */
+
+#setup {
+  padding: var(--space-6) var(--space-5) 48px;
+}
+
+#setup h1 {
+  font-size: 20px;
+  margin: 0 0 4px;
+}
+#setup .sub {
+  color: var(--color-text-dim);
+  font-size: 14px;
+  margin-bottom: var(--space-6);
+}
+
+#setup label {
+  display: block;
+  font-size: 13px;
+  color: var(--color-text-dim);
+  margin: var(--space-5) 0 var(--space-2);
+}
+
+.option-row {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.option {
+  flex: 1;
+  min-width: 130px;
+  padding: 14px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  cursor: pointer;
+  font-size: 14px;
+}
+.option.selected {
+  border-color: var(--color-accent);
+  background: var(--color-accent-bg);
+}
+
+.lap-time-input {
+  width: 100%;
+  padding: 14px;
+  font-size: 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  text-align: center;
+}
+
+.slider-row { margin-bottom: var(--space-4); }
+.slider-row .label-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--color-text-dim);
+  margin-bottom: var(--space-1);
+}
+.slider-row input[type="range"] { width: 100%; }
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  margin-top: var(--space-8);
+  background: var(--color-accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.setup-error {
+  color: var(--color-danger);
+  font-size: 13px;
+  margin-top: var(--space-2);
+  min-height: 1em;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Drive screen                                                           */
+/* ---------------------------------------------------------------------- */
+
+.drive-screen { padding: 0; max-width: 480px; }
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4) var(--space-5);
+}
+.top-bar button {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.top-bar .pause-btn { border-color: #d9b93c; color: #d9b93c; }
+.top-bar .exit-btn { border-color: var(--color-danger); color: var(--color-danger); }
+
+.lap-time-readout {
+  text-align: center;
+}
+.lap-time-readout .label {
+  font-size: 11px;
+  color: var(--color-text-dim);
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+.lap-time-readout .value {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.sector-strip {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+}
+.sector-strip .sector {
+  flex: 1;
+  text-align: center;
+  padding: var(--space-3) 0;
+  color: var(--color-text-dim);
+  background: var(--color-surface);
+}
+.sector-strip .sector .s-label {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+.sector-strip .sector .s-value {
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+.sector-strip .sector.active {
+  background: var(--color-bg);
+  box-shadow: inset 0 3px 0 var(--color-danger);
+}
+.sector-strip .sector.active .s-value { color: var(--color-danger); }
+
+.card-stack {
+  padding: var(--space-5) var(--space-4) 100px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.corner-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  transition: opacity 0.2s ease;
+}
+
+.corner-card .gear-number {
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--color-danger);
+  line-height: 1;
+  min-width: 0.9em;
+}
+
+.corner-card .card-body { flex: 1; min-width: 0; }
+
+.corner-card .corner-range {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--color-danger);
+  margin-bottom: 2px;
+}
+
+.corner-card .complex-name {
+  font-style: italic;
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.corner-card .notes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  color: var(--color-text-dim);
+  line-height: 1.4;
+}
+.corner-card .notes li {
+  padding-left: 14px;
+  position: relative;
+}
+.corner-card .notes li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+}
+.corner-card .notes li.curb-note { color: #d97757; }
+
+/* current card: full size, brightest */
+.corner-card.current {
+  border-color: var(--color-danger);
+}
+
+/* upcoming cards: progressively smaller and dimmer */
+.corner-card.next-1 { opacity: 0.75; transform: scale(0.96); }
+.corner-card.next-2 { opacity: 0.55; transform: scale(0.92); }
+.corner-card.next-1 .gear-number,
+.corner-card.next-2 .gear-number { font-size: 28px; }
+.corner-card.next-1 .complex-name,
+.corner-card.next-2 .complex-name { font-size: 15px; }
+.corner-card.next-1 .notes,
+.corner-card.next-2 .notes { display: none; }
+
+.controls {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  gap: 1px;
+  background: var(--color-border);
+}
+.controls button {
+  flex: 1;
+  padding: 20px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+}
+.controls .lap-btn { background: var(--color-surface-raised); }
+.controls .stop-btn { background: var(--color-danger-bg); }
+
+@media (max-width: 380px) {
+  .lap-time-readout .value { font-size: 18px; }
+  .top-bar button { padding: 8px 12px; font-size: 13px; }
+}
