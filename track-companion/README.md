@@ -33,6 +33,22 @@ starting layout. Next step is a working build.
 8. ~~Audio callout per complex via device text-to-speech~~ — removed; the app is
    currently screen-only
 
+## Next up
+
+1. **Wire up the turn-direction icon set** (`design/svg/arrows/`) — Left/Right at 90°,
+   Sharp, Slight, and U-turn, plus Straight/Continue. Each corner card should show the
+   icon matching that complex's direction; if a complex's direction isn't clear from its
+   data, default to the Straight/Continue icon rather than leaving it blank.
+2. **Confirm design tokens and tidy the system** — re-check `data/design-tokens.tokens.json`
+   against what's actually wired into `styles.css`'s `:root` block and the `.type-*`
+   classes; clean up anything unused or stale.
+3. **Pixel-perfect pass against `wireframes/design.png`** — re-check sizing and spacing
+   (card padding, gaps, font sizes, icon sizing once added) against the reference image.
+4. **Confirm the turn-card maximized/minimized states** — exactly 2 maximized (full-detail:
+   icon, gear, name, notes) turn cards on screen at a time — current and next — with every
+   other turn shown minimized (compact one-line). Re-verify this still holds once the icon
+   set and any spacing fixes from #1-3 land.
+
 ## Data files
 
 - `data/monza-corners.js` — the 7 Monza "complexes" (grouped corners — chicanes are one
