@@ -26,8 +26,8 @@ starting layout. Next step is a working build.
    from compounding across a race)
 7. **Drive screen UI** — glanceable strip: current complex large/centered, next two complexes
    smaller, scrolling forward as the lap progresses (see wireframe for layout reference)
-8. **Audio callout** per complex via device text-to-speech (e.g. Web Speech API if this ends
-   up as a web app), fired simultaneously with the on-screen text
+8. ~~Audio callout per complex via device text-to-speech~~ — removed; the app is
+   currently screen-only
 
 ## Data files
 

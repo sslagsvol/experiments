@@ -3,8 +3,9 @@
 /* ==========================================================================
    Track Companion — app logic
    Loads the Monza timing template, lets the driver bias it with sector
-   sliders, then drives a proportional-scaling timer that fires on-screen +
-   spoken callouts per complex. See docs/PROJECT_PLAN.md for the mechanic.
+   sliders, then drives a proportional-scaling timer that swaps the on-screen
+   corner cards as each complex's scaled timestamp is crossed. See
+   docs/PROJECT_PLAN.md for the mechanic.
    ========================================================================== */
 
 const state = {
@@ -20,7 +21,6 @@ const state = {
   lapStartMs: 0,
   pausedAtElapsed: 0,
   lapCount: 1,
-  announcedIndex: -1,    // index into scaledComplexes of last-announced complex
   tickHandle: null,
   recordedLaps: [],      // {timestamp, car, lapTimeSeconds}, newest first
 };
@@ -308,7 +308,6 @@ function startTimer() {
   state.lapCount = 1;
   state.lapStartMs = performance.now();
   state.pausedAtElapsed = 0;
-  state.announcedIndex = -1;
   document.getElementById("lap-count").textContent = state.lapCount;
   updateElapsedReadout(0);
   tick();
@@ -318,7 +317,6 @@ function stopTimer() {
   state.running = false;
   state.paused = false;
   if (state.tickHandle) cancelAnimationFrame(state.tickHandle);
-  window.speechSynthesis.cancel();
   document.getElementById("pause-overlay").hidden = true;
 }
 
@@ -331,7 +329,6 @@ function onLap() {
 function resetLapClock() {
   state.lapStartMs = performance.now();
   state.pausedAtElapsed = 0;
-  state.announcedIndex = -1;
   updateElapsedReadout(0);
 }
 
@@ -347,7 +344,6 @@ function tick() {
     updateElapsedReadout(elapsed);
     updateSectorHighlight(elapsed);
     renderCardStack(elapsed);
-    maybeAnnounce(elapsed);
   }
   state.tickHandle = requestAnimationFrame(tick);
 }
@@ -417,22 +413,6 @@ function updateSectorHighlight(elapsed) {
   document.querySelectorAll("#sector-strip .sector").forEach((el) => {
     el.classList.toggle("active", Number(el.dataset.sector) === activeSector);
   });
-}
-
-function maybeAnnounce(elapsed) {
-  const idx = currentIndex(elapsed);
-  if (idx >= 0 && idx !== state.announcedIndex) {
-    state.announcedIndex = idx;
-    speakCallout(state.scaledComplexes[idx]);
-  }
-}
-
-function speakCallout(complex) {
-  if (!("speechSynthesis" in window)) return;
-  const parts = [complex.name, complex.gear];
-  if (complex.note) parts.push(complex.note);
-  const utterance = new SpeechSynthesisUtterance(parts.join(". "));
-  window.speechSynthesis.speak(utterance);
 }
 
 function escapeHtml(str) {
