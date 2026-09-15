@@ -32,6 +32,16 @@ const LAP_LOG_STORAGE_KEY = "trackCompanionRecordedLaps";
 const DEFAULT_LAP_TARGET_SECONDS = 115; // 1:55.00
 const MIN_LAP_TARGET_SECONDS = 1; // guards against a degenerate 0:00.00 target
 
+// Bounds per time-selector digit — secondsTens is capped at 5 so seconds can
+// never read past 59; every other digit is a free 0-9.
+const TIME_DIGIT_BOUNDS = {
+  minutes: 9,
+  secondsTens: 5,
+  secondsOnes: 9,
+  hundredthsTens: 9,
+  hundredthsOnes: 9,
+};
+
 // Synthetic complex marking the start/finish line, appended after the real
 // track corners so it shows up in the card stack as the lap winds down.
 // Placed just short of 1.0 so it gets its own moment as "current" before the
@@ -71,20 +81,28 @@ function init() {
 }
 
 /* ---------------------------------------------------------------------- */
-/* Time selector — independent up/down steppers for minutes, seconds, and */
-/* hundredths, replacing free-text lap-time entry with digit-exact control */
+/* Time selector — every digit gets its own independent up/down stepper   */
+/* (minutes, then the two digits of seconds, then the two digits of       */
+/* hundredths), replacing free-text lap-time entry with digit-exact       */
+/* control. Digits are stored and read as integer hundredths internally   */
+/* to avoid float-rounding drift.                                         */
 /* ---------------------------------------------------------------------- */
 
 function createTimeSelector(container, initialSeconds) {
-  const bounds = { minutes: 9, seconds: 59, hundredths: 99 };
   const parts = secondsToParts(initialSeconds);
 
   container.innerHTML = [
     timeSegmentHtml("minutes"),
     '<div class="time-separator type-heading-large">:</div>',
-    timeSegmentHtml("seconds"),
+    '<div class="digit-pair">',
+    timeSegmentHtml("secondsTens"),
+    timeSegmentHtml("secondsOnes"),
+    "</div>",
     '<div class="time-separator type-heading-large">.</div>',
-    timeSegmentHtml("hundredths"),
+    '<div class="digit-pair">',
+    timeSegmentHtml("hundredthsTens"),
+    timeSegmentHtml("hundredthsOnes"),
+    "</div>",
   ].join("");
 
   container.querySelectorAll(".segment-up").forEach((btn) => {
@@ -97,21 +115,23 @@ function createTimeSelector(container, initialSeconds) {
   render();
 
   function step(unit, direction) {
-    const max = bounds[unit];
+    const max = TIME_DIGIT_BOUNDS[unit];
     parts[unit] = (parts[unit] + direction + (max + 1)) % (max + 1);
     render();
   }
 
   function render() {
-    container.querySelector('[data-unit="minutes"] .segment-value').textContent = parts.minutes;
-    container.querySelector('[data-unit="seconds"] .segment-value').textContent =
-      String(parts.seconds).padStart(2, "0");
-    container.querySelector('[data-unit="hundredths"] .segment-value').textContent =
-      String(parts.hundredths).padStart(2, "0");
+    Object.keys(TIME_DIGIT_BOUNDS).forEach((unit) => {
+      container.querySelector(`[data-unit="${unit}"] .segment-value`).textContent = parts[unit];
+    });
   }
 
   return {
-    getSeconds: () => parts.minutes * 60 + parts.seconds + parts.hundredths / 100,
+    getSeconds: () => {
+      const seconds = parts.secondsTens * 10 + parts.secondsOnes;
+      const hundredths = parts.hundredthsTens * 10 + parts.hundredthsOnes;
+      return parts.minutes * 60 + seconds + hundredths / 100;
+    },
     setSeconds: (totalSeconds) => {
       Object.assign(parts, secondsToParts(totalSeconds));
       render();
@@ -123,19 +143,27 @@ function timeSegmentHtml(unit) {
   return `
     <div class="time-segment" data-unit="${unit}">
       <button type="button" class="segment-btn segment-up" aria-label="Increase ${unit}">▲</button>
-      <div class="segment-value type-heading-large">00</div>
+      <div class="segment-value type-heading-large">0</div>
       <button type="button" class="segment-btn segment-down" aria-label="Decrease ${unit}">▼</button>
     </div>
   `;
 }
 
 function secondsToParts(totalSeconds) {
-  const clamped = Math.max(0, totalSeconds || 0);
-  const minutes = Math.floor(clamped / 60) % 10;
-  const remainder = clamped - Math.floor(clamped / 60) * 60;
-  const seconds = Math.floor(remainder);
-  const hundredths = Math.round((remainder - seconds) * 100);
-  return { minutes, seconds, hundredths };
+  // Work in integer hundredths throughout so digit math never hits
+  // floating-point rounding edge cases (e.g. 0.1 + 0.2 !== 0.3).
+  const totalHundredths = Math.max(0, Math.round((totalSeconds || 0) * 100));
+  const minutes = Math.floor(totalHundredths / 6000) % 10;
+  const secondsAndHundredths = totalHundredths % 6000;
+  const seconds = Math.floor(secondsAndHundredths / 100);
+  const hundredths = secondsAndHundredths % 100;
+  return {
+    minutes,
+    secondsTens: Math.floor(seconds / 10),
+    secondsOnes: seconds % 10,
+    hundredthsTens: Math.floor(hundredths / 10),
+    hundredthsOnes: hundredths % 10,
+  };
 }
 
 function loadRecordedLaps() {

@@ -220,6 +220,10 @@ button, input, select {
   border-radius: var(--radius-5);
   box-shadow: var(--shadow-inset-track);
 }
+.digit-pair {
+  display: flex;
+  gap: var(--space-2);
+}
 .time-segment {
   display: flex;
   flex-direction: column;
@@ -227,7 +231,7 @@ button, input, select {
   gap: var(--space-4);
 }
 .time-segment .segment-value {
-  min-width: 1.4ch;
+  min-width: 0.8ch;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
