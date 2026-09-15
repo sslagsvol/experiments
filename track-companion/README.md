@@ -35,19 +35,24 @@ starting layout. Next step is a working build.
 
 ## Next up
 
-1. **Wire up the turn-direction icon set** (`design/svg/arrows/`) — Left/Right at 90°,
-   Sharp, Slight, and U-turn, plus Straight/Continue. Each corner card should show the
-   icon matching that complex's direction; if a complex's direction isn't clear from its
-   data, default to the Straight/Continue icon rather than leaving it blank.
+1. ~~Wire up the turn-direction icon set~~ — done. Each corner card shows one or two icons
+   from `design/svg/arrows/` (two for a chicane's direction change, one for a single
+   corner), hand-mapped per complex id in `TURN_ICONS` (`app.js`) since direction isn't
+   derivable from the corner data itself. The synthetic finish-line card and anything
+   unmapped fall back to Straight/Continue. Layout follows the reference mockups at
+   `wireframes/Card/Full.png` (maximized) and `Card/Mini.png` (minimized) — gear number +
+   turn label in a left column, icon row above the title on the right.
 2. **Confirm design tokens and tidy the system** — re-check `data/design-tokens.tokens.json`
    against what's actually wired into `styles.css`'s `:root` block and the `.type-*`
    classes; clean up anything unused or stale.
-3. **Pixel-perfect pass against `wireframes/design.png`** — re-check sizing and spacing
-   (card padding, gaps, font sizes, icon sizing once added) against the reference image.
+3. **Pixel-perfect pass against `wireframes/design.png` and `wireframes/Card/*.png`** —
+   re-check sizing and spacing (card padding, gaps, font sizes, icon sizing) against the
+   reference images now that the card layout matches their structure.
 4. **Confirm the turn-card maximized/minimized states** — exactly 2 maximized (full-detail:
-   icon, gear, name, notes) turn cards on screen at a time — current and next — with every
-   other turn shown minimized (compact one-line). Re-verify this still holds once the icon
-   set and any spacing fixes from #1-3 land.
+   icons, gear, name, notes) turn cards on screen at a time — current and next — with every
+   other turn shown minimized (icons, gear, name, no notes — see `Card/Mini.png`). The
+   minimized layout was reworked to match that reference as part of #1; still worth a
+   dedicated pixel check under #3.
 
 ## Data files
 

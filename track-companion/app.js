@@ -58,6 +58,23 @@ const FINISH_LINE_COMPLEX = {
   curb_note: "",
 };
 
+const DEFAULT_TURN_ICON = "design/svg/arrows/Straight/Continue.svg";
+
+// One or two icons per complex, in the order the corners are actually
+// driven — two for a chicane's direction change, one for a single corner.
+// Based on the real Monza layout (not inferrable from the note text alone),
+// so hand-mapped by complex id. Anything not listed here (and the synthetic
+// finish line) falls back to DEFAULT_TURN_ICON per complex's request.
+const TURN_ICONS = {
+  rettifilo: ["design/svg/arrows/Right/Sharp.svg", "design/svg/arrows/Left/Sharp.svg"],
+  "curva-grande": ["design/svg/arrows/Right/Slight.svg"],
+  "della-roggia": ["design/svg/arrows/Left/Sharp.svg", "design/svg/arrows/Right/Sharp.svg"],
+  "lesmo-1": ["design/svg/arrows/Right/90.svg"],
+  "lesmo-2": ["design/svg/arrows/Right/Sharp.svg"],
+  ascari: ["design/svg/arrows/Left/Sharp.svg", "design/svg/arrows/Right/Sharp.svg"],
+  parabolica: ["design/svg/arrows/Right/Slight.svg"],
+};
+
 init();
 
 function init() {
@@ -497,6 +514,13 @@ function gearDigit(complex) {
   return (complex.gear.match(/\d/) || ["-"])[0];
 }
 
+function turnIconsHtml(complex) {
+  const icons = TURN_ICONS[complex.id] || [DEFAULT_TURN_ICON];
+  return icons
+    .map((src) => `<img class="turn-icon" src="${src}" alt="" width="20" height="20">`)
+    .join("");
+}
+
 // Jump the lap clock straight to a complex's own position in the timeline —
 // tapping any card (current, next, or a compact upcoming one) re-syncs to
 // it, e.g. if the driver got out of step with the estimate.
@@ -521,8 +545,11 @@ function renderCard(complex, slot) {
   if (!expanded) {
     card.className = "corner-card upcoming";
     card.innerHTML = `
-      <span class="upcoming-gear type-label-turn">${gearDigit(complex)}</span>
-      <span class="upcoming-label type-label-turn">${cornerRangeLabel(complex)} — ${escapeHtml(complex.name)}</span>
+      <div class="gear-number-mini">${gearDigit(complex)}</div>
+      <div class="card-body-mini">
+        <div class="turn-icons">${turnIconsHtml(complex)}</div>
+        <div class="complex-name-mini type-title-small">${escapeHtml(complex.name)}</div>
+      </div>
     `;
     return card;
   }
@@ -538,9 +565,12 @@ function renderCard(complex, slot) {
   if (complex.curb_note) notes.push(`<li class="curb-note type-caption-italic">${escapeHtml(complex.curb_note)}</li>`);
 
   card.innerHTML = `
-    <div class="gear-number ${gearType}">${gearDigit(complex)}</div>
-    <div class="card-body">
+    <div class="gear-column">
+      <div class="gear-number ${gearType}">${gearDigit(complex)}</div>
       <div class="corner-range type-label-turn">${cornerRangeLabel(complex)}</div>
+    </div>
+    <div class="card-body">
+      <div class="turn-icons">${turnIconsHtml(complex)}</div>
       <div class="complex-name ${nameType}">${escapeHtml(complex.name)}</div>
       <ul class="notes">${notes.join("")}</ul>
     </div>
