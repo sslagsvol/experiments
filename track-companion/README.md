@@ -17,7 +17,8 @@ starting layout. Next step is a working build.
 
 1. **Car select:** Porsche 992 GT3 R, Ferrari 488 GT3 (see `data/monza-corners.js` → `cars`)
 2. **Track select:** Monza only for now
-3. **Lap time input** (default 1:54.0, freely editable)
+3. **Lap time selector** (default 1:55.00) — independent up/down steppers for minutes,
+   seconds, and hundredths, not a free-text field
 4. **3 sector sliders**, even split by default, biasing the proportional timing split within
    each sector's corners (sector ranges are in `data/monza-corners.js` → `sectors`)
 5. **Start button** — zeroes a timer, begins scaled playback of each complex at its

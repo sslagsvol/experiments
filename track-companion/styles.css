@@ -209,19 +209,43 @@ button, input, select {
   opacity: 0.7;
 }
 
-.lap-time-input {
-  width: 100%;
-  padding: var(--space-14);
+.time-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  padding: var(--space-16) var(--space-8);
   background: var(--color-surface-card);
   border: 1px solid var(--color-border-dark);
   border-radius: var(--radius-5);
-  color: var(--color-fg-primary);
-  text-align: center;
   box-shadow: var(--shadow-inset-track);
 }
-.lap-time-input:focus {
-  outline: none;
-  border-color: var(--color-border-strong);
+.time-segment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+.time-segment .segment-value {
+  min-width: 1.4ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.segment-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-fg-secondary);
+  line-height: 1;
+  padding: var(--space-6);
+  cursor: pointer;
+}
+.segment-btn:hover,
+.segment-btn:active {
+  color: var(--color-accent-primary);
+}
+.time-separator {
+  color: var(--color-fg-secondary);
+  padding-bottom: 1px;
 }
 
 .slider-row { margin-bottom: var(--space-16); }
@@ -258,12 +282,6 @@ button, input, select {
 }
 .author-line:hover {
   color: var(--color-fg-secondary);
-}
-
-.setup-error {
-  color: var(--color-accent-primary);
-  margin-top: var(--space-8);
-  min-height: 1em;
 }
 
 /* ---------------------------------------------------------------------- */

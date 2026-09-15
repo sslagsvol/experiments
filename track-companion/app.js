@@ -22,10 +22,15 @@ const state = {
   pausedAtElapsed: 0,
   tickHandle: null,
   recordedLaps: [],      // {timestamp, car, lapTimeSeconds}, newest first
+
+  lapTimeSelector: null,       // setup screen's time-selector instance
+  adjustLapTimeSelector: null, // pause menu's time-selector instance
 };
 
 const SLIDER_BIAS_STRENGTH = 0.4; // max +/-40% share shift at full slider deflection
 const LAP_LOG_STORAGE_KEY = "trackCompanionRecordedLaps";
+const DEFAULT_LAP_TARGET_SECONDS = 115; // 1:55.00
+const MIN_LAP_TARGET_SECONDS = 1; // guards against a degenerate 0:00.00 target
 
 // Synthetic complex marking the start/finish line, appended after the real
 // track corners so it shows up in the card stack as the lap winds down.
@@ -47,12 +52,90 @@ init();
 function init() {
   state.track = TRACK_DATA;
   state.recordedLaps = loadRecordedLaps();
+  state.targetLapSeconds = DEFAULT_LAP_TARGET_SECONDS;
+
+  state.lapTimeSelector = createTimeSelector(
+    document.getElementById("lap-time-selector"),
+    DEFAULT_LAP_TARGET_SECONDS
+  );
+  state.adjustLapTimeSelector = createTimeSelector(
+    document.getElementById("adjust-lap-time-selector"),
+    DEFAULT_LAP_TARGET_SECONDS
+  );
 
   renderCarOptions();
   wireSetupScreen();
   wireDriveScreen();
   wirePauseMenu();
   recomputeSchedule();
+}
+
+/* ---------------------------------------------------------------------- */
+/* Time selector — independent up/down steppers for minutes, seconds, and */
+/* hundredths, replacing free-text lap-time entry with digit-exact control */
+/* ---------------------------------------------------------------------- */
+
+function createTimeSelector(container, initialSeconds) {
+  const bounds = { minutes: 9, seconds: 59, hundredths: 99 };
+  const parts = secondsToParts(initialSeconds);
+
+  container.innerHTML = [
+    timeSegmentHtml("minutes"),
+    '<div class="time-separator type-heading-large">:</div>',
+    timeSegmentHtml("seconds"),
+    '<div class="time-separator type-heading-large">.</div>',
+    timeSegmentHtml("hundredths"),
+  ].join("");
+
+  container.querySelectorAll(".segment-up").forEach((btn) => {
+    btn.addEventListener("click", () => step(btn.closest(".time-segment").dataset.unit, 1));
+  });
+  container.querySelectorAll(".segment-down").forEach((btn) => {
+    btn.addEventListener("click", () => step(btn.closest(".time-segment").dataset.unit, -1));
+  });
+
+  render();
+
+  function step(unit, direction) {
+    const max = bounds[unit];
+    parts[unit] = (parts[unit] + direction + (max + 1)) % (max + 1);
+    render();
+  }
+
+  function render() {
+    container.querySelector('[data-unit="minutes"] .segment-value').textContent = parts.minutes;
+    container.querySelector('[data-unit="seconds"] .segment-value').textContent =
+      String(parts.seconds).padStart(2, "0");
+    container.querySelector('[data-unit="hundredths"] .segment-value').textContent =
+      String(parts.hundredths).padStart(2, "0");
+  }
+
+  return {
+    getSeconds: () => parts.minutes * 60 + parts.seconds + parts.hundredths / 100,
+    setSeconds: (totalSeconds) => {
+      Object.assign(parts, secondsToParts(totalSeconds));
+      render();
+    },
+  };
+}
+
+function timeSegmentHtml(unit) {
+  return `
+    <div class="time-segment" data-unit="${unit}">
+      <button type="button" class="segment-btn segment-up" aria-label="Increase ${unit}">▲</button>
+      <div class="segment-value type-heading-large">00</div>
+      <button type="button" class="segment-btn segment-down" aria-label="Decrease ${unit}">▼</button>
+    </div>
+  `;
+}
+
+function secondsToParts(totalSeconds) {
+  const clamped = Math.max(0, totalSeconds || 0);
+  const minutes = Math.floor(clamped / 60) % 10;
+  const remainder = clamped - Math.floor(clamped / 60) * 60;
+  const seconds = Math.floor(remainder);
+  const hundredths = Math.round((remainder - seconds) * 100);
+  return { minutes, seconds, hundredths };
 }
 
 function loadRecordedLaps() {
@@ -97,11 +180,6 @@ function renderCarOptions() {
 }
 
 function wireSetupScreen() {
-  const lapTimeInput = document.getElementById("lap-time-input");
-  const errorEl = document.getElementById("setup-error");
-
-  lapTimeInput.addEventListener("focus", () => lapTimeInput.select());
-
   [1, 2, 3].forEach((n) => {
     const slider = document.getElementById(`slider-${n}`);
     const readout = document.getElementById(`bias-${n}`);
@@ -113,13 +191,7 @@ function wireSetupScreen() {
   });
 
   document.getElementById("start-btn").addEventListener("click", () => {
-    const seconds = parseLapTime(lapTimeInput.value);
-    if (seconds === null) {
-      errorEl.textContent = "Enter a lap time like 1:54.0 or 114.0";
-      return;
-    }
-    errorEl.textContent = "";
-    state.targetLapSeconds = seconds;
+    state.targetLapSeconds = Math.max(MIN_LAP_TARGET_SECONDS, state.lapTimeSelector.getSeconds());
     recomputeSchedule();
     goToDriveScreen();
   });
@@ -130,20 +202,6 @@ function biasLabel(sliderValue) {
   if (delta === 0) return "even";
   const pct = Math.round(Math.abs(delta) / 50 * (SLIDER_BIAS_STRENGTH * 100));
   return delta > 0 ? `+${pct}%` : `-${pct}%`;
-}
-
-function parseLapTime(raw) {
-  const s = raw.trim();
-  const mmss = /^(\d+):(\d{1,2}(?:\.\d+)?)$/.exec(s);
-  if (mmss) {
-    const minutes = Number(mmss[1]);
-    const seconds = Number(mmss[2]);
-    if (seconds >= 60) return null;
-    return minutes * 60 + seconds;
-  }
-  const plain = /^\d+(\.\d+)?$/.exec(s);
-  if (plain) return Number(s);
-  return null;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -237,23 +295,15 @@ function wirePauseMenu() {
   document.getElementById("menu-resume").addEventListener("click", closePauseMenu);
 
   document.getElementById("menu-adjust-lap").addEventListener("click", () => {
-    const input = document.getElementById("adjust-lap-input");
-    input.value = formatTime(state.targetLapSeconds);
-    document.getElementById("adjust-lap-error").textContent = "";
+    state.adjustLapTimeSelector.setSeconds(state.targetLapSeconds);
     document.getElementById("adjust-lap-section").hidden = false;
-    input.focus();
-    input.select();
   });
 
   document.getElementById("adjust-lap-apply").addEventListener("click", () => {
-    const input = document.getElementById("adjust-lap-input");
-    const errorEl = document.getElementById("adjust-lap-error");
-    const seconds = parseLapTime(input.value);
-    if (seconds === null) {
-      errorEl.textContent = "Enter a lap time like 1:54.0 or 114.0";
-      return;
-    }
-    state.targetLapSeconds = seconds;
+    state.targetLapSeconds = Math.max(
+      MIN_LAP_TARGET_SECONDS,
+      state.adjustLapTimeSelector.getSeconds()
+    );
     recomputeSchedule();
     document.getElementById("adjust-lap-section").hidden = true;
     closePauseMenu();

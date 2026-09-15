@@ -28,9 +28,8 @@
     </select>
   </div>
 
-  <label class="type-label-overline" for="lap-time-input">Target lap time</label>
-  <input class="lap-time-input type-heading-large" id="lap-time-input" type="text" inputmode="decimal" autocomplete="off" value="1:54.0">
-  <div class="setup-error type-caption-italic" id="setup-error"></div>
+  <label class="type-label-overline">Target lap time</label>
+  <div class="time-selector" id="lap-time-selector"></div>
 
   <label class="type-label-overline">Sector balance (drag to bias timing)</label>
 
@@ -90,9 +89,8 @@
       </div>
 
       <div class="pause-menu-section" id="adjust-lap-section" hidden>
-        <label class="type-label-overline" for="adjust-lap-input">New target lap time</label>
-        <input class="lap-time-input type-heading-large" id="adjust-lap-input" type="text" inputmode="decimal" autocomplete="off">
-        <div class="setup-error type-caption-italic" id="adjust-lap-error"></div>
+        <label class="type-label-overline">New target lap time</label>
+        <div class="time-selector" id="adjust-lap-time-selector"></div>
         <button class="btn type-heading-small" id="adjust-lap-apply">Apply</button>
       </div>
 
