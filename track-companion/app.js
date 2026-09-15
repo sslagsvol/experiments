@@ -565,21 +565,20 @@ function renderCard(complex, slot) {
   const isCurrent = slot === 0;
   card.className = `corner-card ${isCurrent ? "current" : "next"}`;
 
-  const gearType = isCurrent ? "type-display-gear" : "type-display-turn";
-  const nameType = isCurrent ? "type-title-card" : "type-title-small";
-
+  // Current and next are both "maximized" per the Full.png reference — same
+  // type sizes for both. Only the border/opacity (see CSS) tell them apart.
   const notes = [];
   if (complex.note) notes.push(`<li class="type-body-default">${escapeHtml(complex.note)}</li>`);
   if (complex.curb_note) notes.push(`<li class="curb-note type-caption-italic">${escapeHtml(complex.curb_note)}</li>`);
 
   card.innerHTML = `
     <div class="gear-column">
-      <div class="gear-number ${gearType}">${gearDigit(complex)}</div>
+      <div class="gear-number type-display-gear">${gearDigit(complex)}</div>
       <div class="corner-range type-label-turn">${cornerRangeLabel(complex)}</div>
     </div>
     <div class="card-body">
       <div class="turn-icons">${turnIconsHtml(complex)}</div>
-      <div class="complex-name ${nameType}">${escapeHtml(complex.name)}</div>
+      <div class="complex-name type-title-card">${escapeHtml(complex.name)}</div>
       <ul class="notes">${notes.join("")}</ul>
     </div>
   `;

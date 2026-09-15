@@ -393,6 +393,12 @@ button, input, select {
   color: var(--color-accent-primary);
   min-width: 0.9em;
   line-height: 1;
+  /* type-display-gear's -14.52px letter-spacing is meant for runs of text;
+     on a lone digit it just adds trailing phantom space that the flex
+     centering (.gear-column) includes in its box, visually shifting the
+     glyph left of "TURN #" below it. Neutralize it here. */
+  letter-spacing: 0;
+  text-align: center;
 }
 
 .corner-card .card-body { flex: 1; min-width: 0; }
