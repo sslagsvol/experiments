@@ -371,6 +371,10 @@ button, input, select {
   border-radius: var(--radius-18);
   padding: var(--space-16);
   transition: opacity 0.2s ease;
+  cursor: pointer;
+}
+.corner-card:active {
+  opacity: 0.8;
 }
 
 .corner-card .gear-number {

@@ -31,6 +31,7 @@ const SLIDER_BIAS_STRENGTH = 0.4; // max +/-40% share shift at full slider defle
 const LAP_LOG_STORAGE_KEY = "trackCompanionRecordedLaps";
 const DEFAULT_LAP_TARGET_SECONDS = 115; // 1:55.00
 const MIN_LAP_TARGET_SECONDS = 1; // guards against a degenerate 0:00.00 target
+const START_FINISH_LINGER_SECONDS = 2; // how long the finish line stays "current" at lap start
 
 // Bounds per time-selector digit — secondsTens is capped at 5 so seconds can
 // never read past 59; every other digit is a free 0-9.
@@ -453,10 +454,24 @@ function currentIndex(elapsed) {
   return idx;
 }
 
+// The card-stack's notion of "current" differs from currentIndex() (used for
+// sector highlighting) right at lap start: for a couple of seconds after
+// crossing the line, the finish-line card itself is shown as current — it's
+// literally where the driver just was — before quickly handing off to the
+// first real corner. Sector highlighting stays on the real position (S1)
+// throughout; this only affects which card is drawn as current/next.
+function currentCardIndex(elapsed) {
+  const list = state.scaledComplexes;
+  if (list.length === 0) return -1;
+  const lingerWindow = Math.min(START_FINISH_LINGER_SECONDS, list[0].scaledTime);
+  if (elapsed < lingerWindow) return list.length - 1; // finish line, appended last
+  return currentIndex(elapsed);
+}
+
 function renderCardStack(elapsed) {
   const list = state.scaledComplexes;
   if (list.length === 0) return;
-  const idx = currentIndex(elapsed);
+  const idx = currentCardIndex(elapsed);
   // Before the first complex of the lap, idx is -1: treat complex 0 as the
   // current/upcoming slot rather than wrapping back to the previous lap's
   // last complex.
@@ -482,8 +497,25 @@ function gearDigit(complex) {
   return (complex.gear.match(/\d/) || ["-"])[0];
 }
 
+// Jump the lap clock straight to a complex's own position in the timeline —
+// tapping any card (current, next, or a compact upcoming one) re-syncs to
+// it, e.g. if the driver got out of step with the estimate.
+function jumpToComplex(complex) {
+  if (!state.running) return;
+  const targetElapsed = complex.scaledTime;
+  if (state.paused) {
+    state.pausedAtElapsed = targetElapsed;
+  } else {
+    state.lapStartMs = performance.now() - targetElapsed * 1000;
+  }
+  updateElapsedReadout(targetElapsed);
+  updateSectorHighlight(targetElapsed);
+  renderCardStack(targetElapsed);
+}
+
 function renderCard(complex, slot) {
   const card = document.createElement("div");
+  card.addEventListener("click", () => jumpToComplex(complex));
   const expanded = slot < 2;
 
   if (!expanded) {
