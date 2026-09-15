@@ -1,0 +1,1728 @@
+{
+  "font": {
+    "typography": {
+      "heading": {
+        "small": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "type": "custom-fontStyle",
+          "value": {
+            "fontSize": 18,
+            "textDecoration": "none",
+            "fontFamily": "Inter",
+            "fontWeight": 700,
+            "fontStyle": "normal",
+            "fontStretch": "normal",
+            "letterSpacing": 0,
+            "lineHeight": 21.6,
+            "paragraphIndent": 0,
+            "paragraphSpacing": 0,
+            "textCase": "none"
+          },
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "styleId": "S:78add56471850599aaf90f64b6667c943411b244,",
+              "exportKey": "font"
+            }
+          }
+        },
+        "large": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "type": "custom-fontStyle",
+          "value": {
+            "fontSize": 36,
+            "textDecoration": "none",
+            "fontFamily": "Inter",
+            "fontWeight": 700,
+            "fontStyle": "normal",
+            "fontStretch": "normal",
+            "letterSpacing": 0,
+            "lineHeight": 43.2,
+            "paragraphIndent": 0,
+            "paragraphSpacing": 0,
+            "textCase": "none"
+          },
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "styleId": "S:1b8ba208fca93ffa7d7263f2b4eeb40965fb9788,",
+              "exportKey": "font"
+            }
+          }
+        },
+        "medium": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "type": "custom-fontStyle",
+          "value": {
+            "fontSize": 22,
+            "textDecoration": "none",
+            "fontFamily": "Inter",
+            "fontWeight": 700,
+            "fontStyle": "normal",
+            "fontStretch": "normal",
+            "letterSpacing": 0,
+            "lineHeight": 26.4,
+            "paragraphIndent": 0,
+            "paragraphSpacing": 0,
+            "textCase": "none"
+          },
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "styleId": "S:9e9772609ec0a41d05b44e4f469c956abde6612b,",
+              "exportKey": "font"
+            }
+          }
+        }
+      },
+      "label": {
+        "overline": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "type": "custom-fontStyle",
+          "value": {
+            "fontSize": 10,
+            "textDecoration": "none",
+            "fontFamily": "Inter",
+            "fontWeight": 700,
+            "fontStyle": "normal",
+            "fontStretch": "normal",
+            "letterSpacing": 0.4,
+            "lineHeight": 12,
+            "paragraphIndent": 0,
+            "paragraphSpacing": 0,
+            "textCase": "uppercase"
+          },
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "styleId": "S:fc1b3d618c4414f72e9c6f513beedf77270d68e6,",
+              "exportKey": "font"
+            }
+          }
+        },
+        "distance": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "type": "custom-fontStyle",
+          "value": {
+            "fontSize": 17,
+            "textDecoration": "none",
+            "fontFamily": "Oswald",
+            "fontWeight": 300,
+            "fontStyle": "normal",
+            "fontStretch": "normal",
+            "letterSpacing": 0.68,
+            "lineHeight": 20.4,
+            "paragraphIndent": 0,
+            "paragraphSpacing": 0,
+            "textCase": "uppercase"
+          },
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "styleId": "S:f5cf7e847b36d125b00254e8e745dea3e061fc23,",
+              "exportKey": "font"
+            }
+          }
+        },
+        "turn": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "type": "custom-fontStyle",
+          "value": {
+            "fontSize": 20,
+            "textDecoration": "none",
+            "fontFamily": "Oswald",
+            "fontWeight": 400,
+            "fontStyle": "normal",
+            "fontStretch": "normal",
+            "letterSpacing": 0.8,
+            "lineHeight": 24,
+            "paragraphIndent": 0,
+            "paragraphSpacing": 0,
+            "textCase": "uppercase"
+          },
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "styleId": "S:20affe8ffdb828eec7b465e946818296eeeaa908,",
+              "exportKey": "font"
+            }
+          }
+        }
+      },
+      "body": {
+        "default": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "type": "custom-fontStyle",
+          "value": {
+            "fontSize": 16,
+            "textDecoration": "none",
+            "fontFamily": "Source Serif Pro",
+            "fontWeight": 400,
+            "fontStyle": "normal",
+            "fontStretch": "normal",
+            "letterSpacing": 0.16,
+            "lineHeight": 19.2,
+            "paragraphIndent": 0,
+            "paragraphSpacing": 0,
+            "textCase": "none"
+          },
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "styleId": "S:c801308d1a1f46e112a6a457b83287e631024236,",
+              "exportKey": "font"
+            }
+          }
+        }
+      },
+      "title": {
+        "card": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "type": "custom-fontStyle",
+          "value": {
+            "fontSize": 26,
+            "textDecoration": "none",
+            "fontFamily": "Source Serif Pro",
+            "fontWeight": 300,
+            "fontStyle": "italic",
+            "fontStretch": "normal",
+            "letterSpacing": 0,
+            "lineHeight": 31.2,
+            "paragraphIndent": 0,
+            "paragraphSpacing": 0,
+            "textCase": "none"
+          },
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "styleId": "S:eff36b6d9052fdd2e7c57f2b43f9d89f9b3c0026,",
+              "exportKey": "font"
+            }
+          }
+        },
+        "small": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "type": "custom-fontStyle",
+          "value": {
+            "fontSize": 16,
+            "textDecoration": "none",
+            "fontFamily": "Source Serif Pro",
+            "fontWeight": 300,
+            "fontStyle": "italic",
+            "fontStretch": "normal",
+            "letterSpacing": 0,
+            "lineHeight": 19.2,
+            "paragraphIndent": 0,
+            "paragraphSpacing": 0,
+            "textCase": "none"
+          },
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "styleId": "S:08de5030f697ce35d250d82036007052da6e9c2e,",
+              "exportKey": "font"
+            }
+          }
+        }
+      },
+      "display": {
+        "gear": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "type": "custom-fontStyle",
+          "value": {
+            "fontSize": 132,
+            "textDecoration": "none",
+            "fontFamily": "Oswald",
+            "fontWeight": 300,
+            "fontStyle": "normal",
+            "fontStretch": "normal",
+            "letterSpacing": -14.52,
+            "lineHeight": 104.28,
+            "paragraphIndent": 0,
+            "paragraphSpacing": 0,
+            "textCase": "none"
+          },
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "styleId": "S:188f77e4850bca0f7ab624a3e22ef21b0d5a9b52,",
+              "exportKey": "font"
+            }
+          }
+        },
+        "turn": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "type": "custom-fontStyle",
+          "value": {
+            "fontSize": 55.29730224609375,
+            "textDecoration": "none",
+            "fontFamily": "Oswald",
+            "fontWeight": 300,
+            "fontStyle": "normal",
+            "fontStretch": "normal",
+            "letterSpacing": -6.083,
+            "lineHeight": 43.685,
+            "paragraphIndent": 0,
+            "paragraphSpacing": 0,
+            "textCase": "none"
+          },
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "styleId": "S:7dc804b02ca435c0eda416c4231044683c281570,",
+              "exportKey": "font"
+            }
+          }
+        }
+      },
+      "caption": {
+        "italic": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "type": "custom-fontStyle",
+          "value": {
+            "fontSize": 14,
+            "textDecoration": "none",
+            "fontFamily": "Source Serif Pro",
+            "fontWeight": 300,
+            "fontStyle": "italic",
+            "fontStretch": "normal",
+            "letterSpacing": 0,
+            "lineHeight": 16.8,
+            "paragraphIndent": 0,
+            "paragraphSpacing": 0,
+            "textCase": "none"
+          },
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "styleId": "S:a8e9fce2f4adb0bd9ea50f47e118f7806a142519,",
+              "exportKey": "font"
+            }
+          }
+        }
+      }
+    }
+  },
+  "effect": {
+    "elevation": {
+      "inset track": {
+        "0": {
+          "type": "custom-shadow",
+          "value": {
+            "shadowType": "innerShadow",
+            "radius": 7.199999809265137,
+            "color": "#00000040",
+            "offsetX": 0,
+            "offsetY": 4,
+            "spread": 0
+          }
+        },
+        "1": {
+          "type": "custom-shadow",
+          "value": {
+            "shadowType": "innerShadow",
+            "radius": 7.199999809265137,
+            "color": "#00000040",
+            "offsetX": 0,
+            "offsetY": -4,
+            "spread": 0
+          }
+        },
+        "description": "Inset elevation used by the lap-time selector.",
+        "extensions": {
+          "org.lukasoppermann.figmaDesignTokens": {
+            "styleId": "S:8986f3ae23f47265cd4a14322b6f5424581b0c35,",
+            "exportKey": "effect"
+          }
+        }
+      }
+    }
+  },
+  "racing": {
+    "primitives": {
+      "neutral": {
+        "0": {
+          "description": "Primitive color sampled from the Racing interface.",
+          "type": "color",
+          "value": "#ffffffff",
+          "blendMode": "normal",
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Primitives",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:76",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "200": {
+          "description": "Primitive color sampled from the Racing interface.",
+          "type": "color",
+          "value": "#ddddddff",
+          "blendMode": "normal",
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Primitives",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:77",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "500": {
+          "description": "Primitive color sampled from the Racing interface.",
+          "type": "color",
+          "value": "#9c9c9cff",
+          "blendMode": "normal",
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Primitives",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:78",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "600": {
+          "description": "Primitive color sampled from the Racing interface.",
+          "type": "color",
+          "value": "#6a6a6aff",
+          "blendMode": "normal",
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Primitives",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:79",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "900": {
+          "description": "Primitive color sampled from the Racing interface.",
+          "type": "color",
+          "value": "#1b1b19ff",
+          "blendMode": "normal",
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Primitives",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:80",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "950": {
+          "description": "Primitive color sampled from the Racing interface.",
+          "type": "color",
+          "value": "#070707ff",
+          "blendMode": "normal",
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Primitives",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:81",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "1000": {
+          "description": "Primitive color sampled from the Racing interface.",
+          "type": "color",
+          "value": "#000000ff",
+          "blendMode": "normal",
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Primitives",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:82",
+              "exportKey": "variables"
+            }
+          }
+        }
+      },
+      "warm-neutral": {
+        "100": {
+          "description": "Primitive color sampled from the Racing interface.",
+          "type": "color",
+          "value": "#e8e6e1ff",
+          "blendMode": "normal",
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Primitives",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:83",
+              "exportKey": "variables"
+            }
+          }
+        }
+      },
+      "red": {
+        "300": {
+          "description": "Primitive color sampled from the Racing interface.",
+          "type": "color",
+          "value": "#f38880ff",
+          "blendMode": "normal",
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Primitives",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:84",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "500": {
+          "description": "Primitive color sampled from the Racing interface.",
+          "type": "color",
+          "value": "#ff2a1eff",
+          "blendMode": "normal",
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Primitives",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:85",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "700": {
+          "description": "Primitive color sampled from the Racing interface.",
+          "type": "color",
+          "value": "#c12118ff",
+          "blendMode": "normal",
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Primitives",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:86",
+              "exportKey": "variables"
+            }
+          }
+        }
+      },
+      "yellow": {
+        "100": {
+          "description": "Primitive color sampled from the Racing interface.",
+          "type": "color",
+          "value": "#f9f7cdff",
+          "blendMode": "normal",
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Primitives",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:87",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "300": {
+          "description": "Primitive color sampled from the Racing interface.",
+          "type": "color",
+          "value": "#fff873ff",
+          "blendMode": "normal",
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Primitives",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:88",
+              "exportKey": "variables"
+            }
+          }
+        }
+      },
+      "olive": {
+        "500": {
+          "description": "Primitive color sampled from the Racing interface.",
+          "type": "color",
+          "value": "#a9a333ff",
+          "blendMode": "normal",
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Primitives",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:89",
+              "exportKey": "variables"
+            }
+          }
+        }
+      },
+      "green": {
+        "400": {
+          "description": "Primitive color sampled from the Racing interface.",
+          "type": "color",
+          "value": "#80fb64ff",
+          "blendMode": "normal",
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Primitives",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:90",
+              "exportKey": "variables"
+            }
+          }
+        }
+      },
+      "purple": {
+        "400": {
+          "description": "Primitive color sampled from the Racing interface.",
+          "type": "color",
+          "value": "#da64fbff",
+          "blendMode": "normal",
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Primitives",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:91",
+              "exportKey": "variables"
+            }
+          }
+        }
+      }
+    },
+    "semantic": {
+      "color": {
+        "foreground": {
+          "primary": {
+            "description": "Semantic alias of neutral/0.",
+            "type": "color",
+            "value": "{racing . primitives.neutral.0}",
+            "extensions": {
+              "org.lukasoppermann.figmaDesignTokens": {
+                "collection": "Racing / Semantic",
+                "scopes": [
+                  "ALL_SCOPES"
+                ],
+                "variableId": "VariableID:40:92",
+                "exportKey": "variables"
+              }
+            }
+          },
+          "secondary": {
+            "description": "Semantic alias of neutral/500.",
+            "type": "color",
+            "value": "{racing . primitives.neutral.500}",
+            "extensions": {
+              "org.lukasoppermann.figmaDesignTokens": {
+                "collection": "Racing / Semantic",
+                "scopes": [
+                  "ALL_SCOPES"
+                ],
+                "variableId": "VariableID:40:93",
+                "exportKey": "variables"
+              }
+            }
+          },
+          "muted": {
+            "description": "Semantic alias of neutral/600.",
+            "type": "color",
+            "value": "{racing . primitives.neutral.600}",
+            "extensions": {
+              "org.lukasoppermann.figmaDesignTokens": {
+                "collection": "Racing / Semantic",
+                "scopes": [
+                  "ALL_SCOPES"
+                ],
+                "variableId": "VariableID:40:94",
+                "exportKey": "variables"
+              }
+            }
+          },
+          "subtle": {
+            "description": "Semantic alias of neutral/200.",
+            "type": "color",
+            "value": "{racing . primitives.neutral.200}",
+            "extensions": {
+              "org.lukasoppermann.figmaDesignTokens": {
+                "collection": "Racing / Semantic",
+                "scopes": [
+                  "ALL_SCOPES"
+                ],
+                "variableId": "VariableID:40:95",
+                "exportKey": "variables"
+              }
+            }
+          }
+        },
+        "surface": {
+          "canvas": {
+            "description": "Semantic alias of neutral/900.",
+            "type": "color",
+            "value": "{racing . primitives.neutral.900}",
+            "extensions": {
+              "org.lukasoppermann.figmaDesignTokens": {
+                "collection": "Racing / Semantic",
+                "scopes": [
+                  "ALL_SCOPES"
+                ],
+                "variableId": "VariableID:40:96",
+                "exportKey": "variables"
+              }
+            }
+          },
+          "card": {
+            "description": "Semantic alias of neutral/950.",
+            "type": "color",
+            "value": "{racing . primitives.neutral.950}",
+            "extensions": {
+              "org.lukasoppermann.figmaDesignTokens": {
+                "collection": "Racing / Semantic",
+                "scopes": [
+                  "ALL_SCOPES"
+                ],
+                "variableId": "VariableID:40:97",
+                "exportKey": "variables"
+              }
+            }
+          },
+          "deep": {
+            "description": "Semantic alias of neutral/1000.",
+            "type": "color",
+            "value": "{racing . primitives.neutral.1000}",
+            "extensions": {
+              "org.lukasoppermann.figmaDesignTokens": {
+                "collection": "Racing / Semantic",
+                "scopes": [
+                  "ALL_SCOPES"
+                ],
+                "variableId": "VariableID:40:98",
+                "exportKey": "variables"
+              }
+            }
+          },
+          "light": {
+            "description": "Semantic alias of warm-neutral/100.",
+            "type": "color",
+            "value": "{racing . primitives.warm-neutral.100}",
+            "extensions": {
+              "org.lukasoppermann.figmaDesignTokens": {
+                "collection": "Racing / Semantic",
+                "scopes": [
+                  "ALL_SCOPES"
+                ],
+                "variableId": "VariableID:40:99",
+                "exportKey": "variables"
+              }
+            }
+          }
+        },
+        "accent": {
+          "primary": {
+            "description": "Semantic alias of red/500.",
+            "type": "color",
+            "value": "{racing . primitives.red.500}",
+            "extensions": {
+              "org.lukasoppermann.figmaDesignTokens": {
+                "collection": "Racing / Semantic",
+                "scopes": [
+                  "ALL_SCOPES"
+                ],
+                "variableId": "VariableID:40:100",
+                "exportKey": "variables"
+              }
+            }
+          },
+          "strong": {
+            "description": "Semantic alias of red/700.",
+            "type": "color",
+            "value": "{racing . primitives.red.700}",
+            "extensions": {
+              "org.lukasoppermann.figmaDesignTokens": {
+                "collection": "Racing / Semantic",
+                "scopes": [
+                  "ALL_SCOPES"
+                ],
+                "variableId": "VariableID:40:101",
+                "exportKey": "variables"
+              }
+            }
+          }
+        },
+        "status": {
+          "caution": {
+            "description": "Semantic alias of yellow/300.",
+            "type": "color",
+            "value": "{racing . primitives.yellow.300}",
+            "extensions": {
+              "org.lukasoppermann.figmaDesignTokens": {
+                "collection": "Racing / Semantic",
+                "scopes": [
+                  "ALL_SCOPES"
+                ],
+                "variableId": "VariableID:40:102",
+                "exportKey": "variables"
+              }
+            }
+          }
+        },
+        "border": {
+          "subtle": {
+            "description": "Semantic alias of neutral/0.",
+            "type": "color",
+            "value": "{racing . primitives.neutral.0}",
+            "extensions": {
+              "org.lukasoppermann.figmaDesignTokens": {
+                "collection": "Racing / Semantic",
+                "scopes": [
+                  "ALL_SCOPES"
+                ],
+                "variableId": "VariableID:40:103",
+                "exportKey": "variables"
+              }
+            }
+          },
+          "strong": {
+            "description": "Semantic alias of neutral/0.",
+            "type": "color",
+            "value": "{racing . primitives.neutral.0}",
+            "extensions": {
+              "org.lukasoppermann.figmaDesignTokens": {
+                "collection": "Racing / Semantic",
+                "scopes": [
+                  "ALL_SCOPES"
+                ],
+                "variableId": "VariableID:40:104",
+                "exportKey": "variables"
+              }
+            }
+          },
+          "dark": {
+            "description": "Semantic alias of neutral/950.",
+            "type": "color",
+            "value": "{racing . primitives.neutral.950}",
+            "extensions": {
+              "org.lukasoppermann.figmaDesignTokens": {
+                "collection": "Racing / Semantic",
+                "scopes": [
+                  "ALL_SCOPES"
+                ],
+                "variableId": "VariableID:40:105",
+                "exportKey": "variables"
+              }
+            }
+          },
+          "canvas": {
+            "description": "Semantic alias of neutral/900.",
+            "type": "color",
+            "value": "{racing . primitives.neutral.900}",
+            "extensions": {
+              "org.lukasoppermann.figmaDesignTokens": {
+                "collection": "Racing / Semantic",
+                "scopes": [
+                  "ALL_SCOPES"
+                ],
+                "variableId": "VariableID:40:106",
+                "exportKey": "variables"
+              }
+            }
+          }
+        }
+      }
+    },
+    "dimensions": {
+      "space": {
+        "0": {
+          "description": "Spacing value extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 0,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:107",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "2": {
+          "description": "Spacing value extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 2,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:108",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "3": {
+          "description": "Spacing value extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 3,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:109",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "4": {
+          "description": "Spacing value extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 4,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:110",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "6": {
+          "description": "Spacing value extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 6,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:111",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "8": {
+          "description": "Spacing value extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 8,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:112",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "9": {
+          "description": "Spacing value extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 9,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:113",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "10": {
+          "description": "Spacing value extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 10,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:114",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "11": {
+          "description": "Spacing value extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 11,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:115",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "14": {
+          "description": "Spacing value extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 14,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:116",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "15": {
+          "description": "Spacing value extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 15,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:117",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "16": {
+          "description": "Spacing value extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 16,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:118",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "17": {
+          "description": "Spacing value extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 17,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:119",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "20": {
+          "description": "Spacing value extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 20,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:120",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "22": {
+          "description": "Spacing value extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 22,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:121",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "24": {
+          "description": "Spacing value extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 24,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:122",
+              "exportKey": "variables"
+            }
+          }
+        }
+      },
+      "radius": {
+        "0": {
+          "description": "Corner radius extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 0,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:123",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "4": {
+          "description": "Corner radius extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 4,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:124",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "5": {
+          "description": "Corner radius extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 5,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:125",
+              "exportKey": "variables"
+            }
+          }
+        },
+        "18": {
+          "description": "Corner radius extracted from the Racing layout.",
+          "type": "dimension",
+          "value": 18,
+          "extensions": {
+            "org.lukasoppermann.figmaDesignTokens": {
+              "collection": "Racing / Dimensions",
+              "scopes": [
+                "ALL_SCOPES"
+              ],
+              "variableId": "VariableID:40:126",
+              "exportKey": "variables"
+            }
+          }
+        }
+      }
+    }
+  },
+  "typography": {
+    "typography": {
+      "heading": {
+        "small": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "fontSize": {
+            "type": "dimension",
+            "value": 18
+          },
+          "textDecoration": {
+            "type": "string",
+            "value": "none"
+          },
+          "fontFamily": {
+            "type": "string",
+            "value": "Inter"
+          },
+          "fontWeight": {
+            "type": "number",
+            "value": 700
+          },
+          "fontStyle": {
+            "type": "string",
+            "value": "normal"
+          },
+          "fontStretch": {
+            "type": "string",
+            "value": "normal"
+          },
+          "letterSpacing": {
+            "type": "dimension",
+            "value": 0
+          },
+          "lineHeight": {
+            "type": "dimension",
+            "value": 21.6
+          },
+          "paragraphIndent": {
+            "type": "dimension",
+            "value": 0
+          },
+          "paragraphSpacing": {
+            "type": "dimension",
+            "value": 0
+          },
+          "textCase": {
+            "type": "string",
+            "value": "none"
+          }
+        },
+        "large": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "fontSize": {
+            "type": "dimension",
+            "value": 36
+          },
+          "textDecoration": {
+            "type": "string",
+            "value": "none"
+          },
+          "fontFamily": {
+            "type": "string",
+            "value": "Inter"
+          },
+          "fontWeight": {
+            "type": "number",
+            "value": 700
+          },
+          "fontStyle": {
+            "type": "string",
+            "value": "normal"
+          },
+          "fontStretch": {
+            "type": "string",
+            "value": "normal"
+          },
+          "letterSpacing": {
+            "type": "dimension",
+            "value": 0
+          },
+          "lineHeight": {
+            "type": "dimension",
+            "value": 43.2
+          },
+          "paragraphIndent": {
+            "type": "dimension",
+            "value": 0
+          },
+          "paragraphSpacing": {
+            "type": "dimension",
+            "value": 0
+          },
+          "textCase": {
+            "type": "string",
+            "value": "none"
+          }
+        },
+        "medium": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "fontSize": {
+            "type": "dimension",
+            "value": 22
+          },
+          "textDecoration": {
+            "type": "string",
+            "value": "none"
+          },
+          "fontFamily": {
+            "type": "string",
+            "value": "Inter"
+          },
+          "fontWeight": {
+            "type": "number",
+            "value": 700
+          },
+          "fontStyle": {
+            "type": "string",
+            "value": "normal"
+          },
+          "fontStretch": {
+            "type": "string",
+            "value": "normal"
+          },
+          "letterSpacing": {
+            "type": "dimension",
+            "value": 0
+          },
+          "lineHeight": {
+            "type": "dimension",
+            "value": 26.4
+          },
+          "paragraphIndent": {
+            "type": "dimension",
+            "value": 0
+          },
+          "paragraphSpacing": {
+            "type": "dimension",
+            "value": 0
+          },
+          "textCase": {
+            "type": "string",
+            "value": "none"
+          }
+        }
+      },
+      "label": {
+        "overline": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "fontSize": {
+            "type": "dimension",
+            "value": 10
+          },
+          "textDecoration": {
+            "type": "string",
+            "value": "none"
+          },
+          "fontFamily": {
+            "type": "string",
+            "value": "Inter"
+          },
+          "fontWeight": {
+            "type": "number",
+            "value": 700
+          },
+          "fontStyle": {
+            "type": "string",
+            "value": "normal"
+          },
+          "fontStretch": {
+            "type": "string",
+            "value": "normal"
+          },
+          "letterSpacing": {
+            "type": "dimension",
+            "value": 0.4
+          },
+          "lineHeight": {
+            "type": "dimension",
+            "value": 12
+          },
+          "paragraphIndent": {
+            "type": "dimension",
+            "value": 0
+          },
+          "paragraphSpacing": {
+            "type": "dimension",
+            "value": 0
+          },
+          "textCase": {
+            "type": "string",
+            "value": "uppercase"
+          }
+        },
+        "distance": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "fontSize": {
+            "type": "dimension",
+            "value": 17
+          },
+          "textDecoration": {
+            "type": "string",
+            "value": "none"
+          },
+          "fontFamily": {
+            "type": "string",
+            "value": "Oswald"
+          },
+          "fontWeight": {
+            "type": "number",
+            "value": 300
+          },
+          "fontStyle": {
+            "type": "string",
+            "value": "normal"
+          },
+          "fontStretch": {
+            "type": "string",
+            "value": "normal"
+          },
+          "letterSpacing": {
+            "type": "dimension",
+            "value": 0.68
+          },
+          "lineHeight": {
+            "type": "dimension",
+            "value": 20.4
+          },
+          "paragraphIndent": {
+            "type": "dimension",
+            "value": 0
+          },
+          "paragraphSpacing": {
+            "type": "dimension",
+            "value": 0
+          },
+          "textCase": {
+            "type": "string",
+            "value": "uppercase"
+          }
+        },
+        "turn": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "fontSize": {
+            "type": "dimension",
+            "value": 20
+          },
+          "textDecoration": {
+            "type": "string",
+            "value": "none"
+          },
+          "fontFamily": {
+            "type": "string",
+            "value": "Oswald"
+          },
+          "fontWeight": {
+            "type": "number",
+            "value": 400
+          },
+          "fontStyle": {
+            "type": "string",
+            "value": "normal"
+          },
+          "fontStretch": {
+            "type": "string",
+            "value": "normal"
+          },
+          "letterSpacing": {
+            "type": "dimension",
+            "value": 0.8
+          },
+          "lineHeight": {
+            "type": "dimension",
+            "value": 24
+          },
+          "paragraphIndent": {
+            "type": "dimension",
+            "value": 0
+          },
+          "paragraphSpacing": {
+            "type": "dimension",
+            "value": 0
+          },
+          "textCase": {
+            "type": "string",
+            "value": "uppercase"
+          }
+        }
+      },
+      "body": {
+        "default": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "fontSize": {
+            "type": "dimension",
+            "value": 16
+          },
+          "textDecoration": {
+            "type": "string",
+            "value": "none"
+          },
+          "fontFamily": {
+            "type": "string",
+            "value": "Source Serif Pro"
+          },
+          "fontWeight": {
+            "type": "number",
+            "value": 400
+          },
+          "fontStyle": {
+            "type": "string",
+            "value": "normal"
+          },
+          "fontStretch": {
+            "type": "string",
+            "value": "normal"
+          },
+          "letterSpacing": {
+            "type": "dimension",
+            "value": 0.16
+          },
+          "lineHeight": {
+            "type": "dimension",
+            "value": 19.2
+          },
+          "paragraphIndent": {
+            "type": "dimension",
+            "value": 0
+          },
+          "paragraphSpacing": {
+            "type": "dimension",
+            "value": 0
+          },
+          "textCase": {
+            "type": "string",
+            "value": "none"
+          }
+        }
+      },
+      "title": {
+        "card": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "fontSize": {
+            "type": "dimension",
+            "value": 26
+          },
+          "textDecoration": {
+            "type": "string",
+            "value": "none"
+          },
+          "fontFamily": {
+            "type": "string",
+            "value": "Source Serif Pro"
+          },
+          "fontWeight": {
+            "type": "number",
+            "value": 300
+          },
+          "fontStyle": {
+            "type": "string",
+            "value": "italic"
+          },
+          "fontStretch": {
+            "type": "string",
+            "value": "normal"
+          },
+          "letterSpacing": {
+            "type": "dimension",
+            "value": 0
+          },
+          "lineHeight": {
+            "type": "dimension",
+            "value": 31.2
+          },
+          "paragraphIndent": {
+            "type": "dimension",
+            "value": 0
+          },
+          "paragraphSpacing": {
+            "type": "dimension",
+            "value": 0
+          },
+          "textCase": {
+            "type": "string",
+            "value": "none"
+          }
+        },
+        "small": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "fontSize": {
+            "type": "dimension",
+            "value": 16
+          },
+          "textDecoration": {
+            "type": "string",
+            "value": "none"
+          },
+          "fontFamily": {
+            "type": "string",
+            "value": "Source Serif Pro"
+          },
+          "fontWeight": {
+            "type": "number",
+            "value": 300
+          },
+          "fontStyle": {
+            "type": "string",
+            "value": "italic"
+          },
+          "fontStretch": {
+            "type": "string",
+            "value": "normal"
+          },
+          "letterSpacing": {
+            "type": "dimension",
+            "value": 0
+          },
+          "lineHeight": {
+            "type": "dimension",
+            "value": 19.2
+          },
+          "paragraphIndent": {
+            "type": "dimension",
+            "value": 0
+          },
+          "paragraphSpacing": {
+            "type": "dimension",
+            "value": 0
+          },
+          "textCase": {
+            "type": "string",
+            "value": "none"
+          }
+        }
+      },
+      "display": {
+        "gear": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "fontSize": {
+            "type": "dimension",
+            "value": 132
+          },
+          "textDecoration": {
+            "type": "string",
+            "value": "none"
+          },
+          "fontFamily": {
+            "type": "string",
+            "value": "Oswald"
+          },
+          "fontWeight": {
+            "type": "number",
+            "value": 300
+          },
+          "fontStyle": {
+            "type": "string",
+            "value": "normal"
+          },
+          "fontStretch": {
+            "type": "string",
+            "value": "normal"
+          },
+          "letterSpacing": {
+            "type": "dimension",
+            "value": -14.52
+          },
+          "lineHeight": {
+            "type": "dimension",
+            "value": 104.28
+          },
+          "paragraphIndent": {
+            "type": "dimension",
+            "value": 0
+          },
+          "paragraphSpacing": {
+            "type": "dimension",
+            "value": 0
+          },
+          "textCase": {
+            "type": "string",
+            "value": "none"
+          }
+        },
+        "turn": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "fontSize": {
+            "type": "dimension",
+            "value": 55.29730224609375
+          },
+          "textDecoration": {
+            "type": "string",
+            "value": "none"
+          },
+          "fontFamily": {
+            "type": "string",
+            "value": "Oswald"
+          },
+          "fontWeight": {
+            "type": "number",
+            "value": 300
+          },
+          "fontStyle": {
+            "type": "string",
+            "value": "normal"
+          },
+          "fontStretch": {
+            "type": "string",
+            "value": "normal"
+          },
+          "letterSpacing": {
+            "type": "dimension",
+            "value": -6.083
+          },
+          "lineHeight": {
+            "type": "dimension",
+            "value": 43.685
+          },
+          "paragraphIndent": {
+            "type": "dimension",
+            "value": 0
+          },
+          "paragraphSpacing": {
+            "type": "dimension",
+            "value": 0
+          },
+          "textCase": {
+            "type": "string",
+            "value": "none"
+          }
+        }
+      },
+      "caption": {
+        "italic": {
+          "description": "Semantic typography style extracted from the Racing interface.",
+          "fontSize": {
+            "type": "dimension",
+            "value": 14
+          },
+          "textDecoration": {
+            "type": "string",
+            "value": "none"
+          },
+          "fontFamily": {
+            "type": "string",
+            "value": "Source Serif Pro"
+          },
+          "fontWeight": {
+            "type": "number",
+            "value": 300
+          },
+          "fontStyle": {
+            "type": "string",
+            "value": "italic"
+          },
+          "fontStretch": {
+            "type": "string",
+            "value": "normal"
+          },
+          "letterSpacing": {
+            "type": "dimension",
+            "value": 0
+          },
+          "lineHeight": {
+            "type": "dimension",
+            "value": 16.8
+          },
+          "paragraphIndent": {
+            "type": "dimension",
+            "value": 0
+          },
+          "paragraphSpacing": {
+            "type": "dimension",
+            "value": 0
+          },
+          "textCase": {
+            "type": "string",
+            "value": "none"
+          }
+        }
+      }
+    }
+  }
+}

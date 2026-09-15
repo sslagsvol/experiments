@@ -147,6 +147,18 @@ button, input {
   color: var(--color-text);
 }
 
+.author-line {
+  display: block;
+  margin-top: var(--space-6);
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-text-faint);
+  text-decoration: none;
+}
+.author-line:hover {
+  color: var(--color-text-dim);
+}
+
 .setup-error {
   color: var(--color-danger);
   font-size: 13px;

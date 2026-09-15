@@ -76,6 +76,10 @@
                 grid-template-columns: 1fr 1fr;
                 gap: 1.25rem;
             }
+
+            nav > a:last-child:nth-child(odd) {
+                grid-column: 1 / -1;
+            }
         }
 
         @media (min-width: 1024px) {
@@ -119,6 +123,7 @@
             position: relative;
             aspect-ratio: 5 / 2;
             overflow: hidden;
+            container-type: inline-size;
         }
 
         .vignette svg {
@@ -198,6 +203,118 @@
         /* ---- Type Lab vignette ---- */
         .vignette-typelab {
             background: #050505;
+        }
+
+        /* ---- Track Companion vignette ---- */
+        .vignette-track {
+            background: #0a0a0a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 6cqw;
+        }
+
+        .tc-word {
+            position: absolute;
+            left: 5cqw;
+            top: 4cqw;
+            font-size: 3.6cqw;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: #4a9eff;
+        }
+
+        .tc-strip-wrap {
+            position: relative;
+            height: 13cqw;
+            overflow: hidden;
+        }
+
+        .tc-now-line {
+            position: absolute;
+            left: 46%;
+            top: -2cqw;
+            bottom: -2cqw;
+            width: 0.7cqw;
+            background: #4a9eff;
+            box-shadow: 0 0 1.6cqw 0.2cqw rgba(74, 158, 255, 0.7);
+            z-index: 2;
+        }
+
+        .tc-strip {
+            display: flex;
+            align-items: center;
+            gap: 4cqw;
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            white-space: nowrap;
+            animation-name: tc-scroll;
+            animation-timing-function: linear;
+            animation-duration: 16s;
+            animation-iteration-count: infinite;
+            animation-play-state: paused;
+        }
+
+        body:not(.page-hidden) .vignette.animate .tc-strip {
+            animation-play-state: running;
+        }
+
+        .tc-chip {
+            flex: none;
+            padding: 1.6cqw 3.4cqw;
+            border-radius: 999px;
+            border: 1px solid rgba(242, 242, 242, 0.14);
+            background: rgba(255, 255, 255, 0.03);
+            color: rgba(242, 242, 242, 0.55);
+            font-size: 3.4cqw;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+        }
+
+        @keyframes tc-scroll {
+            to { transform: translateX(-50%); }
+        }
+
+        .tc-sectors {
+            position: relative;
+            height: 1.6cqw;
+            border-radius: 1cqw;
+            overflow: hidden;
+            background: #171717;
+        }
+
+        .tc-sector-seg {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            background: rgba(74, 158, 255, 0.16);
+            border-right: 1px solid #0a0a0a;
+        }
+
+        .tc-marker {
+            position: absolute;
+            top: -1.2cqw;
+            width: 2.2cqw;
+            height: 4cqw;
+            border-radius: 0.6cqw;
+            background: #4a9eff;
+            box-shadow: 0 0 1.4cqw 0.3cqw rgba(74, 158, 255, 0.6);
+            animation-name: tc-lap;
+            animation-timing-function: linear;
+            animation-duration: 9s;
+            animation-iteration-count: infinite;
+            animation-play-state: paused;
+        }
+
+        body:not(.page-hidden) .vignette.animate .tc-marker {
+            animation-play-state: running;
+        }
+
+        @keyframes tc-lap {
+            from { left: 0%; }
+            to { left: 100%; }
         }
 
         footer.author {
@@ -375,6 +492,37 @@
                     </svg>
                 </div>
                 <div class="card-label">Type Lab<span class="card-sub">Liquid type playground</span></div>
+            </a>
+            <a href="track-companion/index.html" class="card">
+                <div class="vignette vignette-track" aria-hidden="true">
+                    <div class="tc-word">TRACK COMPANION</div>
+                    <div class="tc-strip-wrap">
+                        <div class="tc-now-line"></div>
+                        <div class="tc-strip">
+                            <div class="tc-chip">RETTIFILO</div>
+                            <div class="tc-chip">CURVA GRANDE</div>
+                            <div class="tc-chip">DELLA ROGGIA</div>
+                            <div class="tc-chip">LESMO 1</div>
+                            <div class="tc-chip">LESMO 2</div>
+                            <div class="tc-chip">ASCARI</div>
+                            <div class="tc-chip">PARABOLICA</div>
+                            <div class="tc-chip">RETTIFILO</div>
+                            <div class="tc-chip">CURVA GRANDE</div>
+                            <div class="tc-chip">DELLA ROGGIA</div>
+                            <div class="tc-chip">LESMO 1</div>
+                            <div class="tc-chip">LESMO 2</div>
+                            <div class="tc-chip">ASCARI</div>
+                            <div class="tc-chip">PARABOLICA</div>
+                        </div>
+                    </div>
+                    <div class="tc-sectors">
+                        <div class="tc-sector-seg" style="left: 0; width: 31%;"></div>
+                        <div class="tc-sector-seg" style="left: 31%; width: 37%;"></div>
+                        <div class="tc-sector-seg" style="left: 68%; width: 32%;"></div>
+                        <div class="tc-marker"></div>
+                    </div>
+                </div>
+                <div class="card-label">Track Companion<span class="card-sub">ACC pacing companion</span></div>
             </a>
         </nav>
         <footer class="author">
