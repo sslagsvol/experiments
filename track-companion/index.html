@@ -52,8 +52,8 @@
   <div class="top-bar">
     <button class="pause-btn" id="pause-btn">Pause</button>
     <div class="lap-time-readout">
-      <div class="label">EST. LAP TIME</div>
-      <div class="value" id="drive-lap-time">1:54.0</div>
+      <div class="label">LAP TIME</div>
+      <div class="value" id="drive-elapsed-time">0:00.00</div>
     </div>
     <button class="exit-btn" id="exit-btn">Exit</button>
   </div>
@@ -78,6 +78,32 @@
   <div class="controls">
     <button class="lap-btn" id="lap-btn">Lap <span id="lap-count">1</span></button>
     <button class="stop-btn" id="stop-btn">Stop</button>
+  </div>
+
+  <div class="pause-overlay" id="pause-overlay" hidden>
+    <div class="pause-menu">
+      <div class="pause-menu-header">
+        <span>Paused</span>
+        <span class="pause-elapsed" id="pause-elapsed">0:00.00</span>
+      </div>
+
+      <div class="pause-menu-section" id="adjust-lap-section" hidden>
+        <label for="adjust-lap-input">New target lap time</label>
+        <input class="lap-time-input" id="adjust-lap-input" type="text" inputmode="decimal" autocomplete="off">
+        <div class="setup-error" id="adjust-lap-error"></div>
+        <button class="btn" id="adjust-lap-apply">Apply</button>
+      </div>
+
+      <div class="pause-menu-actions" id="pause-menu-actions">
+        <button class="menu-btn" id="menu-adjust-lap">Adjust lap time</button>
+        <button class="menu-btn" id="menu-reset-lap">Reset lap</button>
+        <button class="menu-btn" id="menu-record-lap">Record lap time</button>
+      </div>
+
+      <div class="recorded-laps" id="recorded-laps-list"></div>
+
+      <button class="btn secondary" id="menu-resume">Resume</button>
+    </div>
   </div>
 </div>
 

@@ -22,19 +22,41 @@ const state = {
   lapCount: 1,
   announcedIndex: -1,    // index into scaledComplexes of last-announced complex
   tickHandle: null,
+  recordedLaps: [],      // {timestamp, car, lapTimeSeconds}, newest first
 };
 
 const SLIDER_BIAS_STRENGTH = 0.4; // max +/-40% share shift at full slider deflection
+const LAP_LOG_STORAGE_KEY = "trackCompanionRecordedLaps";
 
 init();
 
 function init() {
   state.track = TRACK_DATA;
+  state.recordedLaps = loadRecordedLaps();
 
   renderCarOptions();
   wireSetupScreen();
   wireDriveScreen();
+  wirePauseMenu();
   recomputeSchedule();
+}
+
+function loadRecordedLaps() {
+  try {
+    const raw = localStorage.getItem(LAP_LOG_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveRecordedLaps() {
+  try {
+    localStorage.setItem(LAP_LOG_STORAGE_KEY, JSON.stringify(state.recordedLaps));
+  } catch (e) {
+    // localStorage unavailable (private browsing, etc.) — recorded laps
+    // just won't persist across reloads.
+  }
 }
 
 /* ---------------------------------------------------------------------- */
@@ -155,8 +177,6 @@ function updateSectorStripTargets() {
     const el = document.getElementById(`sector-target-${n}`);
     if (el) el.textContent = formatTime(state.sectorBoundaries[n - 1] || 0);
   });
-  const readout = document.getElementById("drive-lap-time");
-  if (readout) readout.textContent = formatTime(state.targetLapSeconds);
 }
 
 function formatTime(totalSeconds) {
@@ -186,8 +206,100 @@ function goToSetupScreen() {
 function wireDriveScreen() {
   document.getElementById("lap-btn").addEventListener("click", onLap);
   document.getElementById("stop-btn").addEventListener("click", goToSetupScreen);
-  document.getElementById("pause-btn").addEventListener("click", onPauseToggle);
+  document.getElementById("pause-btn").addEventListener("click", openPauseMenu);
   document.getElementById("exit-btn").addEventListener("click", goToSetupScreen);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Pause menu                                                             */
+/* ---------------------------------------------------------------------- */
+
+function wirePauseMenu() {
+  const overlay = document.getElementById("pause-overlay");
+
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) closePauseMenu();
+  });
+
+  document.getElementById("menu-resume").addEventListener("click", closePauseMenu);
+
+  document.getElementById("menu-adjust-lap").addEventListener("click", () => {
+    const input = document.getElementById("adjust-lap-input");
+    input.value = formatTime(state.targetLapSeconds);
+    document.getElementById("adjust-lap-error").textContent = "";
+    document.getElementById("adjust-lap-section").hidden = false;
+    input.focus();
+    input.select();
+  });
+
+  document.getElementById("adjust-lap-apply").addEventListener("click", () => {
+    const input = document.getElementById("adjust-lap-input");
+    const errorEl = document.getElementById("adjust-lap-error");
+    const seconds = parseLapTime(input.value);
+    if (seconds === null) {
+      errorEl.textContent = "Enter a lap time like 1:54.0 or 114.0";
+      return;
+    }
+    state.targetLapSeconds = seconds;
+    recomputeSchedule();
+    document.getElementById("adjust-lap-section").hidden = true;
+    closePauseMenu();
+  });
+
+  document.getElementById("menu-reset-lap").addEventListener("click", () => {
+    resetLapClock();
+    renderCardStack(0);
+    updateSectorHighlight(0);
+    closePauseMenu();
+  });
+
+  document.getElementById("menu-record-lap").addEventListener("click", () => {
+    const lapTimeSeconds = state.pausedAtElapsed;
+    state.recordedLaps.unshift({
+      timestamp: new Date().toISOString(),
+      car: state.track.cars[state.selectedCarId]
+        ? state.track.cars[state.selectedCarId].display_name
+        : state.selectedCarId,
+      lapTimeSeconds,
+    });
+    state.recordedLaps = state.recordedLaps.slice(0, 20);
+    saveRecordedLaps();
+    renderRecordedLaps();
+  });
+}
+
+function openPauseMenu() {
+  // Compute elapsed while still unpaused — elapsedSeconds() short-circuits
+  // to the (stale) pausedAtElapsed once state.paused is true.
+  state.pausedAtElapsed = elapsedSeconds();
+  state.paused = true;
+  document.getElementById("pause-elapsed").textContent = formatTime(state.pausedAtElapsed);
+  document.getElementById("adjust-lap-section").hidden = true;
+  renderRecordedLaps();
+  document.getElementById("pause-overlay").hidden = false;
+}
+
+function closePauseMenu() {
+  document.getElementById("pause-overlay").hidden = true;
+  if (!state.running) return;
+  state.paused = false;
+  state.lapStartMs = performance.now() - state.pausedAtElapsed * 1000;
+}
+
+function renderRecordedLaps() {
+  const list = document.getElementById("recorded-laps-list");
+  list.innerHTML = "";
+  state.recordedLaps.slice(0, 5).forEach((lap) => {
+    const row = document.createElement("div");
+    row.className = "recorded-lap-row";
+    const time = new Date(lap.timestamp);
+    const timeStr = time.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    row.innerHTML = `
+      <span>${escapeHtml(lap.car)} · ${timeStr}</span>
+      <span class="lap-time-value">${formatTime(lap.lapTimeSeconds)}</span>
+    `;
+    list.appendChild(row);
+  });
 }
 
 function startTimer() {
@@ -198,35 +310,29 @@ function startTimer() {
   state.pausedAtElapsed = 0;
   state.announcedIndex = -1;
   document.getElementById("lap-count").textContent = state.lapCount;
-  document.getElementById("pause-btn").textContent = "Pause";
+  updateElapsedReadout(0);
   tick();
 }
 
 function stopTimer() {
   state.running = false;
+  state.paused = false;
   if (state.tickHandle) cancelAnimationFrame(state.tickHandle);
   window.speechSynthesis.cancel();
+  document.getElementById("pause-overlay").hidden = true;
 }
 
 function onLap() {
   state.lapCount += 1;
   document.getElementById("lap-count").textContent = state.lapCount;
+  resetLapClock();
+}
+
+function resetLapClock() {
   state.lapStartMs = performance.now();
   state.pausedAtElapsed = 0;
   state.announcedIndex = -1;
-}
-
-function onPauseToggle() {
-  const btn = document.getElementById("pause-btn");
-  if (!state.paused) {
-    state.paused = true;
-    state.pausedAtElapsed = elapsedSeconds();
-    btn.textContent = "Resume";
-  } else {
-    state.paused = false;
-    state.lapStartMs = performance.now() - state.pausedAtElapsed * 1000;
-    btn.textContent = "Pause";
-  }
+  updateElapsedReadout(0);
 }
 
 function elapsedSeconds() {
@@ -238,11 +344,17 @@ function tick() {
   if (!state.running) return;
   if (!state.paused) {
     const elapsed = elapsedSeconds();
+    updateElapsedReadout(elapsed);
     updateSectorHighlight(elapsed);
     renderCardStack(elapsed);
     maybeAnnounce(elapsed);
   }
   state.tickHandle = requestAnimationFrame(tick);
+}
+
+function updateElapsedReadout(elapsed) {
+  const el = document.getElementById("drive-elapsed-time");
+  if (el) el.textContent = formatTime(elapsed);
 }
 
 function currentIndex(elapsed) {

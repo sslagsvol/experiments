@@ -142,6 +142,10 @@ button, input {
   font-weight: 600;
   cursor: pointer;
 }
+.btn.secondary {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
 
 .setup-error {
   color: var(--color-danger);
@@ -314,6 +318,95 @@ button, input {
 }
 .controls .lap-btn { background: var(--color-surface-raised); }
 .controls .stop-btn { background: var(--color-danger-bg); }
+
+/* ---------------------------------------------------------------------- */
+/* Pause menu                                                             */
+/* ---------------------------------------------------------------------- */
+
+.pause-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 10;
+}
+.pause-overlay[hidden] { display: none; }
+
+.pause-menu {
+  width: 100%;
+  max-width: 480px;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: var(--space-6) var(--space-5) var(--space-8);
+}
+
+.pause-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: var(--space-6);
+}
+.pause-elapsed {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-dim);
+  font-weight: 400;
+  font-size: 14px;
+}
+
+.pause-menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.menu-btn {
+  width: 100%;
+  padding: 16px;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.pause-menu-section {
+  margin-bottom: var(--space-4);
+}
+.pause-menu-section label {
+  display: block;
+  font-size: 13px;
+  color: var(--color-text-dim);
+  margin-bottom: var(--space-2);
+}
+.pause-menu-section .btn {
+  margin-top: var(--space-3);
+}
+
+.recorded-laps {
+  margin-top: var(--space-4);
+}
+.recorded-laps:empty { margin-top: 0; }
+.recorded-lap-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--color-text-dim);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--color-border);
+}
+.recorded-lap-row .lap-time-value {
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
 
 @media (max-width: 380px) {
   .lap-time-readout .value { font-size: 18px; }
