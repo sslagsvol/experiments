@@ -442,7 +442,27 @@ function updateSectorHighlight(elapsed) {
   const idx = currentIndex(elapsed);
   const activeSector = idx >= 0 ? state.scaledComplexes[idx].sector : 1;
   document.querySelectorAll("#sector-strip .sector").forEach((el) => {
-    el.classList.toggle("active", Number(el.dataset.sector) === activeSector);
+    const n = Number(el.dataset.sector);
+    el.classList.toggle("active", n === activeSector);
+
+    // Sector boundaries are fixed for the whole lap (computed once from the
+    // sector sliders at Start / when the target lap time is adjusted), so
+    // this is just where elapsed sits within that fixed [start, end] window
+    // — a completed sector reads 100%, an unreached one reads 0%.
+    let fraction;
+    if (n < activeSector) {
+      fraction = 1;
+    } else if (n > activeSector) {
+      fraction = 0;
+    } else {
+      const sectorStart = n === 1 ? 0 : state.sectorBoundaries[n - 2] || 0;
+      const sectorEnd = state.sectorBoundaries[n - 1] || 0;
+      const duration = sectorEnd - sectorStart;
+      fraction = duration > 0 ? Math.min(1, Math.max(0, (elapsed - sectorStart) / duration)) : 0;
+    }
+
+    const bar = document.getElementById(`sector-progress-${n}`);
+    if (bar) bar.style.width = `${fraction * 100}%`;
   });
 }
 
