@@ -23,6 +23,30 @@ track means:
 3. Wiring Track select to actually offer more than one option, and loading the right
    data file based on the selection.
 
+## Track minimap
+
+A small minimap of the track on the drive screen, with a small red dot showing the
+driver's estimated position going around the track — same idea as the card stack (a
+time-based estimate against the target lap time, not real position), just spatial instead
+of a list. Explicitly wanted as a memory aid too, not only a progress indicator — seeing
+where the turns actually sit on the map, not just a bare dot with nothing to reference it
+against.
+
+Needs, per track:
+
+- A track outline (SVG path or coordinate list) — doesn't exist yet; `data/monza-corners.js`
+  only has timing data (`position_pct` etc.), nothing spatial.
+- A mapping from each complex's `position_pct` to a point along that outline, so turn
+  markers/labels can be placed on the map.
+- The dot's position driven by the same time-based estimate already powering the card
+  stack (elapsed time / target lap time → position along the outline), reusing
+  `currentIndex`/`scaledPositionPct` rather than inventing a second position system.
+
+Same "grows with more tracks" pattern as the corner timing data above — every track added
+under "More tracks" needs its own outline/map data alongside its timing data. Not scoped
+in detail yet — where it sits on the drive screen, how large, whether it's always visible
+or expandable/collapsible.
+
 ## More cars
 
 Starting list: **McLaren 750S, Lamborghini Huracán EVO.**
