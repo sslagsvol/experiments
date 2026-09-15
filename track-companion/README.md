@@ -1,58 +1,52 @@
 # Track Companion
 
-A phone-based companion app for sim racing (ACC on Xbox), giving glanceable, spoken
-turn-by-turn guidance during a session — timed to a driver-entered target lap time,
-since Xbox exposes no live telemetry to third-party apps.
+A phone-based companion app for sim racing (ACC on Xbox), giving glanceable turn-by-turn
+guidance during a session — timed to a driver-entered target lap time, since Xbox exposes
+no live telemetry to third-party apps.
 
 Full background, design principles, and rationale: see `docs/PROJECT_PLAN.md` — read this
-first, it has the "why" behind every decision below.
+first, it has the "why" behind every decision below. For what's planned beyond the current
+MVP (more tracks, more cars, setup storage, a database), see `docs/ROADMAP.md`.
 
 ## Status
 
-Wireframe stage. `wireframes/wireframe-v1.html` is a static, click-through mockup —
-two screens, no real logic, no audio, no data persistence. Reviewed and approved as a
-starting layout. Next step is a working build.
+Working MVP, live at https://sslagsvol.github.io/experiments/track-companion/ — Monza only,
+Porsche 992 GT3 R / Ferrari 488 GT3 only, screen-only (no audio). Being actively tested and
+tuned. `wireframes/wireframe-v1.html` and `wireframes/design.png` are the original static
+mockups the build started from; `wireframes/Card/{Full,Mini}.png` are the later reference
+mockups the turn-card layout was matched against.
 
-## What to build next (MVP)
+## MVP (built)
 
-1. **Car select:** Porsche 992 GT3 R, Ferrari 488 GT3 (see `data/monza-corners.js` → `cars`)
-2. **Track select:** Monza only for now
-3. **Lap time selector** (default 1:55.00) — independent up/down steppers for minutes,
-   seconds, and hundredths, not a free-text field
-4. **3 sector sliders**, even split by default, biasing the proportional timing split within
-   each sector's corners (sector ranges are in `data/monza-corners.js` → `sectors`)
+1. **Car select** — Porsche 992 GT3 R, Ferrari 488 GT3 (`data/monza-corners.js` → `cars`)
+2. **Track select** — Monza only for now
+3. **Lap time selector** (default 1:55.00) — every digit (minutes, then each digit of
+   seconds, then each digit of hundredths) has its own independent up/down stepper, not a
+   free-text field
+4. **3 sector sliders**, even split by default, biasing the proportional timing split
+   within each sector's corners (sector ranges are in `data/monza-corners.js` → `sectors`)
 5. **Start button** — zeroes a timer, begins scaled playback of each complex at its
    `position_pct * target_lap_time`
-6. ~~Lap button~~ — removed; the timer auto-resets at the start/finish line every lap
-   (prevents drift from compounding across a race) and keeps looping lap after lap with
-   no input needed, until paused or exited
-7. **Drive screen UI** — scrolling card stack: current and next complex shown full-size
-   with notes, every other complex (plus a synthetic finish-line card) shown as a compact
-   one-line entry so as many turns as possible are visible at once (see wireframe for the
-   earlier, since-superseded 3-card layout reference)
-8. ~~Audio callout per complex via device text-to-speech~~ — removed; the app is
-   currently screen-only
-
-## Next up
-
-1. ~~Wire up the turn-direction icon set~~ — done. Each corner card shows one or two icons
-   from `design/svg/arrows/` (two for a chicane's direction change, one for a single
-   corner), hand-mapped per complex id in `TURN_ICONS` (`app.js`) since direction isn't
-   derivable from the corner data itself. The synthetic finish-line card and anything
-   unmapped fall back to Straight/Continue. Layout follows the reference mockups at
-   `wireframes/Card/Full.png` (maximized) and `Card/Mini.png` (minimized) — gear number +
-   turn label in a left column, icon row above the title on the right.
-2. **Confirm design tokens and tidy the system** — re-check `data/design-tokens.tokens.json`
-   against what's actually wired into `styles.css`'s `:root` block and the `.type-*`
-   classes; clean up anything unused or stale.
-3. **Pixel-perfect pass against `wireframes/design.png` and `wireframes/Card/*.png`** —
-   re-check sizing and spacing (card padding, gaps, font sizes, icon sizing) against the
-   reference images now that the card layout matches their structure.
-4. **Confirm the turn-card maximized/minimized states** — exactly 2 maximized (full-detail:
-   icons, gear, name, notes) turn cards on screen at a time — current and next — with every
-   other turn shown minimized (icons, gear, name, no notes — see `Card/Mini.png`). The
-   minimized layout was reworked to match that reference as part of #1; still worth a
-   dedicated pixel check under #3.
+6. **Auto-looping lap timer** — re-zeros at the start/finish line automatically and keeps
+   cycling lap after lap with no button press, until paused or exited. A synthetic
+   finish-line card leads off each lap (shown as current for the first ~2s) before handing
+   off to the first real corner. The pause menu also offers a manual "Reset lap" (re-zero
+   without counting a new lap) and "Adjust lap time" (change the target mid-session), plus
+   "Record lap time" to log the current lap to a small `localStorage`-backed history.
+7. **Drive screen UI** — scrolling card stack showing every complex for the lap: current
+   and next are "maximized" (large gear number + turn label, direction icon(s), estimated
+   braking distance, name, notes), every other complex is "minimized" (same elements,
+   smaller, no notes). Tapping any card jumps the lap clock straight to that complex's
+   timestamp. Sector strip shows each sector's target time and a progress bar that fills
+   as elapsed time moves through that sector's fixed window.
+8. **Turn-direction icons** — one or two icons per complex from `design/svg/arrows/`
+   (two for a chicane's direction change, one for a single corner), hand-mapped per
+   complex id in `TURN_ICONS` (`app.js`) since direction isn't derivable from the corner
+   data itself. Anything unmapped, including the synthetic finish-line card, falls back
+   to the Straight/Continue icon.
+9. **Estimated braking distances** — `brake_point_m` per corner in `data/monza-corners.js`,
+   shown as the "190M"-style chip next to the direction icon(s).
+10. ~~Spoken audio callouts~~ — removed; the app is screen-only.
 
 ## Data files
 
@@ -62,30 +56,50 @@ starting layout. Next step is a working build.
   GT3 pace distribution, and braking points are estimates centered on 150-200m (most
   Monza corners) with lighter/heavier corners adjusted accordingly — neither is measured
   data, and both vary a lot by track conditions. Expect to tune both after real sessions.
-- `data/lap-log-template.csv` — column schema for the future lap-time database (see below).
-  Not wired into the app yet.
+- `data/design-tokens.tokens.json` — the Figma "Racing" design-system export (colors,
+  spacing, radius, typography). Hand-transcribed into `styles.css`'s `:root` block and
+  `.type-*` classes since the project has no build step to generate that automatically —
+  if the token file changes, the CSS needs updating by hand to match.
+- `data/lap-log-template.csv` — column schema for the future lap-time database (see
+  `docs/PROJECT_PLAN.md`'s "Future scaffolding" section). Not wired into the app yet;
+  recorded laps currently live in `localStorage` via the pause menu's "Record lap time".
+- `design/svg/arrows/` — the turn-direction icon set (Left/Right × 90°/Sharp/Slight/Uturn,
+  plus Straight/Continue), referenced by `TURN_ICONS` in `app.js`.
+- `wireframes/Card/{Full,Mini}.png` — reference mockups for the maximized/minimized
+  turn-card layouts.
+
+## Outstanding / known issues
+
+- **Turn-icon directions are hand-guessed**, not verified against real Monza footage or
+  telemetry — based on well-known characteristics of the real circuit (e.g. Rettifilo is
+  right-then-left, Ascari is left-right-left), but worth double-checking once real laps
+  are driven.
+- **`border/subtle` and `border/strong` both alias `neutral/0` (white)** in
+  `data/design-tokens.tokens.json` — applied literally in `styles.css` rather than
+  "corrected," since it's unclear whether that's intentional. Worth checking the source
+  Figma file.
+- **Design-token audit still pending** — `styles.css` has been checked against the token
+  file piecemeal (sector strip, cards) as specific mismatches came up, but there's been no
+  single pass confirming every token is wired up and nothing's stale.
+- **No git remote push access in this environment** — commits have been made locally but
+  need to be pushed manually from a machine with working GitHub credentials for the live
+  site to update.
 
 ## Explicitly out of scope for now
 
 - Live telemetry / automatic on-track position detection (not possible on Xbox)
 - Microphone-based gear-shift detection (considered and deferred — see PROJECT_PLAN.md
   "Known limitations" for why)
-- Any track beyond Monza, any car beyond the 992/488
-- The lap time database itself (schema exists, UI/storage does not)
-
-## Future direction (don't build yet, but don't design against it)
-
-A self-reported lap time log, one CSV per car+setup combination (e.g.
-`porsche-992-setup-a.csv`), so setup changes can be compared over time. Schema is in
-`data/lap-log-template.csv`. Sector times are logged (not just total lap time) so this can
-eventually feed back into suggesting sector-slider positions from real data instead of the
-driver eyeballing them.
+- Any track beyond Monza, any car beyond the 992/488 — see `docs/ROADMAP.md` for what's
+  planned
+- The lap time database itself (schema exists, UI/storage does not) — see
+  `docs/ROADMAP.md`
 
 ## Design principles (see PROJECT_PLAN.md for full detail)
 
 1. Show a window, not a point — current + next always shown in full, everything else
    visible in compact form rather than hidden
-2. Correctable, not precise — sliders beat stopwatches
+2. Correctable, not precise — sliders (and tap-to-jump) beat stopwatches
 3. Group by how it's driven — chicanes are one complex, not two corners
-4. Design for glances — audio primary, screen backup
+4. Design for glances — large text, short phrases, screen-only
 5. Degrade gracefully — a few seconds of drift should never actively mislead

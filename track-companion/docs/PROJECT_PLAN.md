@@ -1,8 +1,11 @@
 # Track Companion — Project Plan
 
+For what's planned beyond this MVP (more tracks, more cars, setup storage, a database),
+see `docs/ROADMAP.md`. This document is the "why" behind the MVP as built.
+
 ## What this is
 
-A phone-based companion app for sim racing (ACC on Xbox, starting with the Porsche 992 GT3 R and Ferrari 488 GT3 at Monza) that gives glanceable, spoken turn-by-turn guidance during a session — gear, line, braking, and curb notes — timed to the driver's own target lap time rather than live telemetry.
+A phone-based companion app for sim racing (ACC on Xbox, starting with the Porsche 992 GT3 R and Ferrari 488 GT3 at Monza) that gives glanceable turn-by-turn guidance during a session — gear, line, braking distance, and curb notes — timed to the driver's own target lap time rather than live telemetry. Screen-only: an on-screen audio callout was built and then removed (see "Design principles" below).
 
 ## Why it exists
 
@@ -11,10 +14,10 @@ ACC on Xbox has no telemetry output to third-party apps — that's a PC-only fea
 ## Core mechanic
 
 1. Driver selects **car** and **track**.
-2. Driver enters a **target lap time** (e.g. 1:54.0).
+2. Driver sets a **target lap time** (e.g. 1:55.00) with a digit-stepper selector.
 3. The app has a pre-built **timing template** per track — each corner or corner group ("complex") expressed as a **percentage of total lap time**, not a fixed second count.
-4. On **Start**, the app zeroes a timer and plays each complex's callout (audio + on-screen) at its scaled timestamp.
-5. On **Lap** (pressed at start/finish line), the timer re-zeros — so any drift never compounds across a race, it just resets every lap.
+4. On **Start**, the app zeroes a timer and swaps the on-screen card for each complex at its scaled timestamp.
+5. The timer **auto-resets at the start/finish line** every lap — no button press needed — so any drift never compounds across a race, it just resets every lap. (A manual "Reset lap" is also available from the pause menu, for correcting a botched lap without waiting for the line.)
 6. **Sector sliders** (3 sectors, matching the track's real sector splits) let the driver bias the proportional split if their pace shape doesn't match the template — e.g., relatively stronger in sector 2, nudge that sector's share down.
 
 ## Design principles
@@ -29,34 +32,34 @@ The app doesn't try to capture perfect data up front. It leans on cheap, fast hu
 A chicane is one decision, not two corners. Corners are bundled into "complexes" that match how a driver actually thinks about a section at speed. This also means fewer, chunkier timing targets — more forgiving of drift than many small ones.
 
 **Design for glances, not reading.**
-The driver sees the screen for a fraction of a second between inputs. Large text, short phrases. Audio carries the primary communication; the screen is backup, never the reverse.
+The driver sees the screen for a fraction of a second between inputs. Large text, short phrases. An audio callout (device text-to-speech) was built for this and then removed by request — the screen carries the whole communication now, so the "current + next always visible" window (above) is what actually delivers on this principle, not a spoken backup.
 
 **Degrade gracefully.**
 If the time estimate is off by a few seconds, the app stays useful — just early or late, never actively wrong (it should never say "brake now" for the wrong corner). Proportional scaling (vs. fixed timestamps) is what makes this possible: the whole template stretches or compresses together, so relative order and spacing survive even when the absolute number drifts.
 
-## MVP scope (build now)
+## MVP scope (built)
 
 - Car select: Porsche 992 GT3 R, Ferrari 488 GT3
 - Track select: Monza only
-- Lap time input field
+- Lap time digit-stepper selector
 - 3 sector sliders (even split by default)
-- Monza corner content, grouped into 7 complexes, each with: name, gear, line/apex note, curb note
-- Start button (zero timer, begin playback)
-- Lap button (re-zero at start/finish)
-- Glanceable strip UI: current complex large/centered, next two smaller, scrolling forward
-- Spoken audio callout per complex (device text-to-speech) + on-screen text, simultaneously
+- Monza corner content, grouped into 7 complexes, each with: name, gear, direction icon(s),
+  estimated braking distance, line/apex note, curb note
+- Start button (zero timer, begin playback), auto-looping lap timer (no manual Lap button)
+- Scrolling card stack: current + next maximized, everything else minimized; tap any card
+  to jump the clock to it
+- ~~Spoken audio callout per complex~~ — built, then removed; screen-only now
 
 ## Explicitly out of scope for MVP
 
 - Live telemetry / automatic position detection (not possible on Xbox)
 - Microphone-based gear-shift detection (considered, deferred — mic-only environment makes accuracy uncertain; revisit if proportional-scaling approach proves insufficient)
-- Any track beyond Monza
-- Any car beyond the 992 and 488
-- The lap time database (see Future Scaffolding below)
+- Any track beyond Monza, any car beyond the 992 and 488 — see `docs/ROADMAP.md`
+- The lap time database (see Future Scaffolding below, and `docs/ROADMAP.md`)
 
 ## Future scaffolding — lap time database (not built yet)
 
-Goal: track self-reported lap times per car *and per setup*, so setup changes can be compared over time.
+Goal: track self-reported lap times per car *and per setup*, so setup changes can be compared over time. A small piece of this exists already — the pause menu's "Record lap time" logs to `localStorage` — but that's a stopgap, not this. See `docs/ROADMAP.md` for how this relates to the planned car-setup-info area and the "store it all in a database" item; they're being designed together rather than separately, since both want to associate data with a specific car+setup combination.
 
 **One file per car + setup combination.** e.g. `porsche-992-setup-a.csv`, `ferrari-488-setup-stock.csv`.
 
@@ -77,3 +80,5 @@ Nothing here is built in the MVP. The lap-timing engine (car, track, sector defi
 
 - Proportional scaling assumes the driver's pace *shape* roughly matches the template, just scaled to their lap time. If a specific car spends unusually long in one corner relative to the rest of the lap, sector sliders can approximate a fix but won't correct a single corner precisely — that's a signal for what a future version might need (e.g. per-corner nudging), not a v1 problem to solve now.
 - The Monza timing template's percentages are estimates based on typical GT3 pace distribution, not measured data. Expect to tune them after real sessions.
+- Braking distances (`brake_point_m`) are likewise estimates, centered on 150-200m for most Monza corners with lighter/heavier corners adjusted by feel — not measured, and will vary a lot by conditions.
+- Turn-direction icons are hand-mapped per corner based on known real-world Monza layout, not derived from the corner data or verified against footage/telemetry.
