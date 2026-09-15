@@ -57,9 +57,11 @@ starting layout. Next step is a working build.
 ## Data files
 
 - `data/monza-corners.js` — the 7 Monza "complexes" (grouped corners — chicanes are one
-  unit, not split into individual turns), each with position %, sector, gear, and notes.
-  Position percentages are estimates based on typical GT3 pace distribution, not measured
-  data — expect to tune after real sessions.
+  unit, not split into individual turns), each with position %, sector, gear, braking
+  point (`brake_point_m`), and notes. Position percentages are estimates based on typical
+  GT3 pace distribution, and braking points are estimates centered on 150-200m (most
+  Monza corners) with lighter/heavier corners adjusted accordingly — neither is measured
+  data, and both vary a lot by track conditions. Expect to tune both after real sessions.
 - `data/lap-log-template.csv` — column schema for the future lap-time database (see below).
   Not wired into the app yet.
 

@@ -20,6 +20,7 @@ const TRACK_DATA = {
       "position_pct": 0.09,
       "sector": 1,
       "gear": "2nd",
+      "brake_point_m": 190,
       "note": "Heavy braking off the main straight.",
       "curb_note": "Don't clip the exit curb hard."
     },
@@ -30,6 +31,7 @@ const TRACK_DATA = {
       "position_pct": 0.20,
       "sector": 1,
       "gear": "6th",
+      "brake_point_m": 30,
       "note": "Flat-out or near it, just a lift.",
       "curb_note": ""
     },
@@ -40,6 +42,7 @@ const TRACK_DATA = {
       "position_pct": 0.31,
       "sector": 1,
       "gear": "2nd-3rd",
+      "brake_point_m": 160,
       "note": "Second chicane. Compression on entry curb.",
       "curb_note": "Be ready for the compression on entry."
     },
@@ -50,6 +53,7 @@ const TRACK_DATA = {
       "position_pct": 0.40,
       "sector": 2,
       "gear": "3rd",
+      "brake_point_m": 120,
       "note": "Blind-ish entry. Patience on throttle.",
       "curb_note": ""
     },
@@ -60,6 +64,7 @@ const TRACK_DATA = {
       "position_pct": 0.45,
       "sector": 2,
       "gear": "3rd",
+      "brake_point_m": 130,
       "note": "Tighter than it looks. Sets up the back straight.",
       "curb_note": ""
     },
@@ -70,6 +75,7 @@ const TRACK_DATA = {
       "position_pct": 0.68,
       "sector": 2,
       "gear": "3rd",
+      "brake_point_m": 150,
       "note": "Left-right-left. Rhythm matters more than any single apex.",
       "curb_note": "Watch the exit curb, don't ride it hard."
     },
@@ -80,6 +86,7 @@ const TRACK_DATA = {
       "position_pct": 0.90,
       "sector": 3,
       "gear": "3rd to 5th",
+      "brake_point_m": 140,
       "note": "Long and patient. Unwinds onto the front straight.",
       "curb_note": ""
     }

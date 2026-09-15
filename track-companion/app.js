@@ -516,9 +516,17 @@ function gearDigit(complex) {
 
 function turnIconsHtml(complex) {
   const icons = TURN_ICONS[complex.id] || [DEFAULT_TURN_ICON];
-  return icons
+  const iconsHtml = icons
     .map((src) => `<img class="turn-icon" src="${src}" alt="" width="20" height="20">`)
     .join("");
+  // Braking distance is an estimate the driver will tune after real
+  // sessions (see data/monza-corners.js) — not every complex has one (the
+  // finish line doesn't), so this chip is skipped when it's absent.
+  const brakeChip =
+    complex.brake_point_m != null
+      ? `<span class="brake-distance type-label-turn">${complex.brake_point_m}M</span>`
+      : "";
+  return iconsHtml + brakeChip;
 }
 
 // Jump the lap clock straight to a complex's own position in the timeline —

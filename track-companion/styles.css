@@ -412,6 +412,9 @@ button, input, select {
   height: 20px;
   display: block;
 }
+.corner-card .brake-distance {
+  color: var(--color-accent-primary);
+}
 
 .corner-card .complex-name {
   margin-bottom: var(--space-6);
