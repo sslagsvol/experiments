@@ -295,8 +295,8 @@ function renderRecordedLaps() {
     const time = new Date(lap.timestamp);
     const timeStr = time.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
     row.innerHTML = `
-      <span>${escapeHtml(lap.car)} · ${timeStr}</span>
-      <span class="lap-time-value">${formatTime(lap.lapTimeSeconds)}</span>
+      <span class="type-body-default">${escapeHtml(lap.car)} · ${timeStr}</span>
+      <span class="lap-time-value type-label-distance">${formatTime(lap.lapTimeSeconds)}</span>
     `;
     list.appendChild(row);
   });
@@ -387,20 +387,23 @@ function renderCardStack(elapsed) {
 
 function renderCard(complex, slot) {
   const card = document.createElement("div");
-  const slotClass = slot === 0 ? "current" : `next-${slot}`;
+  const isCurrent = slot === 0;
+  const slotClass = isCurrent ? "current" : `next-${slot}`;
   card.className = `corner-card ${slotClass}`;
 
   const gearDigit = (complex.gear.match(/\d/) || ["-"])[0];
+  const gearType = isCurrent ? "type-display-gear" : "type-display-turn";
+  const nameType = isCurrent ? "type-title-card" : "type-title-small";
 
   const notes = [];
-  if (complex.note) notes.push(`<li>${escapeHtml(complex.note)}</li>`);
-  if (complex.curb_note) notes.push(`<li class="curb-note">${escapeHtml(complex.curb_note)}</li>`);
+  if (complex.note) notes.push(`<li class="type-body-default">${escapeHtml(complex.note)}</li>`);
+  if (complex.curb_note) notes.push(`<li class="curb-note type-caption-italic">${escapeHtml(complex.curb_note)}</li>`);
 
   card.innerHTML = `
-    <div class="gear-number">${gearDigit}</div>
+    <div class="gear-number ${gearType}">${gearDigit}</div>
     <div class="card-body">
-      <div class="corner-range">TURN ${escapeHtml(complex.corners.replace("T", ""))}</div>
-      <div class="complex-name">${escapeHtml(complex.name)}</div>
+      <div class="corner-range type-label-turn">TURN ${escapeHtml(complex.corners.replace("T", ""))}</div>
+      <div class="complex-name ${nameType}">${escapeHtml(complex.name)}</div>
       <ul class="notes">${notes.join("")}</ul>
     </div>
   `;

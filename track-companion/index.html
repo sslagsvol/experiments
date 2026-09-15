@@ -4,106 +4,109 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Track Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Oswald:wght@300;400&family=Source+Serif+Pro:ital,wght@0,400;1,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
 <!-- SCREEN 1: Setup -->
 <div class="screen active" id="setup">
-  <h1>Track Companion</h1>
-  <div class="sub">ACC · Monza</div>
+  <h1 class="type-heading-medium">Track Companion</h1>
+  <div class="sub type-caption-italic">ACC · Monza</div>
 
-  <label for="car-select">Car</label>
+  <label class="type-label-overline" for="car-select">Car</label>
   <div class="select-wrap">
-    <select class="styled-select" id="car-select"></select>
+    <select class="styled-select type-body-default" id="car-select"></select>
   </div>
 
-  <label for="track-select">Track</label>
+  <label class="type-label-overline" for="track-select">Track</label>
   <div class="select-wrap">
-    <select class="styled-select" id="track-select">
+    <select class="styled-select type-body-default" id="track-select">
       <option value="monza" selected>Monza</option>
     </select>
   </div>
 
-  <label for="lap-time-input">Target lap time</label>
-  <input class="lap-time-input" id="lap-time-input" type="text" inputmode="decimal" autocomplete="off" value="1:54.0">
-  <div class="setup-error" id="setup-error"></div>
+  <label class="type-label-overline" for="lap-time-input">Target lap time</label>
+  <input class="lap-time-input type-heading-large" id="lap-time-input" type="text" inputmode="decimal" autocomplete="off" value="1:54.0">
+  <div class="setup-error type-caption-italic" id="setup-error"></div>
 
-  <label>Sector balance (drag to bias timing)</label>
+  <label class="type-label-overline">Sector balance (drag to bias timing)</label>
 
   <div class="slider-row">
-    <div class="label-line"><span>Sector 1</span><span class="bias-readout" id="bias-1">even</span></div>
+    <div class="label-line type-label-overline"><span>Sector 1</span><span class="bias-readout" id="bias-1">even</span></div>
     <input type="range" min="0" max="100" value="50" id="slider-1">
   </div>
   <div class="slider-row">
-    <div class="label-line"><span>Sector 2</span><span class="bias-readout" id="bias-2">even</span></div>
+    <div class="label-line type-label-overline"><span>Sector 2</span><span class="bias-readout" id="bias-2">even</span></div>
     <input type="range" min="0" max="100" value="50" id="slider-2">
   </div>
   <div class="slider-row">
-    <div class="label-line"><span>Sector 3</span><span class="bias-readout" id="bias-3">even</span></div>
+    <div class="label-line type-label-overline"><span>Sector 3</span><span class="bias-readout" id="bias-3">even</span></div>
     <input type="range" min="0" max="100" value="50" id="slider-3">
   </div>
 
-  <button class="btn" id="start-btn">Start Session →</button>
-  <a href="../index.html" class="author-line">made with ai by Slags</a>
+  <button class="btn type-heading-small" id="start-btn">Start Session →</button>
+  <a href="../index.html" class="author-line type-caption-italic">made with ai by Slags</a>
 </div>
 
 <!-- SCREEN 2: Drive -->
 <div class="screen drive-screen" id="drive">
   <div class="top-bar">
-    <button class="pause-btn" id="pause-btn">Pause</button>
+    <button class="pause-btn type-heading-small" id="pause-btn">Pause</button>
     <div class="lap-time-readout">
-      <div class="label">LAP TIME</div>
-      <div class="value" id="drive-elapsed-time">0:00.00</div>
+      <div class="label type-label-overline">LAP TIME</div>
+      <div class="value type-heading-medium" id="drive-elapsed-time">0:00.00</div>
     </div>
-    <button class="exit-btn" id="exit-btn">Exit</button>
+    <button class="exit-btn type-heading-small" id="exit-btn">Exit</button>
   </div>
 
   <div class="sector-strip" id="sector-strip">
     <div class="sector" data-sector="1">
-      <div class="s-label">S1</div>
-      <div class="s-value" id="sector-target-1">0.00</div>
+      <div class="s-label type-label-overline">S1</div>
+      <div class="s-value type-label-distance" id="sector-target-1">0.00</div>
     </div>
     <div class="sector" data-sector="2">
-      <div class="s-label">S2</div>
-      <div class="s-value" id="sector-target-2">0.00</div>
+      <div class="s-label type-label-overline">S2</div>
+      <div class="s-value type-label-distance" id="sector-target-2">0.00</div>
     </div>
     <div class="sector" data-sector="3">
-      <div class="s-label">S3</div>
-      <div class="s-value" id="sector-target-3">0.00</div>
+      <div class="s-label type-label-overline">S3</div>
+      <div class="s-value type-label-distance" id="sector-target-3">0.00</div>
     </div>
   </div>
 
   <div class="card-stack" id="card-stack"></div>
 
   <div class="controls">
-    <button class="lap-btn" id="lap-btn">Lap <span id="lap-count">1</span></button>
-    <button class="stop-btn" id="stop-btn">Stop</button>
+    <button class="lap-btn type-heading-small" id="lap-btn">Lap <span id="lap-count">1</span></button>
+    <button class="stop-btn type-heading-small" id="stop-btn">Stop</button>
   </div>
 
   <div class="pause-overlay" id="pause-overlay" hidden>
     <div class="pause-menu">
       <div class="pause-menu-header">
-        <span>Paused</span>
-        <span class="pause-elapsed" id="pause-elapsed">0:00.00</span>
+        <span class="type-heading-small">Paused</span>
+        <span class="pause-elapsed type-label-distance" id="pause-elapsed">0:00.00</span>
       </div>
 
       <div class="pause-menu-section" id="adjust-lap-section" hidden>
-        <label for="adjust-lap-input">New target lap time</label>
-        <input class="lap-time-input" id="adjust-lap-input" type="text" inputmode="decimal" autocomplete="off">
-        <div class="setup-error" id="adjust-lap-error"></div>
-        <button class="btn" id="adjust-lap-apply">Apply</button>
+        <label class="type-label-overline" for="adjust-lap-input">New target lap time</label>
+        <input class="lap-time-input type-heading-large" id="adjust-lap-input" type="text" inputmode="decimal" autocomplete="off">
+        <div class="setup-error type-caption-italic" id="adjust-lap-error"></div>
+        <button class="btn type-heading-small" id="adjust-lap-apply">Apply</button>
       </div>
 
       <div class="pause-menu-actions" id="pause-menu-actions">
-        <button class="menu-btn" id="menu-adjust-lap">Adjust lap time</button>
-        <button class="menu-btn" id="menu-reset-lap">Reset lap</button>
-        <button class="menu-btn" id="menu-record-lap">Record lap time</button>
+        <button class="menu-btn type-heading-small" id="menu-adjust-lap">Adjust lap time</button>
+        <button class="menu-btn type-heading-small" id="menu-reset-lap">Reset lap</button>
+        <button class="menu-btn type-heading-small" id="menu-record-lap">Record lap time</button>
       </div>
 
       <div class="recorded-laps" id="recorded-laps-list"></div>
 
-      <button class="btn secondary" id="menu-resume">Resume</button>
+      <button class="btn secondary type-heading-small" id="menu-resume">Resume</button>
     </div>
   </div>
 </div>
