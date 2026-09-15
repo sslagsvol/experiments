@@ -331,15 +331,19 @@ button, input, select {
   overflow: hidden;
   flex: 1;
   text-align: center;
-  padding: var(--space-11) 0;
+  padding: var(--space-11) 0 var(--space-14);
   color: var(--color-fg-secondary);
   background: var(--color-surface-card);
+  border-right: 1px solid var(--color-border-canvas);
+}
+.sector-strip .sector:last-child {
+  border-right: none;
 }
 .sector-progress {
   position: absolute;
-  top: 0;
+  bottom: 0;
   left: 0;
-  height: 3px;
+  height: 4px;
   width: 0%;
   background: var(--color-accent-primary);
 }
@@ -353,6 +357,7 @@ button, input, select {
 .sector-strip .sector.active {
   background: var(--color-surface-canvas);
 }
+.sector-strip .sector.active .s-label,
 .sector-strip .sector.active .s-value { color: var(--color-accent-primary); }
 
 .card-stack {
