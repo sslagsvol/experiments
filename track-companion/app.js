@@ -20,13 +20,27 @@ const state = {
   paused: false,
   lapStartMs: 0,
   pausedAtElapsed: 0,
-  lapCount: 1,
   tickHandle: null,
   recordedLaps: [],      // {timestamp, car, lapTimeSeconds}, newest first
 };
 
 const SLIDER_BIAS_STRENGTH = 0.4; // max +/-40% share shift at full slider deflection
 const LAP_LOG_STORAGE_KEY = "trackCompanionRecordedLaps";
+
+// Synthetic complex marking the start/finish line, appended after the real
+// track corners so it shows up in the card stack as the lap winds down.
+// Placed just short of 1.0 so it gets its own moment as "current" before the
+// lap actually auto-resets at scaledTime === targetLapSeconds.
+const FINISH_LINE_COMPLEX = {
+  id: "finish",
+  name: "Start / Finish",
+  corners: "FINISH",
+  position_pct: 0.97,
+  sector: 3,
+  gear: "",
+  note: "Lap resets here.",
+  curb_note: "",
+};
 
 init();
 
@@ -138,6 +152,7 @@ function parseLapTime(raw) {
 
 function recomputeSchedule() {
   const { sectors, complexes } = state.track;
+  const allComplexes = complexes.concat([FINISH_LINE_COMPLEX]);
   const baseWidths = sectors.map((s) => s.range[1] - s.range[0]);
 
   const weighted = baseWidths.map(
@@ -153,7 +168,7 @@ function recomputeSchedule() {
     acc += w;
   });
 
-  state.scaledComplexes = complexes.map((c) => {
+  state.scaledComplexes = allComplexes.map((c) => {
     const sector = sectors.find((s) => s.id === c.sector);
     const origWidth = sector.range[1] - sector.range[0];
     const frac = origWidth > 0 ? (c.position_pct - sector.range[0]) / origWidth : 0;
@@ -204,8 +219,6 @@ function goToSetupScreen() {
 }
 
 function wireDriveScreen() {
-  document.getElementById("lap-btn").addEventListener("click", onLap);
-  document.getElementById("stop-btn").addEventListener("click", goToSetupScreen);
   document.getElementById("pause-btn").addEventListener("click", openPauseMenu);
   document.getElementById("exit-btn").addEventListener("click", goToSetupScreen);
 }
@@ -305,10 +318,8 @@ function renderRecordedLaps() {
 function startTimer() {
   state.running = true;
   state.paused = false;
-  state.lapCount = 1;
   state.lapStartMs = performance.now();
   state.pausedAtElapsed = 0;
-  document.getElementById("lap-count").textContent = state.lapCount;
   updateElapsedReadout(0);
   tick();
 }
@@ -318,12 +329,6 @@ function stopTimer() {
   state.paused = false;
   if (state.tickHandle) cancelAnimationFrame(state.tickHandle);
   document.getElementById("pause-overlay").hidden = true;
-}
-
-function onLap() {
-  state.lapCount += 1;
-  document.getElementById("lap-count").textContent = state.lapCount;
-  resetLapClock();
 }
 
 function resetLapClock() {
@@ -341,9 +346,17 @@ function tick() {
   if (!state.running) return;
   if (!state.paused) {
     const elapsed = elapsedSeconds();
-    updateElapsedReadout(elapsed);
-    updateSectorHighlight(elapsed);
-    renderCardStack(elapsed);
+    if (state.targetLapSeconds > 0 && elapsed >= state.targetLapSeconds) {
+      // Crossed the finish line — re-zero and keep going, lap after lap,
+      // with no button press needed.
+      resetLapClock();
+      updateSectorHighlight(0);
+      renderCardStack(0);
+    } else {
+      updateElapsedReadout(elapsed);
+      updateSectorHighlight(elapsed);
+      renderCardStack(elapsed);
+    }
   }
   state.tickHandle = requestAnimationFrame(tick);
 }
@@ -371,27 +384,42 @@ function renderCardStack(elapsed) {
   // last complex.
   const base = idx === -1 ? 0 : idx;
 
-  const order = [];
-  const visibleCount = Math.min(list.length, 3);
-  for (let i = 0; i < visibleCount; i++) {
-    const wrapped = (base + i) % list.length;
-    order.push({ complex: list[wrapped], slot: i });
-  }
-
   const stack = document.getElementById("card-stack");
   stack.innerHTML = "";
-  order.forEach(({ complex, slot }) => {
-    stack.appendChild(renderCard(complex, slot));
-  });
+  // Show every complex for the lap, ordered starting from current — only
+  // the current and next (slot 0/1) get the full expanded treatment, the
+  // rest render compact so as many turns as possible fit on screen.
+  for (let i = 0; i < list.length; i++) {
+    const wrapped = (base + i) % list.length;
+    stack.appendChild(renderCard(list[wrapped], i));
+  }
+}
+
+function cornerRangeLabel(complex) {
+  return complex.id === "finish" ? "FINISH LINE" : `TURN ${complex.corners.replace("T", "")}`;
+}
+
+function gearDigit(complex) {
+  if (complex.id === "finish") return "🏁";
+  return (complex.gear.match(/\d/) || ["-"])[0];
 }
 
 function renderCard(complex, slot) {
   const card = document.createElement("div");
-  const isCurrent = slot === 0;
-  const slotClass = isCurrent ? "current" : `next-${slot}`;
-  card.className = `corner-card ${slotClass}`;
+  const expanded = slot < 2;
 
-  const gearDigit = (complex.gear.match(/\d/) || ["-"])[0];
+  if (!expanded) {
+    card.className = "corner-card upcoming";
+    card.innerHTML = `
+      <span class="upcoming-gear type-label-turn">${gearDigit(complex)}</span>
+      <span class="upcoming-label type-label-turn">${cornerRangeLabel(complex)} — ${escapeHtml(complex.name)}</span>
+    `;
+    return card;
+  }
+
+  const isCurrent = slot === 0;
+  card.className = `corner-card ${isCurrent ? "current" : "next"}`;
+
   const gearType = isCurrent ? "type-display-gear" : "type-display-turn";
   const nameType = isCurrent ? "type-title-card" : "type-title-small";
 
@@ -400,9 +428,9 @@ function renderCard(complex, slot) {
   if (complex.curb_note) notes.push(`<li class="curb-note type-caption-italic">${escapeHtml(complex.curb_note)}</li>`);
 
   card.innerHTML = `
-    <div class="gear-number ${gearType}">${gearDigit}</div>
+    <div class="gear-number ${gearType}">${gearDigit(complex)}</div>
     <div class="card-body">
-      <div class="corner-range type-label-turn">TURN ${escapeHtml(complex.corners.replace("T", ""))}</div>
+      <div class="corner-range type-label-turn">${cornerRangeLabel(complex)}</div>
       <div class="complex-name ${nameType}">${escapeHtml(complex.name)}</div>
       <ul class="notes">${notes.join("")}</ul>
     </div>

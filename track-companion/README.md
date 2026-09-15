@@ -22,10 +22,13 @@ starting layout. Next step is a working build.
    each sector's corners (sector ranges are in `data/monza-corners.js` → `sectors`)
 5. **Start button** — zeroes a timer, begins scaled playback of each complex at its
    `position_pct * target_lap_time`
-6. **Lap button** — re-zeros the timer at the start/finish line each lap (prevents drift
-   from compounding across a race)
-7. **Drive screen UI** — glanceable strip: current complex large/centered, next two complexes
-   smaller, scrolling forward as the lap progresses (see wireframe for layout reference)
+6. ~~Lap button~~ — removed; the timer auto-resets at the start/finish line every lap
+   (prevents drift from compounding across a race) and keeps looping lap after lap with
+   no input needed, until paused or exited
+7. **Drive screen UI** — scrolling card stack: current and next complex shown full-size
+   with notes, every other complex (plus a synthetic finish-line card) shown as a compact
+   one-line entry so as many turns as possible are visible at once (see wireframe for the
+   earlier, since-superseded 3-card layout reference)
 8. ~~Audio callout per complex via device text-to-speech~~ — removed; the app is
    currently screen-only
 
@@ -56,7 +59,8 @@ driver eyeballing them.
 
 ## Design principles (see PROJECT_PLAN.md for full detail)
 
-1. Show a window, not a point — current + next two, always
+1. Show a window, not a point — current + next always shown in full, everything else
+   visible in compact form rather than hidden
 2. Correctable, not precise — sliders beat stopwatches
 3. Group by how it's driven — chicanes are one complex, not two corners
 4. Design for glances — audio primary, screen backup
