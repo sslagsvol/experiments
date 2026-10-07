@@ -249,9 +249,12 @@ function hitGate(s) {
     }
   } else if (s.op === '/') {
     // ÷ gates walk down toward ÷1.0 (no effect); steps near ÷3 cost the most.
-    if (s.d > 1 + 1e-6) {
-      s.ch += 1 / multHitsForStep(s.d - CFG.MULT_STEP);
-      if (s.ch >= 0.999) { s.ch = 0; s.d = Math.round((s.d - CFG.MULT_STEP) * 10) / 10; }
+    s.ch += 1 / multHitsForStep(s.d - CFG.MULT_STEP);
+    if (s.ch >= 0.999) { s.ch = 0; s.d = Math.round((s.d - CFG.MULT_STEP) * 10) / 10; }
+    if (s.d <= 1 + 1e-6) {
+      // Shot down to ÷1.0: it flips into a ×1.0 gate and keeps climbing.
+      Object.assign(s, { op: 'x', m: 1, ch: 0 });
+      delete s.d;
     }
   } else {
     // + / − gates fill a charge bar too: ADD_HITS_PER_STEP bullets per +1.

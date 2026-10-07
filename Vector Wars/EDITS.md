@@ -235,6 +235,10 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 ## Round 8 (2026-10-07)
 - Keep all sounds except battle won. That's now a low, boomy, static-y explosion: a deep sub drop (90→28 Hz), a lowpassed noise rumble, a mid noise burst, and a crackle of short static snaps over the tail. Volume 0.6.
 
+## Round 9 (2026-10-07)
+- Battle won sound = the bomber blast + a crackly fizzle through a feedback delay (0.16s, darkening each repeat).
+- ÷ gates shot down to ÷1.0 flip into ×1.0 gates and keep climbing, so a bad gate can be turned into a good one with enough fire.
+
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
 - *(none)*

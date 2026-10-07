@@ -337,7 +337,7 @@ for (const [title, s, v] of [
   ['Multiply gate', { op: 'x', m: 1.4, ch: 0.55 }, `COLORS.mult · rare (${Math.round(CFG.GATE_MIX.mult * 100)}% of gates)`],
   ['Divide gate', { op: '/', d: 2.5, ch: 0.3 }, `COLORS.div · ${Math.round(CFG.GATE_MIX.div * 100)}% of gates`],
 ]) {
-  elementCard({ title, vars: v, meta: `panel ${(CFG.TW - 0.1).toFixed(2)} × ${CFG.GATE_H} · border, faint fill, value text`, note: s.op === '/' ? `Starts at ÷2.0, ÷2.5 or ÷3.0. Shooting walks it down ${CFG.MULT_STEP} at a time toward ÷1.0 (no effect); steps near ÷3 cost the most hits. A pair never has two bad gates.` : s.op === 'x' ? `Starts at ×${CFG.MULT_START.toFixed(1)} (does nothing). Shooting fills the bar; each fill adds ${CFG.MULT_STEP}, up to ×${CFG.MULT_MAX}. Higher steps take more hits.` : `Shooting fills the bar; every ${CFG.ADD_HITS_PER_STEP} hits add +1. Color flips when the value crosses zero.` }, (ctx, w, h) => {
+  elementCard({ title, vars: v, meta: `panel ${(CFG.TW - 0.1).toFixed(2)} × ${CFG.GATE_H} · border, faint fill, value text`, note: s.op === '/' ? `Starts at ÷2.0, ÷2.5 or ÷3.0. Shooting walks it down ${CFG.MULT_STEP} at a time; at ÷1.0 it flips into a ×1.0 gate and keeps climbing. Steps near ÷3 cost the most hits. A pair never has two bad gates.` : s.op === 'x' ? `Starts at ×${CFG.MULT_START.toFixed(1)} (does nothing). Shooting fills the bar; each fill adds ${CFG.MULT_STEP}, up to ×${CFG.MULT_MAX}. Higher steps take more hits.` : `Shooting fills the bar; every ${CFG.ADD_HITS_PER_STEP} hits add +1. Color flips when the value crosses zero.` }, (ctx, w, h) => {
     const gw = Math.min(w * 0.6, 170), gh = gw * CFG.GATE_H / (CFG.TW - 0.1);
     gate(ctx, (w - gw) / 2, (h - gh) / 2, gw, gh, { f: 0, ...s });
   });
@@ -684,7 +684,7 @@ const SOUND_NOTES = {
   gateDown: 'Passing a bad gate: falling buzz and low thud.',
   gateTick: 'A gate value ticking up from fire; pitch rises with the value.',
   blast: 'Bomber explosion: low boom and noise burst.',
-  win: 'Battle won: a low, boomy, static-y explosion (sub drop, rumbling noise, crackle) as the track surges.',
+  win: 'Battle won: the blast sound plus a crackly fizzle that echoes away (feedback delay, darkening each repeat).',
   lose: 'Army wiped out: long dive and rumble.',
 };
 const guideSfx = new Sfx();
