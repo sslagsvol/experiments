@@ -79,7 +79,8 @@ function newRun() {
     overAt: 0,
     stats: { peak: START_UNITS, lostEnemy: 0, leaked: 0, lostGate: 0, fell: 0, gateHits: 0, kills: [0, 0, 0, 0] },
     ui: 0,                       // real-time clock for HUD fades
-    loss: { n: 0, t: -9 },       // running loss total shown next to the count
+    gain: { n: 0, t: -9 },       // running gain total shown left of the count
+    loss: { n: 0, t: -9 },       // running loss total shown right of the count
     leakFlash: 0,
   };
   hud.showOver(null);
@@ -185,7 +186,14 @@ function feedback(color, amp, count) {
 // Every lost unit fizzles out where it stood: cyan → red → black.
 const unitLost = (x, z) => { fizzles.add(x, 0.12, G.dist - z); sfx.play('death'); };
 
-// Battle and fall losses add up into one running "−N" next to the count.
+// Gains and losses add up into running totals beside the count ("+N" left,
+// "−N" right) while they keep coming: a split gate can show both at once.
+function noteGain(n) {
+  if (n <= 0) return;
+  G.gain.n += n;
+  G.gain.t = G.ui;
+}
+
 function noteLoss(n) {
   if (n <= 0) return;
   G.loss.n += n;
@@ -219,10 +227,11 @@ function crossGate(g) {
   g.done = true;
   g.doneAt = time;
   g.primary = g.S ? null : army.cx < 0 ? 'L' : 'R';
-  let gained = false;
+  let gained = false, gainSum = 0, lossSum = 0;
   for (const [s, x0, x1, key] of regions) {
     const n = army.countRange(x0, x1);
     if (n <= 0) continue;
+    const n0 = army.N;
     if (g.S) g.primary = 'S';
     // New units appear where this panel's units are.
     const share = n / total, x = g.S ? g.sx : (key === 'L' ? -1 : 1) * Math.min(1, army.halfW * 0.5);
@@ -234,12 +243,13 @@ function crossGate(g) {
     else if (s.v > 0) { spill(army.spawn(Math.max(1, Math.round(s.v * share)), x)); gained = true; }
     else if (s.v < 0) army.killRange(x0, x1, Math.min(n, Math.round(-s.v * share)), unitLost);
     if (key !== g.primary) s.f = 1;   // secondary panel flashes
+    if (army.N > n0) gainSum += army.N - n0; else lossSum += n0 - army.N;
   }
   if (!g.primary) return;   // a moving gate nobody touched just slides past
   shatterSparks(g);
   const d = army.N - before;
-  G.loss.n = 0;
-  hud.flashDelta(d);
+  noteGain(gainSum);
+  noteLoss(lossSum);
   if (gained && d >= 0) sfx.play('gateUp');
   else if (d < 0) sfx.play('gateDown');
   if (gained && d >= 0) {
@@ -508,10 +518,10 @@ function syncHud(realDt) {
   hud.setDanger(Math.min(1, Math.max((G.danger - 0.4) / (ANIM.slowMoThreshold - 0.4), G.leakFlash * 0.7, 0)));
   hud.setCount(army.N, G.state !== 'over' && army.N > 0);
   hud.setDist(Math.floor(G.dist * CFG.SCORE_PER_DIST));
-  // The running loss total stays up while losses keep coming, then fades.
+  // Gain / loss totals stay up while changes keep coming, then fade.
   G.ui += realDt;
-  if (G.loss.n > 0 && G.ui - G.loss.t > 1.2) G.loss.n = 0;
-  hud.liveLoss(G.loss.n);
+  for (const tally of [G.gain, G.loss]) if (tally.n > 0 && G.ui - tally.t > 1.2) tally.n = 0;
+  hud.setDeltas(G.gain.n, G.loss.n);
 }
 
 // ---------- Loop ----------

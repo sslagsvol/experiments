@@ -15,7 +15,8 @@ export class Hud {
     this.best = document.getElementById('best');
     this.armyHud = document.getElementById('army-hud');
     this.count = document.getElementById('count');
-    this.delta = document.getElementById('delta');
+    this.gainTag = new DeltaTag(document.getElementById('gain'), '+');
+    this.lossTag = new DeltaTag(document.getElementById('loss'), '−');
     this.debugEl = document.getElementById('debug');
     this.title = document.getElementById('title');
     this.over = document.getElementById('over');
@@ -49,27 +50,10 @@ export class Hud {
     this.count.textContent = fmt(n);
   }
 
-  // A one-shot "+371" / "−45" that pops next to the count (gates).
-  flashDelta(d) {
-    if (!d) return;
-    this.last.live = null;
-    this.delta.textContent = (d > 0 ? '+' : '−') + fmt(Math.abs(d));
-    this.delta.className = d > 0 ? 'gain' : 'loss';
-    restart(this.delta, 'flash');
-  }
-
-  // A running loss total that stays up while losses keep coming (battles,
-  // falls), then fades. Pass 0 to let it fade.
-  liveLoss(n) {
-    if (n > 0) {
-      if (n === this.last.live) return;
-      this.last.live = n;
-      this.delta.textContent = '−' + fmt(n);
-      this.delta.className = 'loss live';
-    } else if (this.last.live) {
-      this.last.live = null;
-      this.delta.className = 'loss fade';
-    }
+  // Running totals beside the count: gains left, losses right. 0 lets one fade.
+  setDeltas(gain, loss) {
+    this.gainTag.set(gain);
+    this.lossTag.set(loss);
   }
 
   setDanger(level) {
@@ -136,6 +120,25 @@ export class Hud {
   debug(text) {
     this.debugEl.style.display = 'block';
     this.debugEl.textContent = text;
+  }
+}
+
+// One side of the count: shows a running total, bumps when it changes,
+// fades when it's set back to 0.
+class DeltaTag {
+  constructor(el, sign) { this.el = el; this.sign = sign; this.n = 0; }
+  set(n) {
+    if (n === this.n) return;
+    if (n > 0) {
+      this.el.textContent = this.sign + fmt(n);
+      this.el.classList.remove('fade');
+      this.el.classList.add('live');
+      restart(this.el, 'bump');
+    } else {
+      this.el.classList.remove('live', 'bump');
+      this.el.classList.add('fade');
+    }
+    this.n = n;
   }
 }
 

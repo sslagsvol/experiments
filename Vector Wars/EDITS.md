@@ -266,9 +266,12 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - Tested against a simulated Supabase server in the browser: correct GET/POST requests, merge with CPU entries, highlight of the new entry, offline queue flushed on reconnect with no duplicates.
 - **Waiting on:** the project URL and public key from the Supabase project.
 
+## Round 14 (2026-10-07)
+- **Gains left, losses right:** `#gain` (green, left of the count) and `#loss` (red, right) are separate running totals. Each bumps on every change and fades 1.2s after its last change, so a split gate shows both (e.g. "+29 625 −4") and a battle right after keeps adding to the red side.
+
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
-- *(none)*
+- **Round 14:** the HUD cards and the "Army count, gate delta and battle losses" demo still use the old single `#delta` element. Update them to the `#gain` / `#loss` pair (`.delta.live`, `.bump`, `.fade`).
 
 ## Version history workflow
 - One commit per checklist batch (A, B, C…), with messages starting `Vector Wars:`.
