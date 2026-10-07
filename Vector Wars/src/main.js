@@ -91,6 +91,9 @@ function newRun() {
   G = {
     state: 'title',
     paused: false,
+    record: -1,      // s into the breaking-the-high-score slow motion (-1 = not running)
+    recordPass: -1,  // when in that moment the score passed it
+    recordDone: false,
     ax: 0, tx: 0,
     dist: 0, nextW: 0,
     seg: 0, gateIdx: 0, enemyIdx: 0,
@@ -525,8 +528,9 @@ function update(dt, realDt) {
 
   // Slow motion: ease in when the army is about to be overwhelmed.
   const slow = G.state === 'play' && G.danger >= ANIM.slowMoThreshold;
-  const targetScale = slow ? ANIM.slowMoScale : 1;
-  const ease = targetScale < G.timeScale ? ANIM.slowMoIn : ANIM.slowMoOut;
+  const recordMoment = G.state === 'play' && recordSlowMo(realDt);
+  const targetScale = Math.min(slow ? ANIM.slowMoScale : 1, recordMoment ? ANIM.recordScale : 1);
+  const ease = targetScale < G.timeScale ? (recordMoment && !slow ? ANIM.recordIn : ANIM.slowMoIn) : ANIM.slowMoOut;
   G.timeScale += (targetScale - G.timeScale) * Math.min(1, realDt / ease);
   sfx.rate = G.timeScale;
 
@@ -552,6 +556,25 @@ function update(dt, realDt) {
   fizzles.update(dt, G.dist);
   sparks.update(dt, G.dist);
   G.shake = Math.max(0, G.shake - dt * 0.6);
+}
+
+// Breaking the high score: slow motion starts as the score closes in on 1st
+// place and ends shortly after it passes (once per run). True while running.
+function recordSlowMo(realDt) {
+  if (G.recordDone || !board.length) return false;
+  const top = board[0].score, score = runStats().score;
+  if (G.record < 0) {
+    if (top - score > ANIM.recordLead * CFG.SPEED * CFG.SCORE_PER_DIST) return false;
+    G.record = 0;
+  }
+  G.record += realDt;
+  if (G.recordPass < 0 && score > top) G.recordPass = G.record;
+  if ((G.recordPass >= 0 && G.record - G.recordPass > ANIM.recordHold) || G.record > ANIM.recordMax) {
+    G.recordDone = true;
+    G.record = -1;
+    return false;
+  }
+  return true;
 }
 
 // ---------- HUD ----------

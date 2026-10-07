@@ -131,6 +131,13 @@ export const ANIM = {
   slowMoThreshold: 0.8,    // danger ratio (incoming strength ÷ army) that triggers it
   slowMoIn: 1.2,           // s to ease into slow motion
   slowMoOut: 0.4,          // s to ease back to normal speed
+  // Breaking the high score (1st on the board): a short slow-motion moment,
+  // once per run, as the score closes in and passes it.
+  recordLead: 0.8,         // starts when the gap is ≤ this many seconds of full-speed distance points
+  recordScale: 0.3,        // time scale during the moment
+  recordIn: 0.3,           // s to ease in (faster than danger slow motion)
+  recordHold: 0.9,         // s of slow motion after the score passes it
+  recordMax: 3.5,          // s cap, in case the score stalls (e.g. mid-battle)
 };
 
 // Bloom post-process (UnrealBloomPass). Threshold keeps gate text readable.

@@ -594,7 +594,7 @@ const SLOW_T = 8, SLOW = { danger: [], scale: [], vignette: [] };
     SLOW.vignette.push(Math.min(1, Math.max(0, (danger - 0.4) / (ANIM.slowMoThreshold - 0.4))));
   }
 }
-animCard({ title: 'Slow motion near defeat', vars: 'ANIM.slowMoThreshold · slowMoScale · slowMoIn · slowMoOut', meta: `danger = incoming enemy strength ÷ army · at ≥ ${ANIM.slowMoThreshold}, time eases to ×${ANIM.slowMoScale} over ~${ANIM.slowMoIn}s, back over ~${ANIM.slowMoOut}s · steering stays real-time`, note: 'Danger (pink, dashed line = threshold) and time scale (cyan). The frame edge shows the vignette.', tall: true },
+animCard({ title: 'Slow motion near defeat', vars: 'ANIM.slowMoThreshold · slowMoScale · slowMoIn · slowMoOut', meta: `danger = incoming enemy strength ÷ army · at ≥ ${ANIM.slowMoThreshold}, time eases to ×${ANIM.slowMoScale} over ~${ANIM.slowMoIn}s, back over ~${ANIM.slowMoOut}s · steering stays real-time · <b>breaking the high score</b> (once per run): when the score is within ${ANIM.recordLead}s of distance points of 1st place, time eases to ×${ANIM.recordScale} over ~${ANIM.recordIn}s, holds ${ANIM.recordHold}s after passing it (max ${ANIM.recordMax}s), then returns to full speed, with no vignette`, note: 'Danger (pink, dashed line = threshold) and time scale (cyan). The frame edge shows the vignette.', tall: true },
   (ctx, w, h, t) => {
     const i = Math.floor(((t % SLOW_T) / SLOW_T) * (SLOW.vignette.length - 1));
     const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.max(w, h) * 0.7);

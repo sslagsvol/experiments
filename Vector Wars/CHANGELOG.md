@@ -223,3 +223,6 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 
 ## Round 19: new gate sounds (2026-10-07)
 - Auditioned six candidates (`concepts/gate-sounds.html`). The good gate (`gateUp`) is now E, "whoomp and sparkle", replacing the chiptune arpeggio; the ×3 max-out (`maxMult`) is now F, "data stream", replacing the chord. `Sfx.echo()` added. Style guide sound notes updated.
+
+## Round 20: slow motion for breaking the high score (2026-10-07)
+- When the score gets within about 0.8s of distance points of 1st place, time eases to ×0.3, holds 0.9s after passing it, then returns to full speed (3.5s cap; once per run). Settings `ANIM.record*`. Style guide slow-motion card notes it.
