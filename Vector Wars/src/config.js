@@ -73,7 +73,7 @@ export const SFX = {
   gateDown: { volume: 0.5 },               // passing a bad gate
   gateTick: { volume: 0.18, maxRate: 10 }, // a gate's value ticking up from shooting
   blast:   { volume: 0.5,  maxRate: 4 },   // bomber explosion
-  win:     { volume: 0.4 },                // battle won
+  win:     { volume: 0.6 },                // battle won: low static-y explosion
   lose:    { volume: 0.6 },                // army wiped out
 };
 

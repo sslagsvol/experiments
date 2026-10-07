@@ -119,10 +119,17 @@ const RECIPES = {
     a.tone(out, t, { type: 'sine', f0: 110 * p, f1: 35 * p, dur: 0.5 * s, vol: 1 });
     a.hiss(out, t, { type: 'lowpass', f0: 2500 * p, f1: 150 * p, dur: 0.45 * s, vol: 0.8 });
   },
-  // Battle won: a two-note chime.
+  // Battle won: a low, boomy, static-y explosion. A deep sub drop, a
+  // rumbling lowpassed noise body, and a crackling static tail on top.
   win(a, out, t, p, s) {
-    a.tone(out, t, { type: 'triangle', f0: 784 * p, dur: 0.25 * s, vol: 0.6 });
-    a.tone(out, t + 0.09 * s, { type: 'triangle', f0: 1175 * p, dur: 0.45 * s, vol: 0.6 });
+    a.tone(out, t, { type: 'sine', f0: 90 * p, f1: 28 * p, dur: 1.1 * s, vol: 1, attack: 0.01 });
+    a.tone(out, t, { type: 'triangle', f0: 60 * p, f1: 32 * p, dur: 0.8 * s, vol: 0.6, attack: 0.01 });
+    a.hiss(out, t, { type: 'lowpass', f0: 900 * p, f1: 60 * p, q: 0.7, dur: 1.2 * s, vol: 1, attack: 0.01 });
+    a.hiss(out, t + 0.02 * s, { type: 'bandpass', f0: 2400 * p, f1: 500 * p, q: 0.8, dur: 0.7 * s, vol: 0.45 });
+    // Static crackle: a few short noise snaps scattered through the tail.
+    for (let i = 0; i < 6; i++) {
+      a.hiss(out, t + (0.05 + Math.random() * 0.6) * s, { type: 'highpass', f0: 2000 * p, dur: 0.035 * s, vol: 0.25 + Math.random() * 0.2 });
+    }
   },
   // Army wiped out: a long dive and a rumble.
   lose(a, out, t, p, s) {

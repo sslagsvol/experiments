@@ -232,6 +232,9 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 | Bosses go behind the diamonds, spread out | Brutes take every 3rd slot counting from the *rear* of walls and wedges: behind the grunts, with gaps between them. (The mini-boss itself is still batch D.) |
 | Sound effects: unit deaths, bullet hits, gates | New `src/audio.js`: WebAudio-synthesized sounds, with no files. Death fizzle, bullet tick, enemy pop, gate up/down, gate value tick (pitch rises with value), bomber blast, battle won, army lost. Rate-limited per sound (`SFX` in config). Pitched down in slow motion. Mute button under the best score, saved per device. |
 
+## Round 8 (2026-10-07)
+- Keep all sounds except battle won. That's now a low, boomy, static-y explosion: a deep sub drop (90→28 Hz), a lowpassed noise rumble, a mid noise burst, and a crackle of short static snaps over the tail. Volume 0.6.
+
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
 - *(none)*
