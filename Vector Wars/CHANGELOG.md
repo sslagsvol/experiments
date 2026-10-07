@@ -211,3 +211,9 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 ## Round 16: global leaderboard live (2026-10-07)
 - `CFG.LEADERBOARD` points at Supabase project `uxwcslorwepzrmpbqmjd` (publishable key). Read and insert verified against the live table.
 - `LEADERBOARD.md`: how to find the Project URL on newer dashboards.
+
+## Round 17: pause menu and live score (2026-10-07)
+- **Pause menu:** pause button left of mute (only during a run), Esc / P, and auto-pause when the tab is hidden or loses focus. Shows "Paused", the recap so far, and the high score board with "On pace for Nth" / "N more to make the board". Continue (primary) and Restart (straight into a new run). The sim, the audio and input stop while paused.
+- **Live score, top left:** the real score (distance + enemies defeated), not distance. While it's on pace for the top 3 of the board, it doubles in size with a medal badge in that rank's color; moving up a place pops it and plays the `maxMult` chord.
+- Recap styles are now the `.recap` class (shared by game over and pause); `renderRecap()` takes a label.
+- Style guide: HUD card (score, pause button), new top-3 badge and pause menu cards.

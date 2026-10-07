@@ -34,10 +34,13 @@
 <div id="danger"></div>
 
 <div id="hud">
-  <div id="dist">0</div>
+  <div id="dist"><span id="score">0</span><span id="rank-badge"></span></div>
   <div id="best">Best 0</div>
   <button id="mute" type="button" aria-label="Mute sound" aria-pressed="false">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="on" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/><path class="x" d="M16 9l5 6M21 9l-5 6"/></svg>
+  </button>
+  <button id="pause-btn" type="button" aria-label="Pause">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
   </button>
   <div id="army-hud"><div id="gain" class="delta"></div><div id="count">0</div><div id="loss" class="delta"></div></div>
   <div id="debug"></div>
@@ -56,9 +59,25 @@
 
 <div id="over" class="overlay hidden">
   <h2>Swarm lost</h2>
-  <div id="recap"></div>
+  <div id="recap" class="recap"></div>
   <div id="entry" class="hidden"></div>
   <p id="retry" class="blink">Tap to retry</p>
+</div>
+
+<div id="pause" class="overlay hidden">
+  <h1 class="paused">Paused</h1>
+  <div class="pause-tabs" role="tablist">
+    <button type="button" data-tab="run" class="on">This run</button>
+    <button type="button" data-tab="board">High scores</button>
+  </div>
+  <div class="pause-body">
+    <div id="pause-recap" class="recap"></div>
+    <div class="pause-board"><div id="pause-board"></div><div id="pause-pace"></div></div>
+  </div>
+  <div class="pause-actions">
+    <button id="resume" type="button" class="btn primary">Continue</button>
+    <button id="restart" type="button" class="btn">Restart</button>
+  </div>
 </div>
 
 <script type="module" src="src/main.js"></script>

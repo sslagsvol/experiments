@@ -38,11 +38,40 @@ const syncMute = () => { muteBtn.classList.toggle('off', sfx.muted); muteBtn.set
 muteBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); sfx.unlock(); sfx.setMuted(!sfx.muted); syncMute(); });
 syncMute();
 
+// Pause: the button, Esc / P, or leaving the tab mid-run.
+const pauseBtn = document.getElementById('pause-btn');
+const pauseEl = document.getElementById('pause');
+pauseBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); setPaused(true); });
+// Taps on the menu never reach the game (no steering, no stray taps on resume).
+pauseEl.addEventListener('pointerdown', (e) => e.stopPropagation());
+document.getElementById('resume').addEventListener('click', () => setPaused(false));
+document.getElementById('restart').addEventListener('click', () => { setPaused(false); newRun(); startPlay(); });
+window.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape' && e.key !== 'p' && e.key !== 'P') return;
+  if (G.state === 'play' && !hud.entering) setPaused(!G.paused);
+});
+document.addEventListener('visibilitychange', () => { if (document.hidden) setPaused(true); });
+window.addEventListener('blur', () => setPaused(true));
+
+function setPaused(on) {
+  if (!G || G.state !== 'play' || G.paused === on) return;
+  G.paused = on;
+  hud.setPauseButton(!on);
+  input.consumeTap();
+  input.consumeDx();
+  if (sfx.ctx) { if (on) sfx.ctx.suspend(); else if (!document.hidden) sfx.ctx.resume(); }
+  if (!on) { hud.showPause(null); return; }
+  hud.showPause(runStats(), cachedScores());
+  refreshBoard().then((list) => { if (G.paused) hud.pauseScores(list); });
+}
+
 // "Hi" in the HUD is the top of the high score table (refreshed from the
 // global board when it's configured).
 let best = cachedScores()[0]?.score || 0;
+let board = cachedScores();   // latest board, for the in-run medal badge
 hud.setBest(best);
 const refreshBoard = () => fetchScores().then((list) => {
+  board = list;
   best = list[0]?.score || 0;
   hud.setBest(best);
   if (G && G.state === 'title') hud.showTitle(true, list);
@@ -61,6 +90,7 @@ function newRun() {
   army.spawn(START_UNITS, 0);
   G = {
     state: 'title',
+    paused: false,
     ax: 0, tx: 0,
     dist: 0, nextW: 0,
     seg: 0, gateIdx: 0, enemyIdx: 0,
@@ -84,7 +114,24 @@ function newRun() {
     leakFlash: 0,
   };
   hud.showOver(null);
+  hud.showPause(null);
+  hud.setPauseButton(false);
   hud.showTitle(true, cachedScores());
+}
+
+function startPlay() {
+  G.state = 'play';
+  G.nextW = G.dist + CFG.FIRST;
+  hud.showTitle(false);
+  hud.setPauseButton(true);
+}
+
+// Score = distance + enemies defeated, each worth its hit points.
+function runStats() {
+  const distPts = Math.floor(G.dist * CFG.SCORE_PER_DIST);
+  const killPts = TYPE_LIST.map((t, i) => G.stats.kills[i] * t.hp * CFG.SCORE_PER_HP);
+  const score = distPts + killPts.reduce((a, b) => a + b, 0);
+  return { ...G.stats, distPts, killPts, score, newBest: false };
 }
 
 // ---------- Track generation (seeded, so every run of a seed is identical) ----------
@@ -376,12 +423,10 @@ function onHit(t, x, z, leaked) {
 }
 
 function endRun() {
+  const stats = runStats(), { score } = stats;
   G.state = 'over';
   G.overAt = time;
-  // Score = distance + enemies defeated, each worth its hit points.
-  const distPts = Math.floor(G.dist * CFG.SCORE_PER_DIST);
-  const killPts = TYPE_LIST.map((t, i) => G.stats.kills[i] * t.hp * CFG.SCORE_PER_HP);
-  const score = distPts + killPts.reduce((a, b) => a + b, 0);
+  hud.setPauseButton(false);
   army.kill(army.N, unitLost);
   sfx.play('lose');
   world.addRipple(G.ax, G.dist, ANIM.rippleDeath, time);
@@ -389,7 +434,7 @@ function endRun() {
   // Recap first; then check the (global) board. Made the top 10? Enter
   // initials, then the board replaces the recap.
   const run = G;
-  hud.showOver({ ...G.stats, distPts, killPts, score, newBest: false });
+  hud.showOver(stats);
   refreshBoard().then((list) => {
     if (G !== run) return;   // already restarted
     const rank = rankFor(score, list);
@@ -400,10 +445,11 @@ function endRun() {
       onSubmit: async (initials) => {
         sfx.play('maxMult');
         hud.saving();
-        const { list: board, index } = await submitScore(initials, score);
+        const saved = await submitScore(initials, score);
+        board = saved.list;
         best = board[0]?.score || 0;
         hud.setBest(best);
-        if (G === run) hud.showBoard(board, index);
+        if (G === run) hud.showBoard(board, saved.index);
       },
     });
   });
@@ -417,11 +463,7 @@ function update(dt, realDt) {
 
   if (G.state === 'title') {
     G.dist += CFG.SPEED * 0.35 * dt;
-    if (tapped) {
-      G.state = 'play';
-      G.nextW = G.dist + CFG.FIRST;
-      hud.showTitle(false);
-    }
+    if (tapped) startPlay();
   } else if (G.state === 'over') {
     // No restart while typing initials, or in the instant after the board appears.
     if (tapped && time - G.overAt > 0.6 && hud.canRetry()) newRun();
@@ -517,7 +559,10 @@ function update(dt, realDt) {
 function syncHud(realDt) {
   hud.setDanger(Math.min(1, Math.max((G.danger - 0.4) / (ANIM.slowMoThreshold - 0.4), G.leakFlash * 0.7, 0)));
   hud.setCount(army.N, G.state !== 'over' && army.N > 0);
-  hud.setDist(Math.floor(G.dist * CFG.SCORE_PER_DIST));
+  // Live score; a medal badge while it's on pace for the top 3 of the board.
+  const score = G.state === 'title' ? 0 : runStats().score;
+  const rank = G.state === 'play' ? rankFor(score, board) : -1;
+  if (hud.setScore(score, rank <= 2 ? rank : -1)) sfx.play('maxMult');
   // Gain / loss totals stay up while changes keep coming, then fade.
   G.ui += realDt;
   for (const tally of [G.gain, G.loss]) if (tally.n > 0 && G.ui - tally.t > 1.2) tally.n = 0;
@@ -531,6 +576,7 @@ let last = performance.now();
 let perfAcc = 0, perfFrames = 0, perfWindow = 0, fps = 60;
 
 function step(realDt) {
+  if (G.paused) return;
   const dt = realDt * G.timeScale;
   time += dt;
   update(dt, realDt);
@@ -572,6 +618,7 @@ if (DEBUG) {
     gates,
     cfg: CFG,
     steer(x) { G.tx = x; },
+    pause(on = true) { setPaused(on); return G.paused; },
     morph() { army.nextFormation(time); return army.formation; },
     lose(n, side = 1) { return army.killSide(side, n, unitLost); },
     step(frames = 1, dt = 1 / 60) {
@@ -583,7 +630,8 @@ if (DEBUG) {
   };
 }
 
-window.addEventListener('resize', world.resize);
+// The paused frame has to be redrawn after a resize clears the canvas.
+window.addEventListener('resize', () => { world.resize(); if (G.paused) world.render(); });
 world.resize();
 newRun();
 refreshBoard();
