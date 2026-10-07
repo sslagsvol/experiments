@@ -44,6 +44,9 @@ export class Sfx {
   }
 
   // name: a key of SFX. opts.pitch scales frequency (e.g. gate ticks rise).
+  // SFX.tune / SFX[name].tune detune in semitones without changing speed;
+  // SFX.stretch / SFX[name].stretch lengthen without changing pitch.
+  // Slow motion does both (rate 0.3 = about −21 semitones and ×3.3 longer).
   play(name, opts = {}) {
     const ctx = this.ctx, cfg = SFX[name];
     if (!ctx || this.muted || !cfg || !RECIPES[name]) return;
@@ -53,8 +56,11 @@ export class Sfx {
     const out = ctx.createGain();
     out.gain.value = cfg.volume;
     out.connect(this.master);
-    RECIPES[name](this, out, now, Math.max(0.3, this.rate) * (opts.pitch || 1), 1 / Math.max(0.3, this.rate));
-    setTimeout(() => out.disconnect(), 3000);
+    const rate = Math.max(0.3, this.rate);
+    const p = rate * (opts.pitch || 1) * 2 ** (((SFX.tune || 0) + (cfg.tune || 0)) / 12);
+    const s = (SFX.stretch || 1) * (cfg.stretch || 1) / rate;
+    RECIPES[name](this, out, now, p, s);
+    setTimeout(() => out.disconnect(), 3000 * Math.max(1, s));
   }
 
   // ---- building blocks ----

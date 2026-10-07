@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vector Wars Sound Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  /* Layout: a sticky "all sounds" console, then one card per game sound with its own detune; the settings to keep at the bottom. Single dark look by choice (the game's own). */
+  :root {
+    --bg: #04051a;
+    --panel: #0a0d2e;
+    --line: rgba(70, 210, 255, 0.22);
+    --you: #46d2ff;
+    --hud: #9dff3d;
+    --gain: #5dffb5;
+    --gold: #ffd23d;
+    --text: #cfe8ff;
+    --muted: #7d93b8;
+    --display: 'Audiowide', 'Trebuchet MS', sans-serif;
+    --mono: 'Share Tech Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    color-scheme: dark;
+  }
+  html, body { background: var(--bg); color: var(--text); }
+  body {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 15px;
+    line-height: 1.5;
+    padding-inline: 16px;
+    padding-block: 28px 48px;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 48px 48px;
+    background-color: var(--bg);
+  }
+  main { max-width: 760px; margin: 0 auto; display: grid; gap: 20px; }
+  h1 {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(30px, 8vw, 46px);
+    line-height: 1.05;
+    text-transform: uppercase;
+    color: #9ff0ff;
+    text-shadow: 0 0 12px var(--you), 0 0 30px var(--you);
+  }
+  .intro { margin: 0; max-width: 64ch; }
+  .intro b { color: var(--hud); font-weight: 400; }
+  .console {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 2;
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    background: rgba(4, 5, 26, 0.94);
+    border: 1px solid var(--hud);
+    border-radius: 4px;
+    box-shadow: 0 0 14px rgba(157, 255, 61, 0.2);
+    backdrop-filter: blur(6px);
+  }
+  .console h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 16px; color: var(--hud); letter-spacing: .06em; text-transform: uppercase; }
+  .sliders { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 20px; }
+  .slider { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; min-width: 0; }
+  .slider span:first-child { color: var(--muted); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
+  .slider output { min-width: 6.5ch; text-align: right; color: #fff; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; min-width: 0; accent-color: var(--hud); }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; }
+  button {
+    font: inherit;
+    font-size: 13px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text);
+    background: none;
+    border: 2px solid rgba(207, 232, 255, 0.35);
+    border-radius: 4px;
+    padding: 7px 12px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  button.play { color: var(--hud); border-color: var(--hud); text-shadow: 0 0 8px rgba(157, 255, 61, 0.6); box-shadow: 0 0 10px rgba(157, 255, 61, 0.3), inset 0 0 10px rgba(157, 255, 61, 0.18); }
+  button.preset.on { color: var(--gold); border-color: var(--gold); }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  button:active { transform: scale(0.96); }
+  .list { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+  .card { display: grid; gap: 8px; align-content: start; padding: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; min-width: 0; }
+  .card.lit { border-color: var(--hud); box-shadow: 0 0 14px rgba(157, 255, 61, 0.3); }
+  .card h3 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 18px; color: #fff; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .card h3 small { font-family: var(--mono); font-size: 12px; color: var(--you); letter-spacing: .08em; }
+  .card h3 small.changed { color: var(--gold); }
+  .card p { margin: 0; color: var(--muted); font-size: 14px; }
+  .keep { display: grid; gap: 10px; padding: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; }
+  .keep h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 18px; color: #fff; }
+  .keep p { margin: 0; color: var(--muted); }
+  pre { margin: 0; padding: 12px; overflow-x: auto; background: #02031a; border: 1px solid var(--line); border-radius: 4px; color: var(--gain); font-family: var(--mono); font-size: 14px; user-select: text; }
+  @media (prefers-reduced-motion: reduce) { button:active { transform: none; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Sound lab</h1>
+  <p class="intro">Every sound in the game, played by the game's own synth. Slow motion does two things at once: it plays sounds <b>lower</b> and <b>longer</b>. Here you can take just the lower part (<b>detune</b>, in semitones, at normal speed) or just the longer part (<b>stretch</b>, at normal pitch). Set it for all sounds in the bar below, then fine-tune single sounds on their cards. When something sounds right, send Claude the settings at the bottom.</p>
+
+  <section class="console" aria-label="All sounds">
+    <h2>All sounds</h2>
+    <div class="sliders">
+      <label class="slider"><span>Detune</span><input type="range" id="g-tune" min="-24" max="6" step="0.5" value="0"><output id="g-tune-out">0 st</output></label>
+      <label class="slider"><span>Stretch</span><input type="range" id="g-stretch" min="0.5" max="3.5" step="0.05" value="1"><output id="g-stretch-out">×1.00</output></label>
+    </div>
+    <div class="row" id="presets"></div>
+    <div class="row">
+      <button type="button" class="play" id="moment">Play a run moment</button>
+      <button type="button" id="moment-orig">Same, original</button>
+    </div>
+  </section>
+
+  <div class="list" id="list"></div>
+
+  <section class="keep">
+    <h2>Settings to keep</h2>
+    <p>Only the values you've changed. These go into <code>SFX</code> in <code>src/config.js</code>.</p>
+    <pre id="out"></pre>
+    <div class="row"><button type="button" id="copy">Copy</button><button type="button" id="reset">Reset everything</button></div>
+  </section>
+</main>
+
+<script type="module">
+import { Sfx, SOUND_NAMES } from './src/audio.js';
+import { SFX } from './src/config.js';
+
+const NOTES = {
+  death: 'A unit fizzling out. Plays for every lost unit.',
+  hit: 'A bullet chipping an enemy or a gate.',
+  pop: 'An enemy destroyed.',
+  gateUp: 'Passing a good gate (whoomp and sparkle).',
+  gateDown: 'Passing a bad gate.',
+  gateTick: 'A gate value ticking up from fire. Pitch rises with the value.',
+  maxMult: 'A × gate reaching ×3, passing a top-3 score, saving initials (data stream).',
+  blast: 'Bomber explosion.',
+  stomp: 'Brute stomp.',
+  win: 'Battle won: the blast plus an echoing crackle.',
+  lose: 'Army wiped out.',
+};
+const PRESETS = [
+  ['Original', 0, 1],
+  ['A touch', -2, 1],
+  ['Deeper', -5, 1.15],
+  ['Heavy', -9, 1.4],
+  ['Game slow-mo', -21, 3.3],
+];
+
+// The values the game ships with, so "original" and the output diff are exact.
+const BASE = { tune: SFX.tune || 0, stretch: SFX.stretch || 1 };
+const BASE_SOUND = Object.fromEntries(SOUND_NAMES.map((n) => [n, { tune: SFX[n].tune || 0, stretch: SFX[n].stretch || 1 }]));
+
+const sfx = new Sfx();
+sfx.muted = false;   // this page always plays, whatever the game's mute is set to
+const $ = (id) => document.getElementById(id);
+const fmtTune = (v) => `${v > 0 ? '+' : ''}${+v} st`;
+const fmtStretch = (v) => `×${(+v).toFixed(2)}`;
+
+// Plays one sound with the given tune/stretch (or the lab's current settings).
+function play(name, { tune, stretch, rate = 1, pitch = 1 } = {}) {
+  sfx.unlock();
+  const keep = { gt: SFX.tune, gs: SFX.stretch, t: SFX[name].tune, s: SFX[name].stretch };
+  if (tune !== undefined) { SFX.tune = 0; SFX[name].tune = tune; }
+  if (stretch !== undefined) { SFX.stretch = 1; SFX[name].stretch = stretch; }
+  sfx.rate = rate;
+  sfx.last = {};
+  sfx.play(name, { pitch });
+  sfx.rate = 1;
+  SFX.tune = keep.gt; SFX.stretch = keep.gs; SFX[name].tune = keep.t; SFX[name].stretch = keep.s;
+  const card = cards[name];
+  card.classList.add('lit');
+  clearTimeout(card.litTimer);
+  card.litTimer = setTimeout(() => card.classList.remove('lit'), 400);
+}
+
+// ---- Cards ----
+const cards = {};
+for (const name of SOUND_NAMES) {
+  const card = cards[name] = document.createElement('article');
+  card.className = 'card';
+  card.innerHTML = `
+    <h3>${name}<small id="${name}-eff"></small></h3>
+    <p>${NOTES[name] || ''}</p>
+    <label class="slider"><span>Detune</span><input type="range" id="${name}-tune" min="-12" max="12" step="0.5" value="${BASE_SOUND[name].tune}"><output id="${name}-tune-out"></output></label>
+    <label class="slider"><span>Stretch</span><input type="range" id="${name}-stretch" min="0.5" max="3" step="0.05" value="${BASE_SOUND[name].stretch}"><output id="${name}-stretch-out"></output></label>
+    <div class="row">
+      <button type="button" class="play">Play</button>
+      <button type="button" data-v="orig">Original</button>
+      <button type="button" data-v="slow">Slow-mo</button>
+    </div>`;
+  card.querySelector('.play').addEventListener('click', () => play(name));
+  card.querySelector('[data-v=orig]').addEventListener('click', () => play(name, { tune: 0, stretch: 1 }));
+  card.querySelector('[data-v=slow]').addEventListener('click', () => play(name, { tune: 0, stretch: 1, rate: 0.3 }));
+  $('list').append(card);
+  for (const k of ['tune', 'stretch']) $(`${name}-${k}`).addEventListener('input', (e) => { SFX[name][k] = +e.target.value; sync(); });
+}
+
+// ---- Global bar ----
+$('g-tune').addEventListener('input', (e) => { SFX.tune = +e.target.value; sync(); });
+$('g-stretch').addEventListener('input', (e) => { SFX.stretch = +e.target.value; sync(); });
+for (const [label, tune, stretch] of PRESETS) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'preset';
+  b.textContent = label;
+  b.dataset.tune = tune; b.dataset.stretch = stretch;
+  b.addEventListener('click', () => { SFX.tune = tune; SFX.stretch = stretch; sync(); play('gateUp'); });
+  $('presets').append(b);
+}
+
+// A few seconds of a run: fire, a kill, a gate charging, a good gate, a bomber, losses, a win.
+function moment(original) {
+  const o = original ? { tune: 0, stretch: 1 } : {};
+  const at = (ms, fn) => setTimeout(fn, ms);
+  for (let i = 0; i < 6; i++) at(i * 70, () => play('hit', o));
+  at(430, () => play('pop', o));
+  for (let i = 0; i < 3; i++) at(600 + i * 140, () => play('gateTick', { ...o, pitch: 1 + i * 0.12 }));
+  at(1100, () => play('gateUp', o));
+  at(1900, () => play('blast', o));
+  for (let i = 0; i < 6; i++) at(2000 + i * 60, () => play('death', o));
+  at(2900, () => play('win', o));
+}
+$('moment').addEventListener('click', () => moment(false));
+$('moment-orig').addEventListener('click', () => moment(true));
+
+// ---- Output ----
+function settingsText() {
+  const lines = [];
+  if (SFX.tune !== BASE.tune) lines.push(`tune: ${SFX.tune},`);
+  if (SFX.stretch !== BASE.stretch) lines.push(`stretch: ${SFX.stretch},`);
+  for (const name of SOUND_NAMES) {
+    const c = SFX[name], b = BASE_SOUND[name], parts = [];
+    if ((c.tune || 0) !== b.tune) parts.push(`tune: ${c.tune}`);
+    if ((c.stretch || 1) !== b.stretch) parts.push(`stretch: ${c.stretch}`);
+    if (parts.length) lines.push(`${name}: { ${parts.join(', ')} },`);
+  }
+  return lines.length ? lines.join('\n') : '(nothing changed yet)';
+}
+
+function sync() {
+  $('g-tune').value = SFX.tune; $('g-tune-out').textContent = fmtTune(SFX.tune);
+  $('g-stretch').value = SFX.stretch; $('g-stretch-out').textContent = fmtStretch(SFX.stretch);
+  for (const b of document.querySelectorAll('.preset')) b.classList.toggle('on', +b.dataset.tune === SFX.tune && +b.dataset.stretch === SFX.stretch);
+  for (const name of SOUND_NAMES) {
+    const c = SFX[name];
+    $(`${name}-tune`).value = c.tune || 0; $(`${name}-tune-out`).textContent = fmtTune(c.tune || 0);
+    $(`${name}-stretch`).value = c.stretch || 1; $(`${name}-stretch-out`).textContent = fmtStretch(c.stretch || 1);
+    const t = (SFX.tune || 0) + (c.tune || 0), s = (SFX.stretch || 1) * (c.stretch || 1);
+    const eff = $(`${name}-eff`);
+    eff.textContent = `${fmtTune(t)} · ${fmtStretch(s)}`;
+    eff.classList.toggle('changed', t !== 0 || s !== 1);
+  }
+  $('out').textContent = settingsText();
+  try { localStorage.setItem('vw-sound-lab', JSON.stringify({ g: [SFX.tune, SFX.stretch], s: SOUND_NAMES.map((n) => [SFX[n].tune || 0, SFX[n].stretch || 1]) })); } catch { /* storage unavailable */ }
+}
+
+function reset() {
+  SFX.tune = BASE.tune; SFX.stretch = BASE.stretch;
+  for (const name of SOUND_NAMES) Object.assign(SFX[name], BASE_SOUND[name]);
+  sync();
+}
+$('reset').addEventListener('click', reset);
+$('copy').addEventListener('click', () => {
+  const text = settingsText();
+  navigator.clipboard?.writeText(text).then(() => { $('copy').textContent = 'Copied'; setTimeout(() => { $('copy').textContent = 'Copy'; }, 1500); })
+    .catch(() => getSelection().selectAllChildren($('out')));
+});
+
+// Restore this browser's last session (a convenience only).
+try {
+  const saved = JSON.parse(localStorage.getItem('vw-sound-lab'));
+  if (saved) {
+    [SFX.tune, SFX.stretch] = saved.g;
+    SOUND_NAMES.forEach((n, i) => { if (saved.s[i]) [SFX[n].tune, SFX[n].stretch] = saved.s[i]; });
+  }
+} catch { /* nothing saved */ }
+sync();
+</script>
+</body>
+</html>

@@ -3,7 +3,8 @@
 A crowd-runner in the style of the "army through gates" mobile ads, redesigned around what those games get wrong: fake choices, hidden numbers, no skill expression, and art that buries the numbers. One thumb, thousands of units, 60fps on a mid-range phone.
 
 - **Play:** `index.html`. URL options: `?debug` (overlay plus the `window.vectorWars` test hook), `?units=N` (starting army), `?seed=N` (a different track).
-- **Style guide:** `style-guide.html`, every color, sprite, formation, animation and sound. Visual or animation changes must update it (rule in `CLAUDE.md`).
+- **Style guide:** `style-guide.html`, every color, sprite, formation, animation and sound.
+- **Sound lab:** `sound-lab.html`, every sound with detune (lower, same speed) and stretch (longer, same pitch), globally or per sound (`SFX.tune` / `SFX.stretch`). Visual or animation changes must update it (rule in `CLAUDE.md`).
 - **History:** `CHANGELOG.md`, the round-by-round log of playtest feedback and what changed.
 - **Leaderboard setup:** `LEADERBOARD.md`.
 
