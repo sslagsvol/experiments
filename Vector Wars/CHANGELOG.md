@@ -217,3 +217,6 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Live score, top left:** the real score (distance + enemies defeated), not distance. While it's on pace for the top 3 of the board, it doubles in size with a medal badge in that rank's color; moving up a place pops it and plays the `maxMult` chord.
 - Recap styles are now the `.recap` class (shared by game over and pause); `renderRecap()` takes a label.
 - Style guide: HUD card (score, pause button), new top-3 badge and pause menu cards.
+
+## Round 18: ideas added to the plan (2026-10-07)
+- Planning only, no code changes. New `PLAN.md` roadmap items: 4. levels (level gates, short build-up levels first, an end-of-level menu with "Go to Level #", the army snapshot in the pause and level menus), 5. the fire enemy (burn radius plus burn over time), 6. stronger road / background parallax.
