@@ -35,11 +35,12 @@ export const TYPE_LIST = Object.values(ENEMY_TYPES);
 export function squadMix(kind, squadIndex) {
   const drones = squadIndex >= 2, bombers = squadIndex >= 3, brutes = squadIndex >= 4;
   switch (kind) {
-    case 'skirmish': return { front: [], mix: drones ? [['drone', 1]] : [['grunt', 1]] };
-    case 'column':   return { front: [], mix: bombers ? [['bomber', 0.4], ['grunt', 0.6]] : [['grunt', 1]] };
-    case 'wall':     return { front: brutes ? ['brute', 0.08] : [], mix: [['grunt', 1]] };
-    case 'wedge':    return { front: brutes ? ['brute', 0.05] : [], mix: [['grunt', 1]] };
-    case 'waves':    return { front: [], mix: drones ? [['grunt', 0.7], ['drone', 0.3]] : [['grunt', 1]] };
+    // Grunts are 80–90% of every squad; specials are the seasoning.
+    case 'skirmish': return { front: [], mix: drones ? [['grunt', 0.82], ['drone', 0.18]] : [['grunt', 1]] };
+    case 'column':   return { front: [], mix: bombers ? [['grunt', 0.85], ['bomber', 0.15]] : [['grunt', 1]] };
+    case 'wall':     return { front: brutes ? ['brute', 0.1] : [], mix: [['grunt', 1]] };
+    case 'wedge':    return { front: brutes ? ['brute', 0.08] : [], mix: [['grunt', 1]] };
+    case 'waves':    return { front: [], mix: drones ? [['grunt', 0.85], ['drone', 0.15]] : [['grunt', 1]] };
     default:         return { front: [], mix: bombers ? [['grunt', 0.88], ['bomber', 0.12]] : [['grunt', 1]] };
   }
 }

@@ -8,7 +8,7 @@ import { Army } from './crowd.js';
 import { EnemyForce } from './enemies.js';
 import { squadMix, mixEst } from './enemyFormations.js';
 import { GatePool, FONT, gateColor } from './gates.js';
-import { Bullets, Sparks, Fallers } from './fx.js';
+import { Bullets, Sparks, Fallers, Fizzles } from './fx.js';
 import { UNIT_SPACING } from './formations.js';
 import { DragInput } from './input.js';
 import { Hud } from './hud.js';
@@ -26,6 +26,7 @@ const gates = new GatePool(world.scene);
 const bullets = new Bullets(world.scene);
 const sparks = new Sparks(world.scene, world.pointScale);
 const fallers = new Fallers(world.scene, world.pointScale, UNIT_SPACING * 1.3);
+const fizzles = new Fizzles(world.scene, world.pointScale, UNIT_SPACING * 1.3);
 const input = new DragInput(window);
 const hud = new Hud();
 
@@ -40,6 +41,7 @@ function newRun() {
   bullets.clear();
   sparks.clear();
   fallers.clear();
+  fizzles.clear();
   army.reset();
   army.spawn(START_UNITS, 0);
   G = {
@@ -149,7 +151,8 @@ function feedback(color, amp, count) {
   sparks.emit(G.ax, 0.3, G.dist - army.front, color, count, 4);
 }
 
-const sparkLost = (x, z) => sparks.emit(x, 0.15, G.dist - z, COLORS.you, 1, 2);
+// Every lost unit fizzles out where it stood: cyan → red → black.
+const unitLost = (x, z) => fizzles.add(x, 0.12, G.dist - z);
 
 // Units that don't fit on the track run off the nearest edge.
 function spill(n) {
@@ -181,7 +184,7 @@ function crossGate(g) {
       if (add > 0) { spill(army.spawn(add, x)); gained = true; }
     }
     else if (s.v > 0) { spill(army.spawn(Math.max(1, Math.round(s.v * share)), x)); gained = true; }
-    else if (s.v < 0) army.killSide(sign, Math.min(n, Math.round(-s.v * share)), sparkLost);
+    else if (s.v < 0) army.killSide(sign, Math.min(n, Math.round(-s.v * share)), unitLost);
     if (s !== (g.primary === 'L' ? g.L : g.R)) s.f = 1;   // secondary panel flashes
   }
   shatterSparks(g);
@@ -251,12 +254,12 @@ function squadWiped(s) {
 function onHit(t, x, z, leaked) {
   let killed;
   if (t.blast) {
-    killed = army.killRadius(x, z, t.blast * Math.max(0.6, army.pack), t.blastMax, sparkLost);
+    killed = army.killRadius(x, z, t.blast * Math.max(0.6, army.pack), t.blastMax, unitLost);
     sparks.emit(x, 0.3, G.dist - z, COLORS.enemyHot, 24, 5);
     world.addRipple(x, G.dist - z, 0.6, time);
   } else {
     const k = Math.floor(t.damage) + (Math.random() < t.damage % 1 ? 1 : 0);
-    killed = army.killNear(x, z, k, sparkLost);
+    killed = army.killNear(x, z, k, unitLost);
     sparks.emit(x, 0.2, G.dist - z, COLORS[t.color], t.size > 2 ? 12 : 4, 3);
   }
   if (leaked) { G.stats.leaked += killed; G.leakFlash = 1; }
@@ -279,7 +282,7 @@ function endRun() {
     try { localStorage.setItem('vector-wars-best', String(best)); } catch { /* storage unavailable */ }
     hud.setBest(best);
   }
-  army.kill(army.N, sparkLost);
+  army.kill(army.N, unitLost);
   world.addRipple(G.ax, G.dist, 1.4, time);
   sparks.emit(G.ax, 0.3, G.dist, COLORS.you, 80, 5);
   hud.showOver({ ...G.stats, score, newBest });
@@ -374,6 +377,7 @@ function update(dt, realDt) {
     fallers.drop(x, G.dist - z, Math.sign(x), CFG.SPEED);
   });
   fallers.update(dt, G.dist);
+  fizzles.update(dt, G.dist);
   sparks.update(dt, G.dist);
   G.shake = Math.max(0, G.shake - dt * 0.6);
 }
@@ -442,6 +446,7 @@ if (DEBUG) {
     enemies,
     steer(x) { G.tx = x; },
     morph() { army.nextFormation(time); return army.formation; },
+    lose(n, side = 1) { return army.killSide(side, n, unitLost); },
     step(frames = 1, dt = 1 / 60) {
       for (let i = 0; i < frames; i++) step(dt);
       return { state: G.state, N: army.N, formation: army.formation, dist: Math.round(G.dist), enemies: enemies.count,

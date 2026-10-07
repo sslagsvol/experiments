@@ -73,6 +73,8 @@ export const ANIM = {
   fallGravity: 14,         // units falling off the track (units/s²)
   fallRunMin: 1.5,         // sideways run speed of spilled units (units/s)
   fallRunMax: 3.5,
+  fizzleTime: 0.7,          // s for a lost unit to burn out (cyan → red → black)
+  fizzleRedAt: 0.3,        // fraction of the fizzle spent turning red before fading to black
   sparkGravity: 9,
   sparkLifeMin: 0.35,      // s
   sparkLifeMax: 0.8,
@@ -104,6 +106,7 @@ export const COLORS = {
   rail: [0.35, 0.95, 1.5],
   horizon: [1.0, 0.15, 0.7],
   bullet: [2.0, 1.45, 0.45],
+  dying: [1.8, 0.1, 0.06],   // lost units burn from cyan to this, then to black
   white: [1.6, 1.6, 1.6],
 };
 

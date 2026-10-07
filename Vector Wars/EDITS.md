@@ -205,6 +205,14 @@ The army detonates: **half the army is lost, and every enemy in sight is destroy
 
 Notes: squads are still sized against the gates' current values when they come out of the fog, so a multiplier you charge up after that is a real advantage. A sweeping bot that splits its fire now dies earlier (peak about 50), so check that the early game doesn't feel too punishing when you aim properly.
 
+## Round 5 (2026-10-07)
+| Feedback | Change |
+|---|---|
+| Lost units should fizzle out, red then black | New `Fizzles` effect: every unit lost to a gate, an enemy hit, a blast or slipping past burns cyan → red (`COLORS.dying`) → black over 0.7s (`ANIM.fizzleTime`), flickering and shrinking, and stays where it died so the army visibly leaves its losses behind. Units falling off the edge burn the same way as they drop. |
+| 80–90% of enemies should be basic units | `squadMix()` rebalanced: specials are 8–18% per squad. A full 14-squad test run came out 88% grunts. |
+
+Also fixed: the style guide's enemy-charge card still referenced `ENEMY_STRENGTH`, a setting removed in round 2, so it showed "undefined" and its demo enemies did no damage.
+
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
 - *(none)*
