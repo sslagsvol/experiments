@@ -207,3 +207,7 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 ## Round 15: tidy-up (2026-10-07)
 - Style guide: HUD cards and the count demo now use the `#gain` / `#loss` pair (clears the round 14 debt); restored the high score board / initials demo.
 - Docs restructured: `PLAN.md` is now the design *as built* plus a single roadmap (leaderboard hookup, mini-boss + bomb, firepower rework, balance pass, parked ideas); this file (formerly `EDITS.md`) is history only.
+
+## Round 16: global leaderboard live (2026-10-07)
+- `CFG.LEADERBOARD` points at Supabase project `uxwcslorwepzrmpbqmjd` (publishable key). Read and insert verified against the live table.
+- `LEADERBOARD.md`: how to find the Project URL on newer dashboards.

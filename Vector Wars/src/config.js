@@ -66,7 +66,7 @@ export const CFG = {
   // Global high scores (Supabase). Leave blank for a per-device board.
   // The key is the project's public anon / publishable key: safe to ship,
   // row-level security only allows reading and adding scores. See LEADERBOARD.md.
-  LEADERBOARD: { url: '', key: '' },
+  LEADERBOARD: { url: 'https://uxwcslorwepzrmpbqmjd.supabase.co', key: 'sb_publishable_Hhx4UfgA2LvnRncQ8d1Nvw_iI_WJeKc' },
 
   CAMERA_LIFT: 0.12,       // shifts the view so the army sits higher, leaving thumb room
   SCORE_PER_DIST: 10,      // points per unit of distance

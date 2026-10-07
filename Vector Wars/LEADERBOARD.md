@@ -34,7 +34,7 @@ grant select, insert on public.vector_wars_scores to anon;
 
 ## 3. Copy two values
 Open **Project Settings → API** (or the **Connect** button):
-- **Project URL**, like `https://abcdefghijkl.supabase.co`
+- **Project URL**, like `https://abcdefghijkl.supabase.co`. On newer dashboards it's under **Project Settings → Data API**. Or build it from the project ID in your browser's address bar: `supabase.com/dashboard/project/abcdefghijkl` → `https://abcdefghijkl.supabase.co`
 - The **anon / public** key, or the **publishable** key (starts with `sb_publishable_`) on newer projects
 
 These are safe to put in the game. They're meant to be public, and the rules above only allow reading and adding scores. **Don't** use the `service_role` / secret key.
