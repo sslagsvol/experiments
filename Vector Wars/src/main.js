@@ -378,7 +378,7 @@ function bulletTest(x, oldW, newW) {
   return false;
 }
 
-// A × gate hit its ×3.0 cap: loud chord, a gold burst and a ripple.
+// A × gate hit its ×3.0 cap: the data-stream sound, a gold burst and a ripple.
 function maxedOut(g, s) {
   sfx.play('maxMult');
   const x = g.S ? g.sx : s === g.L ? -CFG.TW / 2 : CFG.TW / 2;

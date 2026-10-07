@@ -82,6 +82,18 @@ export class Sfx {
     src.connect(flt).connect(g).connect(out);
     src.start(t, Math.random() * 0.5); src.stop(t + dur + 0.02);
   }
+
+  // A feedback echo that darkens each repeat; returns its input node.
+  echo(out, s, { time = 0.14, feedback = 0.45, cutoff = 3500 } = {}) {
+    const ctx = this.ctx, delay = ctx.createDelay(1), fb = ctx.createGain(), tone = ctx.createBiquadFilter();
+    delay.delayTime.value = time * s;
+    fb.gain.value = feedback;
+    tone.type = 'lowpass'; tone.frequency.value = cutoff;
+    delay.connect(tone).connect(fb).connect(delay);
+    delay.connect(out);
+    setTimeout(() => { fb.gain.value = 0; delay.disconnect(); }, 3000 * s);
+    return delay;
+  }
 }
 
 // p = pitch multiplier, s = time stretch (both follow slow motion).
@@ -100,10 +112,16 @@ const RECIPES = {
     a.tone(out, t, { type: 'square', f0: 480 * p, f1: 1500 * p, dur: 0.07 * s, vol: 0.35 });
     a.hiss(out, t, { type: 'highpass', f0: 3000 * p, dur: 0.04 * s, vol: 0.5 });
   },
-  // Good gate: a shimmering rising arpeggio and an airy swoosh.
+  // Good gate ("whoomp and sparkle"): noise and a low tone swell in and cut
+  // off hard, then a thump and a spray of bright sparkles.
   gateUp(a, out, t, p, s) {
-    [523, 659, 784, 1047].forEach((f, i) => a.tone(out, t + i * 0.055 * s, { type: 'triangle', f0: f * p, dur: 0.3 * s, vol: 0.5 }));
-    a.hiss(out, t, { type: 'highpass', f0: 1500 * p, f1: 6000 * p, dur: 0.35 * s, vol: 0.25, attack: 0.05 });
+    a.hiss(out, t, { type: 'lowpass', f0: 300 * p, f1: 2400 * p, q: 3, dur: 0.2 * s, vol: 0.6, attack: 0.18 * s });
+    a.tone(out, t, { f0: 70 * p, f1: 140 * p, dur: 0.2 * s, vol: 0.6, attack: 0.17 * s });
+    const at = t + 0.19 * s;
+    a.tone(out, at, { f0: 160 * p, f1: 60 * p, dur: 0.25 * s, vol: 0.8 });
+    for (let i = 0; i < 10; i++) {
+      a.tone(out, at + (i * 0.025 + Math.random() * 0.02) * s, { f0: (2200 + Math.random() * 3000 + i * 180) * p, dur: 0.07 * s, vol: 0.18, attack: 0.002 });
+    }
   },
   // Bad gate: a falling buzz and a low thud.
   gateDown(a, out, t, p, s) {
@@ -114,11 +132,17 @@ const RECIPES = {
   gateTick(a, out, t, p, s) {
     a.tone(out, t, { type: 'sine', f0: 880 * p, f1: 1320 * p, dur: 0.06 * s, vol: 0.7 });
   },
-  // × gate maxed out at ×3.0: a loud, bright major chord with a rising sweep.
+  // × gate maxed out at ×3.0 ("data stream"): a very fast run of sine blips
+  // rising through a pentatonic scale into an echo. Also plays when a score
+  // moves up a place on the board and when initials are saved.
   maxMult(a, out, t, p, s) {
-    [392, 494, 587, 784, 988].forEach((f, i) => a.tone(out, t + i * 0.025 * s, { type: i % 2 ? 'square' : 'sawtooth', f0: f * p, dur: 0.7 * s, vol: 0.28 }));
-    a.tone(out, t, { type: 'sine', f0: 196 * p, dur: 0.6 * s, vol: 0.8 });
-    a.hiss(out, t, { type: 'highpass', f0: 2000 * p, f1: 9000 * p, dur: 0.5 * s, vol: 0.35, attack: 0.03 });
+    const wet = a.echo(out, s, { time: 0.09, feedback: 0.35, cutoff: 5000 * p });
+    [523, 587, 659, 784, 880, 1047, 1175, 1319, 1568, 1760].forEach((f, i) => {
+      const at = t + i * 0.022 * s;
+      a.tone(out, at, { f0: f * p, dur: 0.08 * s, vol: 0.3, attack: 0.002 });
+      a.tone(wet, at, { f0: f * p, dur: 0.06 * s, vol: 0.2, attack: 0.002 });
+    });
+    a.hiss(out, t, { type: 'highpass', f0: 4000 * p, f1: 9000 * p, dur: 0.25 * s, vol: 0.12, attack: 0.04 });
   },
   // Bomber blast: low boom and a burst of noise.
   blast(a, out, t, p, s) {

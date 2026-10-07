@@ -123,7 +123,7 @@
       <div class="stage hud-stage"><div id="hud"><div id="dist" class="top m0"><span id="score">21,340</span><span id="rank-badge">1st</span></div></div></div>
       <div class="controls"><button type="button" data-medal="0">1st</button><button type="button" data-medal="1">2nd</button><button type="button" data-medal="2">3rd</button><button type="button" data-medal="-1">Off board</button></div>
       <h3>Top-3 score badge</h3><div class="var">#dist.top · .m0–.m2 · #rank-badge · .rank-up · @keyframes badge-glow</div>
-      <div class="meta">While the run's score is on pace for 1st–3rd on the board: the score doubles to 44px (springy 0.35s), glows in that rank's board color (gold, pink, lime) and an Audiowide medal badge pulses beside it · moving up a place pops it (rank-up 0.6s) and plays the maxMult chord</div>
+      <div class="meta">While the run's score is on pace for 1st–3rd on the board: the score doubles to 44px (springy 0.35s), glows in that rank's board color (gold, pink, lime) and an Audiowide medal badge pulses beside it · moving up a place pops it (rank-up 0.6s) and plays the maxMult sound</div>
     </div>
     <div class="card">
       <div class="stage"><div id="pause" class="overlay"><h1 class="paused">Paused</h1>
@@ -644,7 +644,7 @@ animCard({ title: 'Enemy charge and flank', vars: 'CFG.ENEMY_CHARGE_SPEED · ENE
 
 // Moving gate: a single narrower panel sways side to side; only the units
 // that pass through it are affected.
-animCard({ title: 'Moving gate', vars: 'CFG.MOVING_GATE_CHANCE · MOVING_GATE_WIDTH · MOVING_GATE_SPEED · MOVING_GATE_GOOD', meta: `${Math.round(CFG.MOVING_GATE_CHANCE * 100)}% of gate spots · ${CFG.MOVING_GATE_WIDTH} wide · sways at ${CFG.MOVING_GATE_SPEED} rad/s across the track · ${Math.round(CFG.MOVING_GATE_GOOD * 100)}% good (+ or ×), the rest bad (− or ÷) · shoot it like any gate; it only shatters if units went through`, note: 'A ×3.0 here is the jackpot: maxing a multiplier plays a loud chord and bursts gold.', tall: true },
+animCard({ title: 'Moving gate', vars: 'CFG.MOVING_GATE_CHANCE · MOVING_GATE_WIDTH · MOVING_GATE_SPEED · MOVING_GATE_GOOD', meta: `${Math.round(CFG.MOVING_GATE_CHANCE * 100)}% of gate spots · ${CFG.MOVING_GATE_WIDTH} wide · sways at ${CFG.MOVING_GATE_SPEED} rad/s across the track · ${Math.round(CFG.MOVING_GATE_GOOD * 100)}% good (+ or ×), the rest bad (− or ÷) · shoot it like any gate; it only shatters if units went through`, note: 'A ×3.0 here is the jackpot: maxing a multiplier plays the data-stream cascade and bursts gold.', tall: true },
   (ctx, w, h, t) => {
     const s = topDown(w), gw = CFG.MOVING_GATE_WIDTH * s, amp = CFG.TW - CFG.MOVING_GATE_WIDTH / 2 - 0.05;
     const sx = amp * Math.sin(t * CFG.MOVING_GATE_SPEED), m = Math.min(3, 1 + Math.floor((t % 6) / 6 * 21) / 10);
@@ -789,12 +789,12 @@ const SOUND_NOTES = {
   death: 'A unit fizzling out: noise crackle sweeping down plus a falling zap. Every lost unit and every faller.',
   hit: 'Bullet chipping an enemy or a gate: a tiny glassy tick.',
   pop: 'Enemy destroyed: bright chirp and click.',
-  gateUp: 'Passing a good gate: shimmering rising arpeggio and swoosh.',
+  gateUp: 'Passing a good gate ("whoomp and sparkle"): noise and a low tone swell in and cut off hard, then a thump and a spray of bright sparkles.',
   gateDown: 'Passing a bad gate: falling buzz and low thud.',
   gateTick: 'A gate value ticking up from fire; pitch rises with the value.',
   blast: 'Bomber explosion: low boom and noise burst.',
   stomp: 'Brute stomp: heavy sub thud, crunch and ground rumble.',
-  maxMult: 'A × gate reaching its ×3.0 cap: a loud, bright major chord with a rising sweep (plus a gold burst on the gate).',
+  maxMult: 'A × gate reaching its ×3.0 cap ("data stream"): a very fast run of sine blips rising through a pentatonic scale into an echo (plus a gold burst on the gate). Also plays when your score moves up a place on the board, and when initials are saved.',
   win: 'Battle won: the blast sound plus a crackly fizzle that echoes away (feedback delay, darkening each repeat).',
   lose: 'Army wiped out: long dive and rumble.',
 };

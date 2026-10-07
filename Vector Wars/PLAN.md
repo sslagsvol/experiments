@@ -39,7 +39,7 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 - Auto-fire from the army, rate `min(50, 3 + 2√N)`. *(Rework planned: batch B.)*
 - **Gate mix** (`CFG.GATE_MIX`): × 8%, + 32%, − 35%, ÷ 25%. A pair never has two bad options.
   - **+ / −** fill a charge bar: 4 hits per step.
-  - **×** starts at ×1.0 (no effect) and climbs 0.1 per step to ×3.0, costing more hits as it climbs (`multHitsForStep()`, about 110 hits). Maxing it plays a loud chord and bursts gold.
+  - **×** starts at ×1.0 (no effect) and climbs 0.1 per step to ×3.0, costing more hits as it climbs (`multHitsForStep()`, about 110 hits). Maxing it plays the "data stream" cascade and bursts gold.
   - **÷** starts at ÷2–÷3 and shooting walks it down; at ÷1.0 it flips into a ×1.0 gate and keeps climbing.
 - **Split gates:** each panel applies only to the units that cross it (× multiplies them; + / − scale by their share). The primary panel (where the army's center goes) shatters.
 - **Moving gates** (15% of gate spots): a single 1.5-wide panel sweeping side to side. Mostly good; only the units that pass through it are affected.
@@ -61,7 +61,7 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 
 ### Pacing, HUD and score
 - Track spacing: 18 units after a gate, 28 after a squad.
-- **HUD:** live score (top left; while it's on pace for 1st–3rd on the board it doubles in size with a gold / pink / lime medal badge, and moving up a place plays the max-multiplier chord), "Hi" score, pause and mute (top right), army count at the bottom center with gains (green, left) and losses (red, right) as running totals. The camera is lens-shifted up for thumb room.
+- **HUD:** live score (top left; while it's on pace for 1st–3rd on the board it doubles in size with a gold / pink / lime medal badge, and moving up a place plays the max-multiplier sound), "Hi" score, pause and mute (top right), army count at the bottom center with gains (green, left) and losses (red, right) as running totals. The camera is lens-shifted up for thumb room.
 - **Score** = distance × 10 + each enemy defeated × its hp × 5.
 - **Recap:** a big count-up score, each enemy type's idle sprite with kills and points, then distance, peak army and losses.
 - **Pause:** the pause button, Esc / P, or leaving the tab mid-run. A big "Paused" over the recap so far ("Score so far") and the board with where this run would place (tabs on phones, side by side on wide screens). Continue is the main button; Restart starts a fresh run at once.
@@ -70,7 +70,7 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 ### Feel
 - **Grid ripples:** battle won 2.2, gate 1.6, wipe 1.5, blast 1.6, stomp 2.0, army lost 2.4.
 - **Bloom** is tuned so numbers stay readable.
-- **Sound:** synthesized WebAudio, rate-limited and pitched down in slow motion. Sounds: death fizzle, hit tick, pop, gate up/down/tick, max multiplier, blast, stomp, battle won (blast plus an echoing crackle), army lost.
+- **Sound:** synthesized WebAudio, rate-limited and pitched down in slow motion. Sounds: death fizzle, hit tick, pop, good gate (whoomp and sparkle), bad gate, gate tick, max multiplier (data stream), blast, stomp, battle won (blast plus an echoing crackle), army lost.
 
 ## 4. Roadmap
 
