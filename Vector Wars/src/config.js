@@ -4,7 +4,7 @@
 // STYLE GUIDE: style-guide.html reads COLORS, ANIM, BLOOM and the formation
 // settings from this file. If you add or rename a visual value, or change how
 // something animates, update style-guide.html in the same change (or flag it
-// under "Style guide debt" in EDITS.md).
+// under "Style guide debt" in CHANGELOG.md).
 
 export const CFG = {
   TW: 2.0,                 // track half-width (world units)

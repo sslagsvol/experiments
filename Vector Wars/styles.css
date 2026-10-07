@@ -1,7 +1,7 @@
 /* STYLE GUIDE: style-guide.html loads this stylesheet and shows every HUD
    style and keyframe animation below. If you change a style or animation
    here, update style-guide.html in the same change (or flag it under
-   "Style guide debt" in EDITS.md). */
+   "Style guide debt" in CHANGELOG.md). */
 
 :root {
   --bg: #04051a;

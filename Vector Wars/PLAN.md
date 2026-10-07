@@ -1,150 +1,121 @@
-# Vector Wars: design and build plan
+# Vector Wars: design and roadmap
 
-A crowd-runner in the style of the "army through gates" mobile ads, redesigned around the things those games get wrong: fake choices, hidden numbers, no skill expression, and art that buries the numbers. One thumb, thousands of units, 60fps on a mid-range phone.
+A crowd-runner in the style of the "army through gates" mobile ads, redesigned around what those games get wrong: fake choices, hidden numbers, no skill expression, and art that buries the numbers. One thumb, thousands of units, 60fps on a mid-range phone.
 
-**Play it:** `index.html` (add `?debug` for an FPS/unit overlay, `?units=1000` to stress-test, `?seed=42` for a different track).
-
-**Style guide:** `style-guide.html` shows every color, type style, element, formation and animation. Any visual or animation change must update it (see `CLAUDE.md`).
+- **Play:** `index.html`. URL options: `?debug` (overlay plus the `window.vectorWars` test hook), `?units=N` (starting army), `?seed=N` (a different track).
+- **Style guide:** `style-guide.html`, every color, sprite, formation, animation and sound. Visual or animation changes must update it (rule in `CLAUDE.md`).
+- **History:** `CHANGELOG.md`, the round-by-round log of playtest feedback and what changed.
+- **Leaderboard setup:** `LEADERBOARD.md`.
 
 ---
 
 ## 1. Why the ad games frustrate, and the fix for each
 
-| What frustrates | Why it happens | What we do instead |
-|---|---|---|
-| Choices are fake: "+5 or ×3" has an obvious answer | Gates are tuned for ads, not decisions | **No gate pair has a clearly better option.** Shooting, gate order and the hazards around each gate make both sides worth considering. |
-| The ad and the real game are different games | Bait for installs | The ad *is* the game. |
-| You lose and don't know why | Hidden numbers, unclear collisions | **Honest numbers.** Enemy counts show from far away. The death recap breaks down where you lost units. |
-| No skill: the result depends only on which gate you picked | Passive auto-runner | **Shooting adds skill.** Where you aim your fire and for how long changes the result. |
-| Waiting around: slow-motion, popups, forced ads | Monetization pressure | Restarting takes under a second. No interruptions during a run. |
-| The finale is passive | The crowd just walks into the castle | The finale is an active boss fight where aim and crowd size both count. |
+| What frustrates | What we do instead |
+|---|---|
+| Fake choices ("+5 or ×3") | Gates are shot up or down, split by where the army crosses, and sometimes move. A bad gate can become the best one if you commit fire to it. |
+| The ad and the game differ | The ad *is* the game. |
+| You lose and don't know why | The death recap breaks losses down (squads, slipped past, gates, fell off). Gains and losses show live beside the army count. |
+| No skill | Aim (bullets raise gates and kill enemies), steering (edge spill, dodging moving gates), and gate choice all change the outcome. |
+| Waiting around | Restart in under a second. No interruptions. |
 
 ## 2. Design pillars
 
-1. **One thumb, always readable.** Anything that needs a second gesture or a long read is cut.
+1. **One thumb, always readable.** Anything needing a second gesture or a long read is cut.
 2. **Every gate is a real decision.** If playtesters always pick the same side, the gate is a bug.
-3. **The crowd is both your health bar and your weapon.** More units means more firepower, but also a wider body that's harder to steer around hazards.
-4. **60fps with 2,000+ units on a mid-range phone.** A feature, not a polish item.
+3. **The crowd is your health bar and your weapon.** More units means more firepower, but a wider body that spills off the edges.
+4. **60fps with thousands of units on a mid-range phone.**
 5. **Fail fast, understand why, retry instantly.**
 
-## 3. Core mechanics
+## 3. The game as built
 
-### Control: relative drag
-- The army moves by the **finger's movement**, not to where the finger is, so the thumb never covers the action.
-- The army follows its target through a critically damped spring (~80ms) so it feels connected but not twitchy. No inertia after release.
-- Default: dragging across 60% of the screen width moves the army across the full track (`CFG.DRAG_SPAN`). A sensitivity setting comes later.
+### Army
+- **Relative drag:** the army follows the finger's movement, not its position (`CFG.DRAG_SPAN`, `STEER_RESPONSE`). Its center stays on the track, but a wide army hugging an edge loses its outer units over the rail.
+- **Formations:** sunflower, hex, rings, wedge, diamond and phalanx. Good gates morph to the next one with an outward ripple and a swirl burst; bad gates make it shake.
+- **Size:** every dot is one unit. Full spacing up to 1,200, then progressively tighter, reaching the rails at the 5,000 cap (`CFG.CAPACITY`). Overflow and units pushed past a rail fall into the void below the raised track.
+- **Losses** fizzle cyan → red → black where they died.
 
-### Auto-fire: the core addition
-- The front rank fires forward constantly. Fire rate grows with **√(army size)**, so bullet count stays bounded.
-- **Shooting a gate changes its value:**
-  - Additive gates go up by 1 per hit: −20 → −5 → +10. You can rescue a bad gate.
-  - Multiplier gates fill a charge bar: ×2 → ×3 at 100%.
-  - *(Planned)* Locked gates need N hits to open at all.
-- **The central tension:** fire spent on gates is fire not spent on the enemy squad coming next.
+### Fire and gates
+- Auto-fire from the army, rate `min(50, 3 + 2√N)`. *(Rework planned: batch B.)*
+- **Gate mix** (`CFG.GATE_MIX`): × 8%, + 32%, − 35%, ÷ 25%. A pair never has two bad options.
+  - **+ / −** fill a charge bar: 4 hits per step.
+  - **×** starts at ×1.0 (no effect) and climbs 0.1 per step to ×3.0, costing more hits as it climbs (`multHitsForStep()`, about 110 hits). Maxing it plays a loud chord and bursts gold.
+  - **÷** starts at ÷2–÷3 and shooting walks it down; at ÷1.0 it flips into a ×1.0 gate and keeps climbing.
+- **Split gates:** each panel applies only to the units that cross it (× multiplies them; + / − scale by their share). The primary panel (where the army's center goes) shatters.
+- **Moving gates** (15% of gate spots): a single 1.5-wide panel sweeping side to side. Mostly good; only the units that pass through it are affected.
 
-### Track elements
-| Element | What it tests | Status |
+### Enemies
+- **Every enemy is a unit** in a squad formation: blob, wall, wedge, skirmish, column or waves. All stay 0.45 in from the rails.
+- **Types** (`ENEMY_TYPES`), with grunts 80–90% of every squad:
+
+| Type | Look | Behavior |
 |---|---|---|
-| Gate pairs (+, −, ×) | Reading values and planning | Built |
-| Enemy squads (numbers shown) | Losses traded one for one, softened first by your fire | Built |
-| ÷ gates, order-of-operations runs | Light math mastery | Planned |
-| Saws, rollers, spike strips | Steering a wide crowd | Planned |
-| Crates and barrels to shoot | Weapon upgrades for that run (spread, pierce, fire rate) | Planned |
-| Narrow bridges | The crowd squeezes into a line, and units that hang off the edge fall | Planned |
-| Finale boss | Aim at weak points. Damage comes from surviving army plus weapon level. | Planned |
+| Grunt | Diamond | 1 hp, kills ~1.5 nearest units on contact |
+| Drone | Triangle | Strafes side to side; from the 3rd squad |
+| Bomber | Pulsing orange ring | 2 hp, homes on the center; **area blast** r 0.7, 95% at center, max 45; from the 4th squad |
+| Brute | Big hexagon | 8 hp, at the *back* of walls and wedges; **area stomp** r 1.2, 50% at center, max 60; from the 5th squad |
 
-### Scoring
-- 1 to 3 stars based on surviving army count and boss time.
-- **Every level can be beaten with zero meta upgrades by a skilled player.** Upgrades are a cushion, not a gate.
+- **Battles:** squads charge from 18 units out at 2.2 u/s. The track rolls in at half speed, stops dead for the clash, then surges forward with a big grid ripple and the battle-won sound. Enemies level with the army turn in on its flanks; ones that slip past hit the rear.
+- **Slow motion:** when incoming strength ≥ 0.8× the army, time eases to 0.3× (steering stays real-time), with a danger vignette and a heartbeat on the count.
+- **Sizing:** squads are sized as they emerge from the fog, against the army you'd have from the *best* side of every gate before them, minus what earlier squads will cost, at 0.35–0.85× that strength, by expected damage (not headcount).
 
-## 4. Level progression
+### Pacing, HUD and score
+- Track spacing: 18 units after a gate, 28 after a squad.
+- **HUD:** distance (top left), "Hi" score and mute (top right), army count at the bottom center with gains (green, left) and losses (red, right) as running totals. The camera is lens-shifted up for thumb room.
+- **Score** = distance × 10 + each enemy defeated × its hp × 5.
+- **Recap:** a big count-up score, each enemy type's idle sprite with kills and points, then distance, peak army and losses.
+- **High scores:** an 80s top-10 board with initials entry (▲▼ or typing, specials allowed), and a title attract mode. Global via Supabase once configured; until then per device.
 
-Levels last 30 to 60 seconds. Each world teaches **one** idea, then twists it. Difficulty rises in a sawtooth: hard, easy "power fantasy", harder.
+### Feel
+- **Grid ripples:** battle won 2.2, gate 1.6, wipe 1.5, blast 1.6, stomp 2.0, army lost 2.4.
+- **Bloom** is tuned so numbers stay readable.
+- **Sound:** synthesized WebAudio, rate-limited and pitched down in slow motion. Sounds: death fizzle, hit tick, pop, gate up/down/tick, max multiplier, blast, stomp, battle won (blast plus an echoing crackle), army lost.
 
-| World | Levels | New idea | Twist by the end |
-|---|---|---|---|
-| 1. Basics | 1–8 | Steering, simple gates | Shooting gates to raise them |
-| 2. Rescue | 9–16 | Negative gates you can shoot positive | Locked gates: charge one, or take the free gate? |
-| 3. Hazards | 17–24 | Saws and rollers | A big army is harder to steer, so is the ×3 worth it? |
-| 4. Contact | 25–32 | Enemy squads, crates | Fire on the enemies or on the gate? |
-| 5. Math | 33–40 | Order-of-operations runs, ÷ gates | Moving gates |
-| 6. Return fire | 41–50 | Enemies that shoot back | Everything combined |
+## 4. Roadmap
 
-- **Boss every 10 levels**, each built around that world's mechanic.
-- **Meta progression:** coins buy small permanent upgrades with diminishing returns.
-- **Daily seeded challenge:** the same level for everyone, compared on a leaderboard. No stamina timers.
+### Next up
+1. **Connect the global leaderboard.** Create the Supabase project (`LEADERBOARD.md`) and paste the URL and publishable key into `CFG.LEADERBOARD`.
+2. **Batch D: mini-boss plus the bomb it awards.**
+   - **Mini-boss:** a large wireframe shape with a health bar, about one every 8 segments from the second loop on. The track stops when it's in range. It advances slowly and **slams** every few seconds: a telegraphed pulsing ring, then a radius kill with a grid shockwave. Spread out or dodge. If it reaches the army it eats units each second. On death it shatters into tumbling segments (voxel-style).
+   - **Bomb ("Overload"):** the mini-boss's reward. One charge at a time (an inventory may come later). Shown as a top-right icon (excluded from drag input).
+     - **Tap:** lose half the army, destroy every enemy in sight. "In sight" = every squad that exists, since squads only spawn at the fog line (38 units); queued squads are untouched. Gates are untouched; a mini-boss takes heavy damage instead.
+     - **Last stand:** holding a charge and dropping below 100 in a battle auto-detonates it, still costing half the army.
+     - **Feel:** freeze-frame, white flash, a fast shockwave ring (about 30 u/s) shattering enemies as it reaches them, the outer half of the army popping, 0.5s of slow motion, shake and a big ripple. Sample sparks (about 1 per 8 kills) and process kills per frame as the ring passes.
+3. **Batch B: firepower rework.** Volley fire from front-rank positions; linear DPS (N × damage per unit) with a capped number of visible bullets and damage aggregated per bullet; bullets brighter and thicker as damage per bullet rises; gate "toughness" so big armies don't raise gates instantly.
+4. **Batch E: balance pass.** Tune the par curve, threat range, capacity, gate toughness, area damage and boss hp. Test on a real phone after D.
 
-### How levels get built
-- Levels are assembled from hand-authored **chunks** (gate pair, saw corridor, enemy wave) stored as JSON, plus difficulty settings.
-- **Automated level validator:** a headless simulator plays every level with bot strategies (always left, always right, greedy, optimal). It flags levels that can't be beaten, and gates where one option is always better. The `?debug` step hook (`window.vectorWars.step()`) is the first piece of this.
+### Ideas parked for later
+- **Track hazards:** saws, rollers, spike strips; narrow bridges and gaps; rail breaks.
+- **Gates:** locked gates (N hits to open), order-of-operations runs, gates that flip sign on a timer.
+- **Enemies:** squads that shoot back; shielded units (immune from the front); splitters that break into grunts; an enemy that steals units on contact.
+- **Run upgrades:** crates and barrels to shoot for spread, pierce or fire rate.
+- **Structure:** worlds and levels that each teach one idea (sawtooth difficulty); a boss every 10 levels; a daily seeded challenge with its own board; chunk-based levels in JSON; a headless level validator that plays every level with bot strategies (the `?debug` step hook is the start).
+- **Meta:** coins for small permanent upgrades (diminishing returns; every level beatable without them); stars; settings (drag sensitivity, effects intensity).
+- **Platform:** PWA install; Capacitor builds for iOS haptics and the app stores.
+- **Monetization (if any):** cosmetics only. Never pay-to-win, never interrupt a run.
 
 ## 5. Art direction: "vector arcade"
 
-Chosen from four options (see `concepts/art-directions.html`). Inspired by Geometry Wars, Defcon, neon arcades and old vector displays.
+Chosen from four options (`concepts/art-directions.html`), inspired by Geometry Wars, Defcon, neon arcades and old vector displays.
+- **You:** cyan / white points of light. **Enemies:** outlined shapes, never filled, in magenta (bombers orange, brutes violet).
+- **Gates:** green add, red-pink subtract, deeper red divide, gold multiply. **World:** electric blue, always dimmer than anything interactive. **HUD:** lime, in Share Tech Mono (titles in Audiowide).
+- **The grid reacts to events.** Losses burn red. Big objects (planned: mini-boss, barricades) shatter into glowing segments.
 
-| Reference | What we take |
-|---|---|
-| Geometry Wars | Enemies are **outlined shapes, never filled**. Deaths burst into line sparks. Dense crowds glow white-hot. |
-| Defcon | **One color per team** on a dark blue-black map, like a tactical display, with labels floating next to units. |
-| Neon arcade | Warm neon (yellow, pink) for **things you interact with**: gates, pickups, UI. |
-| Hyperspace streaks | **A sense of speed**: track lines streaking toward you, star streaks on big multipliers. |
-| GW warping grid | **The grid reacts to events**, rippling out from gate passes and explosions. |
+## 6. Tech
 
-### Color rules (fixed, so players learn them)
-- **Cyan / white:** you. **Magenta:** enemies and anything that hurts you.
-- **Green:** add gates. **Red-pink:** subtract gates. **Gold:** multipliers and pickups.
-- **Electric blue:** the world (grid, rails), always dimmer than anything interactive.
-- **Lime:** HUD text, in a vector-display font (Share Tech Mono; titles in Audiowide).
-- Bloom is tuned so **gate numbers stay readable**: only HDR elements (> ~0.55 luminance) glow.
-
-### Voxel-style destruction without the unit cap
-The swarm stays as points of light so it scales. **Large objects shatter like voxels:** enemy walls, barricades, gate frames and bosses are wireframe cubes that break into tumbling glowing segments. There are only ever a handful on screen, so they can be as detailed as we like.
-
-## 6. Tech architecture
-
-**Stack:** plain ES modules plus Three.js r170 from a CDN via an import map. **No build step**, so the folder deploys to GitHub Pages as-is. It can move to Vite + TypeScript and be wrapped with Capacitor for app stores if it grows.
+**Stack:** plain ES modules plus Three.js r170 from a CDN import map. **No build step**: the folder deploys to GitHub Pages as-is.
 
 | File | Responsibility |
 |---|---|
-| `src/config.js` | Every tunable and the HDR palette, plus seeded RNG |
-| `src/world.js` | Renderer, camera fit, bloom, the warping grid floor shader, rails, horizon, stars |
-| `src/crowd.js` | Player swarm and enemy squads, one `THREE.Points` draw call each |
-| `src/gates.js` | Gate panels (SDF border shader plus a canvas-texture label), squad count labels, pools |
-| `src/fx.js` | Bullets (one `LineSegments`) and sparks (one `Points`) |
-| `src/input.js` | Relative drag, scroll/zoom/long-press blocking |
-| `src/hud.js` | DOM HUD (distance, best, projected army count, recap) |
-| `src/main.js` | Rules, track generation, loop, adaptive quality, debug hook |
+| `src/config.js` | Tunables (`CFG`), animation timings (`ANIM`), bloom, the HDR palette, sound volumes (`SFX`), seeded RNG |
+| `src/main.js` | Rules, track generation, battles, scoring, loop, adaptive quality, debug hook |
+| `src/world.js` | Renderer, lens-shifted camera, bloom, the warping grid shader, rails, void |
+| `src/crowd.js` / `formations.js` | Player swarm (one `Points` draw call), formation slots, packing |
+| `src/enemies.js` / `enemyFormations.js` | Enemy units (one `Points` draw call, per-unit shape and color); formations, types, squad mixes |
+| `src/gates.js` | Gate panels (pairs or moving singles), labels, pool |
+| `src/fx.js` | Bullets, sparks, spark rings, fizzles, fallers |
+| `src/hud.js` / `sprites.js` | DOM HUD, recap, board and initials entry; 2D enemy sprites |
+| `src/scores.js` | High score board: Supabase REST plus a local cache and offline queue |
+| `src/audio.js` | Synthesized sound effects |
 
-### Performance design
-| Problem | Solution |
-|---|---|
-| Drawing thousands of units | One `Points` draw call per team with a custom glow/diamond sprite shader |
-| Crowd simulation | No boids. Units spring toward slots in one of six formation patterns (`src/formations.js`). O(N). |
-| Memory churn | Preallocated typed arrays for units, bullets and sparks. No per-frame allocation in hot loops. |
-| Very large armies | The track holds at most 1,200 units (`CFG.CAPACITY`); overflow falls off the edges, so every dot is exactly one unit. |
-| Crowd-vs-crowd fights | Losses traded 1:1 along the contact line, with sparks |
-| Bullets | Bounded fire rate (≤ 50/s), one line-segment draw call, a 1D sweep test against gates and squads |
-| Gate text | Canvas texture redrawn only when the value changes |
-| Frame pacing | Clamped variable dt (fixed timestep planned for the validator), DPR capped at 2, adaptive resolution drop when frames run > 19ms |
-
-**Measured (Phase 0, desktop):** 24,000 units (4,000 drawn) plus gates and squads run at about 0.9ms of CPU per frame, with about 30 draw calls. Still to do: profile on a real iPhone 11 / Pixel 6a.
-
-**Mobile details:** `touch-action: none`, pull-to-refresh and pinch blocked, safe-area insets, auto-pause when hidden. `navigator.vibrate` haptics on Android only; iOS needs the Capacitor wrapper.
-
-## 7. Build phases
-
-| Phase | Deliverable | "Done" means | Status |
-|---|---|---|---|
-| **0. Toy** | Running crowd, drag control, instanced rendering, bloom, warping grid; gates, shooting and squads as a bonus | 60fps on a real phone, and steering feels good with no goal | **Built.** Needs on-device testing. |
-| **1. Core loop** | Hazards, ÷ gates, locked gates, finale boss, 5 hand-made levels | You want to replay level 3 to beat your score | Next |
-| **2. Content pipeline** | Chunk JSON, level validator, 30 levels, juice pass, sound | Testers make different gate choices | |
-| **3. Meta and polish** | Coins, upgrades, stars, save data, settings, PWA install | A full session loop works | |
-| **4. Ship and tune** | Analytics, daily challenge, Capacitor builds | Decisions come from data | |
-
-**Most important rule:** the crowd has to feel good to steer on a real phone before anything else is built.
-
-## 8. Open decisions
-
-1. **Platform:** web/PWA first, Capacitor later. *(Leaning yes.)*
-2. **Monetization (if any):** cosmetics plus optional "double coins". Never pay-to-win, never interrupt a run.
-3. **Audio direction:** synthwave or chiptune, with bullets pulsing to the beat.
+**Performance:** typed arrays and pooling everywhere; no per-frame allocation in hot loops; DPR capped at 2 with an adaptive resolution drop. Measured on desktop: 1,200 units at about 1.5ms/frame. Still to do: profile a full battle at 5,000 units on a real mid-range phone.

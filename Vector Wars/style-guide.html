@@ -61,14 +61,14 @@
 <body>
 <main>
   <h1 class="sg-title">Vector Wars style guide</h1>
-  <p class="sg-lede">Every color, type style, game element, formation and animation, side by side and drawn the way it appears in the game. <a href="index.html">Play the game</a> · <a href="PLAN.md">Plan</a> · <a href="EDITS.md">Edits</a></p>
+  <p class="sg-lede">Every color, type style, game element, formation and animation, side by side and drawn the way it appears in the game. <a href="index.html">Play the game</a> · <a href="PLAN.md">Plan</a> · <a href="CHANGELOG.md">Edits</a></p>
 
   <div class="rule">
     <strong>Keep this page in sync.</strong> Any change to a color, font, size, HUD style, glow, formation or animation must update this page in the same commit.
     <ol>
       <li><span class="badge live">live</span> sections read their values straight from <code>src/config.js</code>, <code>src/formations.js</code> and <code>styles.css</code>. After a change, reload and check they still look right. New values need a label or card added here.</li>
       <li><span class="badge manual">manual</span> sections are hand-drawn approximations of shaders and effect code. Edit them by hand when the look or behavior changes.</li>
-      <li>If you can't update it right away, add an item under <strong>Style guide debt</strong> in <code>EDITS.md</code> so it isn't forgotten.</li>
+      <li>If you can't update it right away, add an item under <strong>Style guide debt</strong> in <code>CHANGELOG.md</code> so it isn't forgotten.</li>
     </ol>
   </div>
 
@@ -114,12 +114,12 @@
       <div class="meta">3 slots · ▲▼ cycle A–Z, 0–9 and ! ? . - * # @ &amp; $ % + = &lt; &gt; / _ space (hold to repeat) · tap a slot to select · keyboard typing, arrows, Backspace, Enter · "New high score" flashes gold/pink</div>
     </div>
     <div class="card">
-      <div class="stage hud-stage"><div id="hud"><div id="dist">2059</div><div id="best">Best 24,869</div><button id="mute" type="button" aria-label="Mute sound (demo)"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="on" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/><path class="x" d="M16 9l5 6M21 9l-5 6"/></svg></button><div id="army-hud"><div id="count">640</div><div id="delta" class="gain live">+371</div></div></div></div>
-      <h3>In-game HUD</h3><div class="var">#dist · #best · #mute (.off) · #army-hud #count · #delta</div>
-      <div class="meta">Share Tech Mono · distance 22px --hud (it's also the distance score) · best score 14px · army count 34px white with --you glow, fixed at the bottom center · delta 20px to its right</div>
+      <div class="stage hud-stage"><div id="hud"><div id="dist">2059</div><div id="best">Hi 24,869</div><button id="mute" type="button" aria-label="Mute sound (demo)"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="on" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/><path class="x" d="M16 9l5 6M21 9l-5 6"/></svg></button><div id="army-hud"><div id="gain" class="delta live">+371</div><div id="count">640</div><div id="loss" class="delta live">−24</div></div></div></div>
+      <h3>In-game HUD</h3><div class="var">#dist · #best · #mute (.off) · #army-hud #gain · #count · #loss</div>
+      <div class="meta">Share Tech Mono · distance 22px --hud (it's also the distance score) · "Hi" = top of the high score board, 14px · army count 34px white with --you glow, fixed at the bottom center · gains 20px --gain on its left, losses 20px --loss on its right; both can show at once</div>
     </div>
     <div class="card">
-      <div class="stage danger-stage"><div id="danger" style="opacity:1"></div><div id="hud"><div id="army-hud"><div id="count" class="danger">68</div><div id="delta" class="loss live">−214</div></div></div></div>
+      <div class="stage danger-stage"><div id="danger" style="opacity:1"></div><div id="hud"><div id="army-hud"><div id="count" class="danger">68</div><div id="loss" class="delta live">−214</div></div></div></div>
       <h3>Danger state</h3><div class="var">#danger · #count.danger · @keyframes heartbeat</div>
       <div class="meta">Vignette opacity follows danger from 0.4 up to ANIM.slowMoThreshold, and pulses when enemies slip past to the rear · count turns pink and beats every 0.9s</div>
     </div>
@@ -150,9 +150,9 @@
   <p class="sg-sub">Each demo runs on the real values in <code>ANIM</code>. Use 0.25× to study fast ones like the grid ripple.</p>
   <div class="grid wide" id="anims">
     <div class="card">
-      <div class="stage pop-stage"><div id="hud"><div id="army-hud" class="demo-army"><div id="count">300</div><div id="delta"></div></div></div></div>
-      <h3>Army count, gate delta and battle losses</h3><div class="var">#count.pop · #delta.flash · #delta.live → .fade</div>
-      <div class="meta">Gate: count pops (scale 1.3 → 1, 0.25s) and "+N"/"−N" flashes beside it (1.4s rise and fade) · battles and falls: a running "−N" stays up while losses keep coming, then fades 1.2s after the last one (0.6s)</div>
+      <div class="stage pop-stage"><div id="hud"><div id="army-hud" class="demo-army"><div id="gain" class="delta"></div><div id="count">300</div><div id="loss" class="delta"></div></div></div></div>
+      <h3>Army count, gains and losses</h3><div class="var">#count.pop · #gain / #loss · .delta.live · .bump · .fade</div>
+      <div class="meta">Gains (green, left) and losses (red, right) are separate running totals: each bumps (scale 1.45 → 1, 0.3s) on every change and fades 0.6s, 1.2s after its last change · a split gate shows both at once, and a battle keeps adding to the red side · the count pops when it goes up</div>
     </div>
   </div>
 
@@ -705,24 +705,31 @@ animCard({ title: 'Area attacks (bomber and brute)', vars: 'ENEMY_TYPES.*.aoe ·
 
 animCard({ title: 'Blink prompt', html: '<div class="stage" style="height:150px;display:flex;align-items:center;justify-content:center"><p class="blink" style="margin:0">Touch to start</p></div>', vars: '.blink · @keyframes blink', meta: '1.2s steps(2, start) infinite · CSS, so speed buttons do not apply' });
 
-// Count + delta use the real classes: a gate gain, then a battle's running losses.
-const countEl = document.querySelector('.demo-army #count'), deltaEl = document.querySelector('.demo-army #delta');
+// Count, gains and losses use the real classes: a split gate (gain and loss
+// at once), then a battle's running losses.
+const countEl = document.querySelector('.demo-army #count');
+const gainEl = document.querySelector('.demo-army #gain'), lossEl = document.querySelector('.demo-army #loss');
 const restartCls = (el, c) => { el.classList.remove(c); void el.offsetWidth; el.classList.add(c); };
+const showTag = (el, text) => { el.textContent = text; el.classList.remove('fade'); el.classList.add('live'); restartCls(el, 'bump'); };
+const fadeTag = (el) => { el.classList.remove('live', 'bump'); el.classList.add('fade'); };
 let countVal = 300, demoStep = 0, lossRun = 0;
 setInterval(() => {
   if (paused) return;
-  demoStep = (demoStep + 1) % 12;
+  demoStep = (demoStep + 1) % 14;
   if (demoStep === 1) {
-    const gain = Math.round(countVal * 0.6);
-    countVal += gain; countEl.textContent = countVal; restartCls(countEl, 'pop');
-    deltaEl.textContent = '+' + gain; deltaEl.className = 'gain'; restartCls(deltaEl, 'flash');
-  } else if (demoStep >= 4 && demoStep <= 8) {
-    const loss = 20 + Math.round(Math.random() * 30);
+    const gain = Math.round(countVal * 0.4), loss = Math.round(countVal * 0.08);
+    countVal += gain - loss; lossRun = loss;
+    countEl.textContent = countVal; restartCls(countEl, 'pop');
+    showTag(gainEl, '+' + gain); showTag(lossEl, '−' + lossRun);
+  } else if (demoStep === 5) {
+    fadeTag(gainEl);
+  } else if (demoStep >= 6 && demoStep <= 9) {
+    const loss = 15 + Math.round(Math.random() * 25);
     lossRun += loss; countVal -= loss; countEl.textContent = countVal;
-    deltaEl.textContent = '−' + lossRun; deltaEl.className = 'loss live';
-  } else if (demoStep === 10) {
-    deltaEl.className = 'loss fade'; lossRun = 0;
-  } else if (demoStep === 11 && countVal > 600) countVal = 300;
+    showTag(lossEl, '−' + lossRun);
+  } else if (demoStep === 12) {
+    fadeTag(lossEl); lossRun = 0;
+  } else if (demoStep === 13 && countVal > 600) countVal = 300;
 }, 350);
 
 // High scores: the real board (with a highlighted row) and a live entry.
