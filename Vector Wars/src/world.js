@@ -25,9 +25,10 @@ void main() {
     if (r.w == 0.0 || age < 0.0 || age > ${ANIM.rippleLife.toFixed(2)}) continue;
     vec2 c = vec2(r.x, -(r.y - uDist));
     float d = distance(p.xz, c);
-    float ring = exp(-pow((d - age * ${ANIM.rippleSpeed.toFixed(2)}) * 1.4, 2.0)) * exp(-age * ${ANIM.rippleDecay.toFixed(2)}) * r.w;
+    float ring = exp(-pow((d - age * ${ANIM.rippleSpeed.toFixed(2)}) / ${ANIM.rippleWidth.toFixed(2)}, 2.0)) * exp(-age * ${ANIM.rippleDecay.toFixed(2)}) * r.w;
     rip += ring;
   }
+  rip = min(rip, 2.5);
   p.y -= rip * ${ANIM.rippleDepth.toFixed(2)};
   vPos = p;
   vRip = rip;
@@ -165,6 +166,9 @@ export function createWorld(canvas) {
     let fov = 2 * Math.atan(Math.tan(hHalf) / camera.aspect) * 180 / Math.PI;
     fov = Math.min(80, Math.max(45, fov));
     camera.fov = fov;
+    // Lens shift: render a window offset downward, so the whole scene (army
+    // included) moves up the screen without tilting the camera.
+    camera.setViewOffset(w, h, 0, h * CFG.CAMERA_LIFT, w, h);
     camera.updateProjectionMatrix();
     pointScale.value = h * pixelRatio / (2 * Math.tan(fov * Math.PI / 360));
   }
@@ -178,13 +182,14 @@ export function createWorld(canvas) {
       ripples[ripI].set(x, wz, time, amp);
       ripI = (ripI + 1) % RIPPLES;
     },
-    update(time, dist, ax, shake) {
+    update(time, dist, ax, shake, battle = 0) {
       floorMat.uniforms.uTime.value = time;
       floorMat.uniforms.uDist.value = dist;
       const sx = shake ? (Math.random() * 2 - 1) * shake : 0;
       const sy = shake ? (Math.random() * 2 - 1) * shake : 0;
-      camera.position.set(ax * 0.3 + sx, 6.2 + sy, 7.4);
-      lookAt.set(ax * 0.45, 0, -7);
+      const push = battle * ANIM.battleCamPush;
+      camera.position.set(ax * 0.3 + sx, 6.2 - push * 0.7 + sy, 7.4 - push);
+      lookAt.set(ax * 0.45, 0, -7 + push * 0.6);
       camera.lookAt(lookAt);
     },
     render() { composer.render(); },

@@ -47,10 +47,13 @@
   .stage { position: relative; background: var(--bg); border-radius: 6px; overflow: hidden; }
   .stage .overlay { position: relative; inset: auto; min-height: 250px; }
   .stage #hud { position: absolute; }
-  .stage.hud-stage { height: 120px; }
-  .stage #count { position: absolute; left: 50%; top: 70px; transform: translate(-50%, -50%); visibility: visible; }
+  .stage.hud-stage { height: 140px; }
+  .stage #army-hud { visibility: visible; }
+  .stage > #count, .stage #hud > #count { position: absolute; left: 50%; top: 75px; transform: translate(-50%, -50%); }
   .pop-stage { height: 150px; }
-  .pop-stage #count { top: 75px; }
+  .stage #danger { position: absolute; }
+  .danger-stage { height: 150px; }
+  .stage #recap { margin: 0 auto; }
   code { font-family: 'Share Tech Mono', monospace; color: #cfe8ff; }
   a { color: var(--you); }
 </style>
@@ -86,7 +89,7 @@
   <div class="grid" id="cssvars"></div>
 
   <h2 class="sg-h">Typography and HUD <span class="badge live">live · styles.css</span></h2>
-  <p class="sg-sub">Titles use <code>Audiowide</code>; everything else uses <code>Share Tech Mono</code>, including the gate and squad labels drawn into textures (<code>FONT</code> in <code>src/gates.js</code>). These use the real game classes.</p>
+  <p class="sg-sub">Titles use <code>Audiowide</code>; everything else uses <code>Share Tech Mono</code>, including the gate labels drawn into textures (<code>FONT</code> in <code>src/gates.js</code>). These use the real game classes.</p>
   <div class="grid wide">
     <div class="card">
       <div class="stage"><div class="overlay"><h1>Vector Wars</h1><p class="sub">Drag to steer · Shoot gates to raise them</p><p class="blink">Touch to start</p></div></div>
@@ -95,20 +98,35 @@
     </div>
     <div class="card">
       <div class="stage"><div class="overlay"><h2>Swarm lost</h2>
-        <div id="recap"><div class="row"><span>Distance</span><span>2059</span></div><div class="row"><span>Peak swarm</span><span>1200</span></div><div class="row"><span>Lost to squads</span><span>81</span></div><div class="row"><span>Fell off</span><span>416</span></div><div class="new-best">New best</div></div>
+        <div id="recap"></div>
         <p class="blink">Tap to retry</p></div></div>
-      <h3>Game-over recap</h3><div class="var">.overlay h2 · #recap .row · .new-best</div>
-      <div class="meta">Audiowide clamp(28px, 9vw, 44px), --enemy glow</div>
+      <h3>Game-over recap</h3><div class="var">renderRecap() · #recap .score · .kills · .row</div>
+      <div class="meta">The real recap from src/hud.js with sample stats. Score = distance × CFG.SCORE_PER_DIST + each enemy defeated × its hp × CFG.SCORE_PER_HP · numbers count up over 0.9s · sprites idle (grunts bob, drones sway, bombers pulse, brutes turn)</div>
     </div>
     <div class="card">
-      <div class="stage hud-stage"><div id="hud"><div id="dist">2059</div><div id="best">Best 8320</div><div id="count">640</div></div></div>
-      <h3>In-game HUD</h3><div class="var">#dist · #best · #count</div>
-      <div class="meta">Share Tech Mono · distance 22px --hud · best 14px · army count 26px white with --you glow, floats above the army</div>
+      <div class="stage" style="padding:16px 8px"><div id="sg-board"></div></div>
+      <h3>High score board</h3><div class="var">renderBoard() · .board .r0–.r9 · .me</div>
+      <div class="meta">Top 10 from src/scores.js: global via Supabase when CFG.LEADERBOARD is set (cached on each device, offline scores queued), otherwise per device; empty slots filled with CPU entries VEC, TOR, WAR… · per-rank neon colors · dotted leaders · a fresh entry blinks · the title screen alternates logo and board every 5s</div>
+    </div>
+    <div class="card">
+      <div class="stage" style="padding:16px 8px"><div id="sg-entry"></div></div>
+      <h3>Initials entry (try it)</h3><div class="var">InitialsEntry · CHARSET · .slot.cur · .enter</div>
+      <div class="meta">3 slots · ▲▼ cycle A–Z, 0–9 and ! ? . - * # @ &amp; $ % + = &lt; &gt; / _ space (hold to repeat) · tap a slot to select · keyboard typing, arrows, Backspace, Enter · "New high score" flashes gold/pink</div>
+    </div>
+    <div class="card">
+      <div class="stage hud-stage"><div id="hud"><div id="dist">2059</div><div id="best">Best 24,869</div><button id="mute" type="button" aria-label="Mute sound (demo)"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="on" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/><path class="x" d="M16 9l5 6M21 9l-5 6"/></svg></button><div id="army-hud"><div id="count">640</div><div id="delta" class="gain live">+371</div></div></div></div>
+      <h3>In-game HUD</h3><div class="var">#dist · #best · #mute (.off) · #army-hud #count · #delta</div>
+      <div class="meta">Share Tech Mono · distance 22px --hud (it's also the distance score) · best score 14px · army count 34px white with --you glow, fixed at the bottom center · delta 20px to its right</div>
+    </div>
+    <div class="card">
+      <div class="stage danger-stage"><div id="danger" style="opacity:1"></div><div id="hud"><div id="army-hud"><div id="count" class="danger">68</div><div id="delta" class="loss live">−214</div></div></div></div>
+      <h3>Danger state</h3><div class="var">#danger · #count.danger · @keyframes heartbeat</div>
+      <div class="meta">Vignette opacity follows danger from 0.4 up to ANIM.slowMoThreshold, and pulses when enemies slip past to the rear · count turns pink and beats every 0.9s</div>
     </div>
     <div class="card">
       <canvas id="type-labels"></canvas>
-      <h3>Texture labels</h3><div class="var">gateLabel() · CountLabel</div>
-      <div class="meta">Gate value: 62% of panel height (50% when 5+ chars), tinted toward white for legibility · squad count: 80px, COLORS.enemy</div>
+      <h3>Gate labels</h3><div class="var">gateLabel()</div>
+      <div class="meta">62% of panel height (50% when 5+ chars), tinted toward white for legibility. Enemy squads have no count label: their formation and size show their strength.</div>
     </div>
   </div>
 
@@ -120,15 +138,27 @@
   <p class="sg-sub">Generated by the real <code>src/formations.js</code>, shown at 300 units top-down between the rails. Each is normalized so a full army (<span class="var" id="cap-label"></span>) spans <span class="var" id="fill-label"></span> of the track. Good gates advance to the next pattern in this order.</p>
   <div class="grid" id="formations"></div>
 
+  <h2 class="sg-h">Enemy formations <span class="badge live">live · enemyFormations.js</span></h2>
+  <p class="sg-sub">Generated by the real <code>src/enemyFormations.js</code> at 140 units, kept <span class="var">CFG.ENEMY_EDGE_MARGIN</span> in from the rails so they're always hittable, top-down with the front row (nearest the player) at the bottom. <span class="var">spread</span> is how well a squad keeps its shape while charging; every enemy turns inward once it's level with the army.</p>
+  <div class="grid" id="enemy-formations"></div>
+
+  <h2 class="sg-h">Enemy types <span class="badge live">live · ENEMY_TYPES</span> <span class="badge manual">shapes manual</span></h2>
+  <p class="sg-sub">Stats from <code>ENEMY_TYPES</code> in <code>src/enemyFormations.js</code>. Shapes are drawn to match the enemy shader in <code>src/enemies.js</code>. Squads are sized by expected damage (<span class="var">est</span>), so a squad with brutes or bombers has fewer units. Grunts are 80–90% of every squad (<span class="var">squadMix()</span>).</p>
+  <div class="grid" id="enemy-types"></div>
+
   <h2 class="sg-h">Animations <span class="badge live">timings live · ANIM</span> <span class="badge manual">drawing manual</span></h2>
   <p class="sg-sub">Each demo runs on the real values in <code>ANIM</code>. Use 0.25× to study fast ones like the grid ripple.</p>
   <div class="grid wide" id="anims">
     <div class="card">
-      <div class="stage pop-stage"><div id="hud"><div id="count">300</div></div></div>
-      <h3>Army count pop</h3><div class="var">#count.pop · @keyframes pop</div>
-      <div class="meta">0.25s ease-out, 36px → 26px · fires when the count goes up</div>
+      <div class="stage pop-stage"><div id="hud"><div id="army-hud" class="demo-army"><div id="count">300</div><div id="delta"></div></div></div></div>
+      <h3>Army count, gate delta and battle losses</h3><div class="var">#count.pop · #delta.flash · #delta.live → .fade</div>
+      <div class="meta">Gate: count pops (scale 1.3 → 1, 0.25s) and "+N"/"−N" flashes beside it (1.4s rise and fade) · battles and falls: a running "−N" stays up while losses keep coming, then fades 1.2s after the last one (0.6s)</div>
     </div>
   </div>
+
+  <h2 class="sg-h">Sound effects <span class="badge live">live · src/audio.js · SFX</span></h2>
+  <p class="sg-sub">Synthesized with WebAudio, so there are no audio files. Tap to play each sound. Volumes and rate limits come from <code>SFX</code> in <code>src/config.js</code>; rate limits keep big battles from turning into a wall of noise. In slow motion every sound plays lower and longer. The mute choice is saved per device.</p>
+  <div class="grid" id="sounds"></div>
 
   <h2 class="sg-h">Glow and post-processing <span class="badge live">live · BLOOM</span></h2>
   <p class="sg-sub">Bloom only picks up pixels brighter than the threshold, which is why HDR colors above 1.0 glow and gate text stays readable. Tone mapping is off; OutputPass converts to sRGB.</p>
@@ -143,8 +173,14 @@
 </main>
 
 <script type="module">
-import { CFG, COLORS, ANIM, BLOOM } from './src/config.js';
+import { CFG, COLORS, ANIM, BLOOM, multHitsForStep } from './src/config.js';
 import { FORMATIONS, UNIT_SPACING } from './src/formations.js';
+import { enemyFormation, ENEMY_KINDS, ENEMY_TYPES, TYPE_LIST } from './src/enemyFormations.js';
+import { drawEnemy } from './src/sprites.js';
+import { renderRecap, renderBoard, InitialsEntry } from './src/hud.js';
+import { cachedScores } from './src/scores.js';
+import { Sfx, SOUND_NAMES } from './src/audio.js';
+import { SFX } from './src/config.js';
 
 const FONT = '"Share Tech Mono", ui-monospace, monospace';
 const $ = (id) => document.getElementById(id);
@@ -184,8 +220,8 @@ function vline(ctx, x1, y1, x2, y2, c, w = 1.5) {
 }
 
 // Mirrors gateColor / gateLabel in src/gates.js (kept here to avoid loading three.js).
-const gateColor = (s) => s.op === 'x' ? COLORS.mult : s.op === '/' ? COLORS.sub : s.v >= 0 ? COLORS.add : COLORS.sub;
-const gateLabel = (s) => s.op === 'x' ? '×' + s.m : (s.v >= 0 ? '+' : '−') + Math.abs(s.v);
+const gateColor = (s) => s.op === 'x' ? COLORS.mult : s.op === '/' ? COLORS.div : s.v >= 0 ? COLORS.add : COLORS.sub;
+const gateLabel = (s) => s.op === 'x' ? '×' + s.m.toFixed(1) : s.op === '/' ? '÷' + s.d.toFixed(1) : (s.v >= 0 ? '+' : '−') + Math.abs(s.v);
 function gate(ctx, x, y, w, h, s) {
   const c = gateColor(s);
   ctx.fillStyle = css(c, 0.07 + (s.f || 0) * 0.3); ctx.fillRect(x, y, w, h);
@@ -195,7 +231,14 @@ function gate(ctx, x, y, w, h, s) {
   const ink = c.map((v) => v * 0.55 * 0.65 + 0.9 * 0.35);
   ctx.fillStyle = css(ink); ctx.font = `${Math.round(h * (label.length > 4 ? 0.5 : 0.62))}px ${FONT}`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, x + w / 2, y + h * 0.52);
-  if (s.op === 'x' && s.ch > 0) { ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.fillRect(x, y + h * 0.9, w * s.ch, h * 0.06); }
+  if (s.ch > 0) { ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.fillRect(x, y + h * 0.9, w * s.ch, h * 0.06); }
+}
+
+// Mirrors the fizzle shader in src/fx.js: cyan → COLORS.dying → black.
+function fizzleColor(t) {
+  const a = Math.min(1, t / ANIM.fizzleRedAt), k = 1 - Math.max(0, Math.min(1, (t - ANIM.fizzleRedAt) / (1 - ANIM.fizzleRedAt)));
+  const sm = (x) => x * x * (3 - 2 * x);
+  return COLORS.you.map((v, i) => (v + (COLORS.dying[i] - v) * sm(a)) * sm(k));
 }
 
 // ---------- Canvas + animation loop ----------
@@ -237,7 +280,9 @@ function loop(now) {
 const ROLES = {
   bg: 'Page background, void below the track',
   you: 'Your swarm, army count glow, falling units',
-  enemy: 'Enemy diamonds, squad count labels, enemy sparks',
+  enemy: 'Grunts and drones, enemy sparks, danger vignette',
+  enemyHot: 'Bombers and their blast rings',
+  enemyHeavy: 'Brutes and their stomp rings',
   add: '+ gates (value ≥ 0)',
   sub: '− gates, and ÷ gates once added',
   mult: '× gates and their charge',
@@ -245,6 +290,8 @@ const ROLES = {
   rail: 'Track rails; edge walls at ×0.12',
   horizon: 'Horizon line',
   bullet: 'Bullet streaks',
+  div: '÷ gates',
+  dying: 'Lost units burn to this, then fade to black',
   white: 'Highlights',
 };
 for (const [name, value] of Object.entries(COLORS)) {
@@ -278,9 +325,7 @@ fetch('styles.css').then((r) => r.text()).then((text) => {
 demo($('type-labels'), (ctx, w, h) => {
   const gw = Math.min(110, w * 0.3), gh = gw * CFG.GATE_H / (CFG.TW - 0.1);
   gate(ctx, w * 0.06, h / 2 - gh / 2, gw, gh, { op: '+', v: 24, f: 0 });
-  gate(ctx, w * 0.06 + gw + 8, h / 2 - gh / 2, gw, gh, { op: 'x', m: 2, ch: 0.4, f: 0 });
-  ctx.fillStyle = css(COLORS.enemy); ctx.font = `28px ${FONT}`; ctx.textAlign = 'center'; ctx.shadowColor = css(COLORS.enemy); ctx.shadowBlur = 10;
-  ctx.fillText('186', w * 0.86, h / 2); ctx.shadowBlur = 0;
+  gate(ctx, w * 0.06 + gw + 8, h / 2 - gh / 2, gw, gh, { op: 'x', m: 1.7, ch: 0.4, f: 0 });
 });
 
 // ---------- Game elements ----------
@@ -292,17 +337,18 @@ elementCard({ title: 'Player unit', vars: 'COLORS.you · pointMaterial shape 0',
   dot(ctx, w * 0.3, h / 2, 90, COLORS.you);
   for (let i = 0; i < 19; i++) { const r = Math.sqrt(i + 0.5) * 9, a = i * 2.39996; dot(ctx, w * 0.72 + r * Math.cos(a), h / 2 + r * Math.sin(a) * 0.85, 16, COLORS.you); }
 });
-elementCard({ title: 'Enemy unit', vars: 'COLORS.enemy · pointMaterial shape 1', meta: 'outlined diamond, never filled · size 0.24', note: 'Geometry Wars style. Enemies are always outlines; you are always dots.' }, (ctx, w, h, t) => {
+elementCard({ title: 'Enemy unit (grunt)', vars: 'COLORS.enemy × 0.55 · enemy shader shape 0', meta: 'outlined diamond, never filled · size 0.18', note: 'Geometry Wars style. Enemies are always outlines; you are always dots. Dimmed so dense formations keep their shape; hits flash them bright.' }, (ctx, w, h, t) => {
   ctx.globalCompositeOperation = 'lighter';
   diamond(ctx, w * 0.3, h / 2, 70, COLORS.enemy);
   for (let i = 0; i < 16; i++) { const r = Math.sqrt(i + 0.5) * 10, a = i * 2.39996; diamond(ctx, w * 0.72 + r * Math.cos(a), h / 2 + r * Math.sin(a) * 0.85, 16, COLORS.enemy); }
 });
 for (const [title, s, v] of [
-  ['Add gate', { op: '+', v: 12 }, 'COLORS.add · v ≥ 0'],
-  ['Subtract gate', { op: '+', v: -18 }, 'COLORS.sub · v < 0'],
-  ['Multiply gate', { op: 'x', m: 2, ch: 0.55 }, 'COLORS.mult · charge bar = ch'],
+  ['Add gate', { op: '+', v: 12, ch: 0.33 }, 'COLORS.add · v ≥ 0 · charge bar'],
+  ['Subtract gate', { op: '+', v: -18, ch: 0.66 }, 'COLORS.sub · v < 0 · charge bar'],
+  ['Multiply gate', { op: 'x', m: 1.4, ch: 0.55 }, `COLORS.mult · rare (${Math.round(CFG.GATE_MIX.mult * 100)}% of gates)`],
+  ['Divide gate', { op: '/', d: 2.5, ch: 0.3 }, `COLORS.div · ${Math.round(CFG.GATE_MIX.div * 100)}% of gates`],
 ]) {
-  elementCard({ title, vars: v, meta: `panel ${(CFG.TW - 0.1).toFixed(2)} × ${CFG.GATE_H} · border, faint fill, value text`, note: s.op === 'x' ? `Shooting fills the bar; at full it steps up, capped at ×${CFG.MULT_MAX}.` : 'Each bullet hit adds +1. Color flips when the value crosses zero.' }, (ctx, w, h) => {
+  elementCard({ title, vars: v, meta: `panel ${(CFG.TW - 0.1).toFixed(2)} × ${CFG.GATE_H} · border, faint fill, value text`, note: s.op === '/' ? `Starts at ÷2.0, ÷2.5 or ÷3.0. Shooting walks it down ${CFG.MULT_STEP} at a time; at ÷1.0 it flips into a ×1.0 gate and keeps climbing. Steps near ÷3 cost the most hits. A pair never has two bad gates.` : s.op === 'x' ? `Starts at ×${CFG.MULT_START.toFixed(1)} (does nothing). Shooting fills the bar; each fill adds ${CFG.MULT_STEP}, up to ×${CFG.MULT_MAX}. Higher steps take more hits.` : `Shooting fills the bar; every ${CFG.ADD_HITS_PER_STEP} hits add +1. Color flips when the value crosses zero.` }, (ctx, w, h) => {
     const gw = Math.min(w * 0.6, 170), gh = gw * CFG.GATE_H / (CFG.TW - 0.1);
     gate(ctx, (w - gw) / 2, (h - gh) / 2, gw, gh, { f: 0, ...s });
   });
@@ -348,6 +394,54 @@ FORMATIONS.forEach((f, idx) => {
   });
 });
 
+// ---------- Enemy formations (live from enemyFormations.js) ----------
+function seeded(seed) { let a = seed; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = Math.imul(a ^ (a >>> 15), a | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+for (const [kind, info] of Object.entries(ENEMY_KINDS)) {
+  const { pts } = enemyFormation(kind, 140, seeded(7));
+  const maxZ = Math.max(...pts.map((p) => p[1]), 0.5);
+  const cv = card($('enemy-formations'), { title: info.label, vars: `enemyFormation('${kind}') · spread ${info.spread}`, note: info.note, tall: true });
+  demo(cv, (ctx, w, h, t) => {
+    const s = Math.min(topDown(w), (h - 30) / maxZ);
+    ctx.globalCompositeOperation = 'lighter'; rails(ctx, w, h, s);
+    for (const [x, z] of pts) diamond(ctx, w / 2 + x * s, h - 16 - z * s, Math.max(6, CFG.ENEMY_SPACING * s * 1.1), COLORS.enemy);
+  });
+}
+
+// ---------- Enemy types ----------
+// Shapes come from src/sprites.js (shared with the end-of-run recap).
+const enemyShape = (ctx, x, y, size, t, time, flash = 0) => drawEnemy(ctx, t, x, y, size, time, { flash });
+for (const [key, t] of Object.entries(ENEMY_TYPES)) {
+  const stats = `hp ${t.hp} · ` + (t.aoe ? `area: radius ${t.aoe.radius}, ${Math.round(t.aoe.peak * 100)}% kill chance at center → 0 at edge, max ${t.aoe.max}` : `kills ${t.damage} on contact`) + ` · speed ×${t.speed} · homing ×${t.homing}` + (t.strafe ? ` · strafe ${t.strafe}` : '') + (t.converge ? ' · homes on center' : '');
+  const cv = card($('enemy-types'), { title: t.label, vars: `ENEMY_TYPES.${key} · COLORS.${t.color} · size ×${t.size}`, meta: stats, note: t.note });
+  demo(cv, (ctx, w, h, time) => {
+    ctx.globalCompositeOperation = 'lighter';
+    const dx = t.strafe ? Math.sin(time * 2.5) * w * 0.18 : 0, flash = (time % 2) < 0.12 ? 1 : 0;
+    enemyShape(ctx, w * 0.3 + dx * 0.3, h / 2, 34 * t.size, t, time, flash);
+    for (let i = 0; i < 9; i++) enemyShape(ctx, w * 0.62 + (i % 3) * 16 * Math.sqrt(t.size) + dx * 0.3, h / 2 - 16 + Math.floor(i / 3) * 16 * Math.sqrt(t.size), 13 * t.size, t, time + i);
+  });
+}
+
+// Plots precomputed curves with a moving playhead. lines: [{data, color, max, label}]
+function timeline(ctx, w, h, t, period, lines, marks) {
+  const pad = 26, gw = w - pad * 2, gh = h - 46, ph = (t % period) / period;
+  ctx.strokeStyle = 'rgba(120,140,200,.25)'; ctx.lineWidth = 1;
+  ctx.strokeRect(pad, 12, gw, gh);
+  ctx.font = `11px ${FONT}`; ctx.textAlign = 'center';
+  for (const [at, label] of marks) { const x = pad + at / period * gw; ctx.fillStyle = 'rgba(160,180,220,.7)'; ctx.fillText(label, x, h - 8); ctx.fillRect(x, 12, 1, gh); }
+  ctx.globalCompositeOperation = 'lighter';
+  for (const L of lines) {
+    ctx.strokeStyle = css(L.color, L.alpha || 1); ctx.lineWidth = 2; ctx.setLineDash(L.dash || []); ctx.beginPath();
+    L.data.forEach((v, i) => { const x = pad + i / (L.data.length - 1) * gw, y = 12 + gh - Math.min(1, v / L.max) * gh; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    ctx.stroke(); ctx.setLineDash([]);
+    const v = L.data[Math.floor(ph * (L.data.length - 1))];
+    dot(ctx, pad + ph * gw, 12 + gh - Math.min(1, v / L.max) * gh, 16, L.color);
+  }
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(pad + ph * gw, 12, 1, gh);
+  ctx.textAlign = 'left';
+  lines.forEach((L, i) => { ctx.fillStyle = css(L.color); ctx.fillText(L.label, pad + 4 + i * 120, 26); });
+}
+
 // ---------- Animations ----------
 function animCard(opts, draw, state) { const cv = card($('anims'), opts); if (cv && draw) demo(cv, draw, { state }); }
 
@@ -389,15 +483,16 @@ animCard({ title: 'March bob', vars: 'ANIM.bobFreq · bobHeight', meta: `|sin(${
     for (let i = 0; i < 14; i++) { const y = base - Math.abs(Math.sin(t * ANIM.bobFreq + i * 1.7)) * ANIM.bobHeight * PX * 8; dot(ctx, 20 + i * (w - 40) / 13, y, 22, COLORS.you); }
   });
 
-animCard({ title: 'Gate hit flash and charge', vars: 'ANIM.gateFlashDecay · CFG.MULT_CHARGE_PER_HIT · MULT_MAX', meta: `flash 1 → 0 at ${ANIM.gateFlashDecay}/s · +1 per hit · charge ${CFG.MULT_CHARGE_PER_HIT}/(m−1) per hit, cap ×${CFG.MULT_MAX}`, note: 'Bullets raise the − gate until it flips to +.', tall: true },
+animCard({ title: 'Gate hit flash and charge', vars: 'ANIM.gateFlashDecay · CFG.ADD_HITS_PER_STEP · MULT_STEP · multHitsForStep()', meta: `flash 1 → 0 at ${ANIM.gateFlashDecay}/s · + / −: 1 per ${CFG.ADD_HITS_PER_STEP} hits · ×: +${CFG.MULT_STEP} per ${CFG.MULT_HITS_BASE}–${multHitsForStep(CFG.MULT_MAX - 0.1)} hits (more as it climbs), ×${CFG.MULT_START.toFixed(1)} → ×${CFG.MULT_MAX}`, note: 'Bullets fill each gate bar; the − gate climbs until it flips to +.', tall: true },
   (ctx, w, h, t, dt, st) => {
-    if (!st.a) { st.a = { op: '+', v: -8, f: 0 }; st.b = { op: 'x', m: 2, ch: 0, f: 0 }; st.acc = 0; st.hold = 0; }
+    if (!st.a) { st.a = { op: '+', v: -4, ch: 0, f: 0 }; st.b = { op: 'x', m: CFG.MULT_START, ch: 0, f: 0 }; st.acc = 0; st.hold = 0; }
     st.acc += dt;
-    while (st.acc > 0.12) {
-      st.acc -= 0.12;
-      st.a.v++; st.a.f = 1; if (st.a.v > 14) st.a.v = -8;
-      if (st.b.m < CFG.MULT_MAX) { st.b.ch += CFG.MULT_CHARGE_PER_HIT / (st.b.m - 1); st.b.f = 1; if (st.b.ch >= 1) { st.b.ch = 0; st.b.m++; } }
-      else if ((st.hold += 0.12) > 1.5) { st.b.m = 2; st.b.ch = 0; st.hold = 0; }
+    while (st.acc > 0.06) {
+      st.acc -= 0.06;
+      st.a.ch = (st.a.ch || 0) + 1 / CFG.ADD_HITS_PER_STEP; st.a.f = 1;
+      if (st.a.ch >= 0.999) { st.a.ch = 0; st.a.v++; if (st.a.v > 6) st.a.v = -4; }
+      if (st.b.m < CFG.MULT_MAX - 1e-6) { st.b.ch += 1 / multHitsForStep(st.b.m); st.b.f = 1; if (st.b.ch >= 0.999) { st.b.ch = 0; st.b.m = Math.round((st.b.m + CFG.MULT_STEP) * 10) / 10; } }
+      else if ((st.hold += 0.06) > 1.5) { st.b.m = CFG.MULT_START; st.b.ch = 0; st.hold = 0; }
     }
     for (const g of [st.a, st.b]) g.f = Math.max(0, g.f - dt * ANIM.gateFlashDecay);
     const gw = Math.min(w * 0.4, 150), gh = gw * CFG.GATE_H / (CFG.TW - 0.1), gy = 18;
@@ -406,7 +501,7 @@ animCard({ title: 'Gate hit flash and charge', vars: 'ANIM.gateFlashDecay · CFG
     for (let i = 0; i < 10; i++) { const x = w / 2 + (i < 5 ? -gw / 2 - 4 : gw / 2 + 4) + ((i % 5) - 2) * 10, y = gy + gh + ((t * 300 + i * 23) % (h - gy - gh)); vline(ctx, x, y, x, y + 14, COLORS.bullet, 1.5); }
   }, {});
 
-animCard({ title: 'Grid ripple', vars: 'ANIM.rippleSpeed · rippleDecay · rippleLife · rippleDepth', meta: `ring ${ANIM.rippleSpeed} units/s · fade e^(−${ANIM.rippleDecay}t) · ${ANIM.rippleLife}s life · dips grid ${ANIM.rippleDepth}`, note: 'Gate passes, squad wipes and death. Top-down; the real one also bends the floor down.', tall: true },
+animCard({ title: 'Grid ripple', vars: 'ANIM.rippleSpeed · rippleDecay · rippleLife · rippleDepth · rippleWidth · ripple*', meta: `ring ${ANIM.rippleSpeed} units/s, ${ANIM.rippleWidth} wide · fade e^(−${ANIM.rippleDecay}t) · ${ANIM.rippleLife}s life · dips the floor ${ANIM.rippleDepth} × strength (capped at 2.5) · strengths: battle won ${ANIM.rippleWin}, gate ${ANIM.rippleGate}, squad wiped ${ANIM.rippleWipe}, bomber blast ${ANIM.rippleBlast}, brute stomp ${ANIM.rippleStomp}, enemy hit ${ANIM.rippleHit}, army lost ${ANIM.rippleDeath}`, note: 'Top-down sketch; in game the floor visibly bends down into a rolling wave. Shown at gate strength.', tall: true },
   (ctx, w, h, t) => {
     const s = topDown(w), age = t % 2.2, cx = w / 2, cy = h * 0.6;
     const r = age * ANIM.rippleSpeed * s, fade = Math.exp(-age * ANIM.rippleDecay);
@@ -414,7 +509,7 @@ animCard({ title: 'Grid ripple', vars: 'ANIM.rippleSpeed · rippleDecay · rippl
     for (let gx = -CFG.TW; gx <= CFG.TW + 1e-6; gx += 0.4) { ctx.strokeStyle = css(COLORS.grid, 0.5); ctx.beginPath(); ctx.moveTo(cx + gx * s, 0); ctx.lineTo(cx + gx * s, h); ctx.stroke(); }
     for (let gz = -10; gz <= 10; gz++) { ctx.strokeStyle = css(COLORS.grid, 0.5); ctx.beginPath(); ctx.moveTo(cx - CFG.TW * s, cy + gz * s); ctx.lineTo(cx + CFG.TW * s, cy + gz * s); ctx.stroke(); }
     ctx.save(); ctx.beginPath(); ctx.rect(cx - CFG.TW * s, 0, 2 * CFG.TW * s, h); ctx.clip();
-    for (const [lw, a] of [[18, 0.12], [6, 0.35], [2, 0.9]]) { ctx.strokeStyle = `rgba(150,110,255,${a * fade})`; ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke(); }
+    for (const [lw, a] of [[26 * ANIM.rippleWidth, 0.14], [9 * ANIM.rippleWidth, 0.4], [3, 0.95]]) { ctx.strokeStyle = `rgba(150,110,255,${a * fade})`; ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke(); }
     ctx.restore(); rails(ctx, w, h, s);
   });
 
@@ -431,7 +526,7 @@ animCard({ title: 'Spark burst', vars: 'Sparks · ANIM.sparkGravity · sparkLife
     for (const p of st.p) { p.vy -= ANIM.sparkGravity * dt; p.vx *= drag; p.x += p.vx * dt; p.y = Math.max(0.02, p.y + p.vy * dt); dot(ctx, w / 2 + p.x * PX * 0.8, base - p.y * PX * 0.8, 14 * (0.4 + 0.6 * p.life / p.span), p.c, p.life / p.span); }
   }, {});
 
-animCard({ title: 'Falling off the track', vars: 'Fallers · ANIM.fallGravity · fallRunMin/Max', meta: `run ${ANIM.fallRunMin}–${ANIM.fallRunMax} units/s → past the rail, gravity ${ANIM.fallGravity} · flickers and fades over 5 units`, note: 'Side view. Overflow from multipliers and units pushed past a rail.' },
+animCard({ title: 'Falling off the track', vars: 'Fallers · ANIM.fallGravity · fallRunMin/Max', meta: `run ${ANIM.fallRunMin}–${ANIM.fallRunMax} units/s → past the rail, gravity ${ANIM.fallGravity} · burns cyan → red → black over the first 3 units of drop`, note: 'Side view. Overflow from multipliers and units pushed past a rail.' },
   (ctx, w, h, t, dt, st) => {
     if (!st.p) { st.p = []; st.acc = 0; }
     const s = PX * 0.7, edge = w * 0.55, top = h * 0.35;
@@ -445,21 +540,233 @@ animCard({ title: 'Falling off the track', vars: 'Fallers · ANIM.fallGravity ·
       p.x += p.vx * dt;
       if (p.x * s > 0) { p.vy -= ANIM.fallGravity * dt; p.y += p.vy * dt; p.vx *= Math.pow(0.5, dt); p.life = Math.max(0, 1 + p.y / 5); }
       const flick = p.y < 0 ? 0.6 + 0.4 * Math.sin(p.i + p.y * 9) : 1;
-      dot(ctx, edge + p.x * s, top - 6 - p.y * s, 18, COLORS.you, p.life * flick);
+      dot(ctx, edge + p.x * s, top - 6 - p.y * s, 18 * (1 - 0.35 * Math.min(1, Math.max(0, -p.y / 3))), fizzleColor(Math.min(1, Math.max(0, -p.y / 3))), flick);
+    }
+  }, {});
+
+// Battle pacing: same easing rules as main.js, sampled over an 8s script.
+const PACE_T = 8, PACE = { speed: [], cam: [] };
+{
+  let speed = 1, surge = 0, battle = 0, wasEngaged = false;
+  for (let i = 0; i <= PACE_T * 60; i++) {
+    const t = i / 60, dt = 1 / 60;
+    const charging = t > 1.5 && t < 5.5, close = t > 2.6 && t < 5.5;
+    if (wasEngaged && !charging) surge = 1;
+    wasEngaged = charging;
+    surge = Math.max(0, surge - dt * ANIM.surgeDecay);
+    const target = close ? 0 : charging ? ANIM.approachSpeed : 1 + ANIM.surgeBoost * surge;
+    speed += (target - speed) * Math.min(1, dt * ANIM.battleBrake);
+    battle += ((close ? 1 : charging ? 0.4 : 0) - battle) * Math.min(1, dt * 3);
+    PACE.speed.push(speed); PACE.cam.push(battle);
+  }
+}
+animCard({ title: 'Battle pacing', vars: 'ANIM.approachSpeed · battleBrake · surgeBoost · surgeDecay · battleCamPush', meta: `approach ×${ANIM.approachSpeed} → stop within 3 units (eases at ${ANIM.battleBrake}/s) → surge ×${1 + ANIM.surgeBoost} fading at ${ANIM.surgeDecay}/s · camera pushes in ${ANIM.battleCamPush} units`, note: 'Track speed (cyan) and camera push-in (gold) through one battle.', tall: true },
+  (ctx, w, h, t) => timeline(ctx, w, h, t, PACE_T, [
+    { data: PACE.speed, color: COLORS.you, max: 1.7, label: 'track speed' },
+    { data: PACE.cam, color: COLORS.mult, max: 1.7, label: 'camera push', alpha: 0.8 },
+  ], [[1.5, 'charge'], [2.6, 'clash'], [5.5, 'won']]));
+
+// Slow motion: danger rises past the threshold, time scale eases down, then recovers.
+const SLOW_T = 8, SLOW = { danger: [], scale: [], vignette: [] };
+{
+  let scale = 1;
+  for (let i = 0; i <= SLOW_T * 60; i++) {
+    const t = i / 60, dt = 1 / 60;
+    const danger = t < 1 ? 0.2 : t < 3 ? 0.2 + (t - 1) * 0.6 : t < 5.5 ? 1.4 : Math.max(0, 1.4 - (t - 5.5) * 3);
+    const target = danger >= ANIM.slowMoThreshold ? ANIM.slowMoScale : 1;
+    scale += (target - scale) * Math.min(1, dt / (target < scale ? ANIM.slowMoIn : ANIM.slowMoOut));
+    SLOW.danger.push(danger); SLOW.scale.push(scale);
+    SLOW.vignette.push(Math.min(1, Math.max(0, (danger - 0.4) / (ANIM.slowMoThreshold - 0.4))));
+  }
+}
+animCard({ title: 'Slow motion near defeat', vars: 'ANIM.slowMoThreshold · slowMoScale · slowMoIn · slowMoOut', meta: `danger = incoming enemy strength ÷ army · at ≥ ${ANIM.slowMoThreshold}, time eases to ×${ANIM.slowMoScale} over ~${ANIM.slowMoIn}s, back over ~${ANIM.slowMoOut}s · steering stays real-time`, note: 'Danger (pink, dashed line = threshold) and time scale (cyan). The frame edge shows the vignette.', tall: true },
+  (ctx, w, h, t) => {
+    const i = Math.floor(((t % SLOW_T) / SLOW_T) * (SLOW.vignette.length - 1));
+    const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.max(w, h) * 0.7);
+    g.addColorStop(0, 'rgba(255,61,154,0)'); g.addColorStop(1, `rgba(255,61,154,${0.38 * SLOW.vignette[i]})`);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    timeline(ctx, w, h, t, SLOW_T, [
+      { data: SLOW.danger, color: COLORS.enemy, max: 1.6, label: 'danger' },
+      { data: SLOW.scale, color: COLORS.you, max: 1.6, label: 'time scale' },
+      { data: SLOW.danger.map(() => ANIM.slowMoThreshold), color: COLORS.enemy, max: 1.6, label: '', alpha: 0.4, dash: [4, 4] },
+    ], [[1, 'squad'], [3, 'overwhelmed'], [5.5, 'survived']]);
+  });
+
+// Enemy charge: a wall holds formation, charges, then turns in on the flanks.
+animCard({ title: 'Enemy charge and flank', vars: 'CFG.ENEMY_CHARGE_SPEED · ENEMY_HOMING · ENEMY_TYPES.grunt.damage', meta: `starts at ${CFG.ENEMY_TRIGGER} units · charge ${CFG.ENEMY_CHARGE_SPEED} units/s (+${CFG.ENEMY_CATCHUP}/s per unit of distance beyond 6) · homing ${CFG.ENEMY_HOMING}/s, ×3 once level with the army · each grunt that connects takes out ~${ENEMY_TYPES.grunt.damage} nearest units`, note: 'Top-down. Enemies that reach the army die and take the closest units with them.', tall: true },
+  (ctx, w, h, t, dt, st) => {
+    const s = Math.min(topDown(w), (h - 20) / 9), cx = w / 2, armyZ = 1.2;
+    if (!st.e || st.reset < t) {
+      st.e = enemyFormation('wall', 66, seeded(3)).pts.map(([x, z]) => ({ x, z: z + 7, ox: x, a: 1 }));
+      st.u = []; for (let i = 0; i < 170; i++) { const r = Math.sqrt(i + 0.5) * 0.09, a = i * 2.39996; st.u.push({ x: r * Math.cos(a), z: armyZ + r * Math.sin(a) * 0.85, a: 1 }); }
+      st.reset = t + 7; st.go = t + 0.8;
+    }
+    const alive = st.u.filter((u) => u.a);
+    const front = Math.max(...alive.map((u) => u.z - armyZ).map((d) => -d), 0) * -1;
+    let minX = 0, maxX = 0; for (const u of alive) { minX = Math.min(minX, u.x); maxX = Math.max(maxX, u.x); }
+    const halfW = (maxX - minX) / 2;
+    if (t > st.go) for (const e of st.e) {
+      if (!e.a) continue;
+      const gap = e.z - (armyZ + front);
+      e.z -= (CFG.ENEMY_CHARGE_SPEED + Math.max(0, gap - 6) * CFG.ENEMY_CATCHUP) * dt;
+      const close = e.z < armyZ + front + 1.2;
+      const tx = close ? 0 : e.ox, step = CFG.ENEMY_HOMING * (close ? 3 : 1) * dt;
+      e.x += Math.max(-step, Math.min(step, tx - e.x));
+      if (e.z <= armyZ + front + 0.05 && Math.abs(e.x) <= halfW + 0.12 && alive.length) {
+        e.a = 0;
+        for (let k = 0; k < Math.round(ENEMY_TYPES.grunt.damage); k++) {
+          let best = null, bd = Infinity;
+          for (const u of st.u) if (u.a) { const d = (u.x - e.x) ** 2 + (u.z - e.z) ** 2; if (d < bd) { bd = d; best = u; } }
+          if (best) best.a = 0;
+        }
+      }
+    }
+    ctx.globalCompositeOperation = 'lighter'; rails(ctx, w, h, s);
+    const Y = (z) => h - 10 - z * s;
+    for (const u of st.u) if (u.a) dot(ctx, cx + u.x * s, Y(u.z), 10, COLORS.you);
+    for (const e of st.e) if (e.a) diamond(ctx, cx + e.x * s, Y(e.z), 8, COLORS.enemy);
+  }, {});
+
+// Moving gate: a single narrower panel sways side to side; only the units
+// that pass through it are affected.
+animCard({ title: 'Moving gate', vars: 'CFG.MOVING_GATE_CHANCE · MOVING_GATE_WIDTH · MOVING_GATE_SPEED · MOVING_GATE_GOOD', meta: `${Math.round(CFG.MOVING_GATE_CHANCE * 100)}% of gate spots · ${CFG.MOVING_GATE_WIDTH} wide · sways at ${CFG.MOVING_GATE_SPEED} rad/s across the track · ${Math.round(CFG.MOVING_GATE_GOOD * 100)}% good (+ or ×), the rest bad (− or ÷) · shoot it like any gate; it only shatters if units went through`, note: 'A ×3.0 here is the jackpot: maxing a multiplier plays a loud chord and bursts gold.', tall: true },
+  (ctx, w, h, t) => {
+    const s = topDown(w), gw = CFG.MOVING_GATE_WIDTH * s, amp = CFG.TW - CFG.MOVING_GATE_WIDTH / 2 - 0.05;
+    const sx = amp * Math.sin(t * CFG.MOVING_GATE_SPEED), m = Math.min(3, 1 + Math.floor((t % 6) / 6 * 21) / 10);
+    ctx.globalCompositeOperation = 'lighter'; rails(ctx, w, h, s);
+    ctx.globalCompositeOperation = 'source-over';
+    gate(ctx, w / 2 + sx * s - gw / 2, h * 0.3, gw, gw * CFG.GATE_H / CFG.MOVING_GATE_WIDTH * 0.6, { op: 'x', m, ch: m >= 3 ? 0 : (t * 3) % 1, f: m >= 3 ? 0.6 + 0.4 * Math.sin(t * 20) : 0 });
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 90; i++) { const r = Math.sqrt(i + 0.5) * 0.09, a = i * 2.39996; dot(ctx, w / 2 + (sx * 0.8 + r * Math.cos(a)) * s, h * 0.8 + r * Math.sin(a) * 0.85 * s, 9, COLORS.you); }
+  });
+
+// Split gate crossing: units through each panel get that panel's effect;
+// the primary (where the center went) shatters.
+animCard({ title: 'Split gate crossing', vars: 'crossGate() · ANIM.gateShatter', meta: `primary panel bursts over ${ANIM.gateShatter}s · × applies to units through it · + / − scaled by their share of the army`, note: 'Most of the army goes through ×2 (primary, shatters); the right edge clips −20 (secondary, flashes) and loses its share from that side only.', tall: true },
+  (ctx, w, h, t) => {
+    const s = topDown(w) * 0.8, period = 3, ph = (t % period) / period;
+    const gw = CFG.TW * s, gy = h * 0.35, armyY = h * 0.95 - ph * h * 0.9, cx = w / 2 - CFG.TW * s * 0.3;
+    const crossed = armyY < gy, k = crossed ? Math.min(1, (gy - armyY) / (h * 0.9 * ANIM.gateShatter / period)) : 0;
+    ctx.save(); ctx.globalAlpha = 1 - k; ctx.translate(w / 2 - gw / 2, gy); ctx.scale(1 + k * 0.5, 1 + k * 0.5); ctx.translate(-(w / 2 - gw / 2), -gy);
+    gate(ctx, w / 2 - gw - 2, gy - 24, gw, 30, { op: 'x', m: 2.0, ch: 0, f: k > 0 ? 1 - k : 0 }); ctx.restore();
+    gate(ctx, w / 2 + 2, gy - 24, gw, 30, { op: '+', v: -20, ch: 0, f: crossed ? Math.max(0, 1 - k * 2) : 0 });
+    ctx.globalCompositeOperation = 'lighter'; rails(ctx, w, h, s);
+    if (k > 0 && k < 1) for (let i = 0; i < 14; i++) dot(ctx, w / 2 - gw + (i / 13) * gw, gy - 24 + (i % 2) * 30 - k * 20 * (i % 3 - 1), 10, COLORS.mult, 1 - k);
+    const n = crossed ? 150 : 100;
+    for (let i = 0; i < n; i++) { const r = Math.sqrt(i + 0.5) * 6, a = i * 2.39996, x = cx + r * Math.cos(a) * 1.3, y = armyY + r * Math.sin(a) * 0.6; if (crossed && x > w / 2 && i % 3 === 0) continue; dot(ctx, x, y, 9, COLORS.you); }
+  });
+
+animCard({ title: 'Unit loss fizzle', vars: 'Fizzles · COLORS.dying · ANIM.fizzleTime · fizzleRedAt', meta: `${ANIM.fizzleTime}s: cyan → red over the first ${Math.round(ANIM.fizzleRedAt * 100)}%, then red → black · flickers · shrinks 35% · stays where it died`, note: 'Every unit lost to a gate, an enemy hit, a blast or slipping past. Fallers use the same burn as they drop.', tall: true },
+  (ctx, w, h, t) => {
+    const s = topDown(w), period = 2.2, ph = (t % period);
+    ctx.globalCompositeOperation = 'lighter'; rails(ctx, w, h, s);
+    for (let i = 0; i < 160; i++) {
+      const r = Math.sqrt(i + 0.5) * 0.11, a = i * 2.39996, x = w / 2 + r * Math.cos(a) * s, y = h * 0.55 + r * Math.sin(a) * 0.85 * s;
+      const lost = Math.cos(a) * r > 0.15;   // the right side is lost to a gate
+      if (!lost || ph < 0.4) { dot(ctx, x, y, 12, COLORS.you); continue; }
+      const k = Math.min(1, (ph - 0.4) / ANIM.fizzleTime);
+      if (k >= 1) continue;
+      dot(ctx, x, y + (ph - 0.4) * 30, 12 * (1 - 0.35 * k), fizzleColor(k), 0.75 + 0.25 * Math.sin(i * 3.7 + k * 40));
+    }
+  });
+
+// Area attack: chance to die falls off from the center; the ring shows reach.
+animCard({ title: 'Area attacks (bomber and brute)', vars: 'ENEMY_TYPES.*.aoe · army.killArea() · sparks.ring()', meta: `bomber: radius ${ENEMY_TYPES.bomber.aoe.radius}, ${Math.round(ENEMY_TYPES.bomber.aoe.peak * 100)}% at center · brute: radius ${ENEMY_TYPES.brute.aoe.radius}, ${Math.round(ENEMY_TYPES.brute.aoe.peak * 100)}% at center · chance = peak × (1 − d²/r²) · both throb brighter in their last 4 units · shake, ripple and sound on impact`, note: 'Left: bomber (tight and deadly). Right: brute (wide, fewer per unit). Lost units fizzle red, leaving a crater.', tall: true },
+  (ctx, w, h, t, dt, st) => {
+    const period = 2.6, ph = t % period, s = Math.min(topDown(w), w / 9);
+    if (!st.u || ph < st.lastPh) {
+      st.u = [];
+      for (const [cx, type] of [[-1, ENEMY_TYPES.bomber], [1, ENEMY_TYPES.brute]]) {
+        for (let i = 0; i < 260; i++) {
+          const r = Math.sqrt(i + 0.5) * 0.085, a = i * 2.39996, x = cx * 1.9 + r * Math.cos(a), z = r * Math.sin(a) * 0.85;
+          const d2 = (x - cx * 1.9) ** 2 + (z + 0.35) ** 2, R2 = type.aoe.radius ** 2;
+          st.u.push({ x, z, die: d2 < R2 && Math.random() < type.aoe.peak * (1 - d2 / R2) });
+        }
+      }
+    }
+    st.lastPh = ph;
+    const hit = 0.9, cy = h * 0.55, X = (x) => w / 2 + x * s, Y = (z) => cy + z * s;
+    ctx.globalCompositeOperation = 'lighter';
+    for (const [cx, type] of [[-1, ENEMY_TYPES.bomber], [1, ENEMY_TYPES.brute]]) {
+      const ex = cx * 1.9, ez = -0.35 - Math.max(0, hit - ph) * 2.2;
+      if (ph < hit) { const glow = Math.max(0, 1 - (hit - ph) * 2); drawEnemy(ctx, type, X(ex), Y(ez) - 12, 22 * Math.sqrt(type.size), t, { flash: glow * (0.5 + 0.5 * Math.sin(t * 14)) }); }
+      else if (ph < hit + 0.6) {
+        const k = (ph - hit) / 0.6, c = COLORS[type.color];
+        ctx.strokeStyle = css(c, 1 - k); ctx.lineWidth = 3; ctx.shadowColor = css(c); ctx.shadowBlur = 12;
+        ctx.beginPath(); ctx.ellipse(X(ex), Y(-0.35), type.aoe.radius * s * (0.9 + k * 0.3), type.aoe.radius * s * 0.85 * (0.9 + k * 0.3), 0, 0, Math.PI * 2); ctx.stroke(); ctx.shadowBlur = 0;
+      }
+    }
+    for (const u of st.u) {
+      if (!u.die || ph < hit) { dot(ctx, X(u.x), Y(u.z), 9, COLORS.you); continue; }
+      const k = Math.min(1, (ph - hit) / ANIM.fizzleTime);
+      if (k < 1) dot(ctx, X(u.x), Y(u.z), 9 * (1 - 0.35 * k), fizzleColor(k), 0.75 + 0.25 * Math.sin(u.x * 50 + k * 40));
     }
   }, {});
 
 animCard({ title: 'Blink prompt', html: '<div class="stage" style="height:150px;display:flex;align-items:center;justify-content:center"><p class="blink" style="margin:0">Touch to start</p></div>', vars: '.blink · @keyframes blink', meta: '1.2s steps(2, start) infinite · CSS, so speed buttons do not apply' });
 
-// Count pop uses the real #count.pop class.
-const countEl = document.querySelector('.pop-stage #count');
-let countVal = 300;
+// Count + delta use the real classes: a gate gain, then a battle's running losses.
+const countEl = document.querySelector('.demo-army #count'), deltaEl = document.querySelector('.demo-army #delta');
+const restartCls = (el, c) => { el.classList.remove(c); void el.offsetWidth; el.classList.add(c); };
+let countVal = 300, demoStep = 0, lossRun = 0;
 setInterval(() => {
   if (paused) return;
-  countVal = countVal >= 1200 ? 300 : Math.min(1200, countVal * 2);
-  countEl.textContent = countVal;
-  countEl.classList.remove('pop'); void countEl.offsetWidth; countEl.classList.add('pop');
-}, 1400);
+  demoStep = (demoStep + 1) % 12;
+  if (demoStep === 1) {
+    const gain = Math.round(countVal * 0.6);
+    countVal += gain; countEl.textContent = countVal; restartCls(countEl, 'pop');
+    deltaEl.textContent = '+' + gain; deltaEl.className = 'gain'; restartCls(deltaEl, 'flash');
+  } else if (demoStep >= 4 && demoStep <= 8) {
+    const loss = 20 + Math.round(Math.random() * 30);
+    lossRun += loss; countVal -= loss; countEl.textContent = countVal;
+    deltaEl.textContent = '−' + lossRun; deltaEl.className = 'loss live';
+  } else if (demoStep === 10) {
+    deltaEl.className = 'loss fade'; lossRun = 0;
+  } else if (demoStep === 11 && countVal > 600) countVal = 300;
+}, 350);
+
+// High scores: the real board (with a highlighted row) and a live entry.
+renderBoard(document.getElementById('sg-board'), cachedScores(), 5);
+const sgEntry = document.getElementById('sg-entry');
+const startEntry = () => {
+  const e = new InitialsEntry(sgEntry, 5, (ini) => { e.close(); sgEntry.innerHTML = `<div class="entry-title">Saved "${ini}"</div><p class="note">(Demo only; nothing stored.)</p>`; setTimeout(startEntry, 2000); });
+};
+startEntry();
+
+// Recap: the real renderer with sample stats.
+renderRecap(document.getElementById('recap'), {
+  score: 24869, distPts: 8164, kills: [2388, 137, 72, 84],
+  killPts: TYPE_LIST.map((t, i) => [2388, 137, 72, 84][i] * t.hp * CFG.SCORE_PER_HP),
+  peak: 813, lostEnemy: 2159, leaked: 0, lostGate: 42, fell: 0, newBest: true,
+});
+
+// ---------- Sounds ----------
+const SOUND_NOTES = {
+  death: 'A unit fizzling out: noise crackle sweeping down plus a falling zap. Every lost unit and every faller.',
+  hit: 'Bullet chipping an enemy or a gate: a tiny glassy tick.',
+  pop: 'Enemy destroyed: bright chirp and click.',
+  gateUp: 'Passing a good gate: shimmering rising arpeggio and swoosh.',
+  gateDown: 'Passing a bad gate: falling buzz and low thud.',
+  gateTick: 'A gate value ticking up from fire; pitch rises with the value.',
+  blast: 'Bomber explosion: low boom and noise burst.',
+  stomp: 'Brute stomp: heavy sub thud, crunch and ground rumble.',
+  maxMult: 'A × gate reaching its ×3.0 cap: a loud, bright major chord with a rising sweep (plus a gold burst on the gate).',
+  win: 'Battle won: the blast sound plus a crackly fizzle that echoes away (feedback delay, darkening each repeat).',
+  lose: 'Army wiped out: long dive and rumble.',
+};
+const guideSfx = new Sfx();
+for (const name of SOUND_NAMES) {
+  const cfg = SFX[name], el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `<div class="controls" style="margin:0"><button type="button">Play ${name}</button><button type="button">×5 burst</button><button type="button">Slow-mo</button></div>
+    <h3>${name}</h3><div class="var">SFX.${name}</div>
+    <div class="meta">volume ${cfg.volume}${cfg.maxRate ? ` · max ${cfg.maxRate}/s` : ''}</div><div class="note">${SOUND_NOTES[name] || ''}</div>`;
+  const [one, burst, slow] = el.querySelectorAll('button');
+  one.onclick = () => { guideSfx.unlock(); guideSfx.rate = 1; guideSfx.play(name); };
+  burst.onclick = () => { guideSfx.unlock(); guideSfx.rate = 1; for (let i = 0; i < 5; i++) setTimeout(() => guideSfx.play(name), i * 60); };
+  slow.onclick = () => { guideSfx.unlock(); guideSfx.rate = ANIM.slowMoScale; guideSfx.play(name); guideSfx.rate = 1; };
+  $('sounds').appendChild(el);
+}
 
 // ---------- Tables ----------
 function table(el, obj, prefix) { el.innerHTML = Object.entries(obj).map(([k, v]) => `<tr><td>${prefix}.${k}</td><td>${fmtN(v)}</td></tr>`).join(''); }

@@ -31,24 +31,34 @@
 </head>
 <body>
 <canvas id="game"></canvas>
+<div id="danger"></div>
 
 <div id="hud">
   <div id="dist">0</div>
   <div id="best">Best 0</div>
-  <div id="count">0</div>
+  <button id="mute" type="button" aria-label="Mute sound" aria-pressed="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="on" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/><path class="x" d="M16 9l5 6M21 9l-5 6"/></svg>
+  </button>
+  <div id="army-hud"><div id="gain" class="delta"></div><div id="count">0</div><div id="loss" class="delta"></div></div>
   <div id="debug"></div>
 </div>
 
 <div id="title" class="overlay">
-  <h1>Vector Wars</h1>
-  <p class="sub">Drag to steer · Shoot gates to raise them</p>
+  <div class="title-stage">
+    <div id="title-logo">
+      <h1>Vector Wars</h1>
+      <p class="sub">Drag to steer · Shoot gates to raise them</p>
+    </div>
+    <div id="title-board"></div>
+  </div>
   <p class="blink">Touch to start</p>
 </div>
 
 <div id="over" class="overlay hidden">
   <h2>Swarm lost</h2>
   <div id="recap"></div>
-  <p class="blink">Tap to retry</p>
+  <div id="entry" class="hidden"></div>
+  <p id="retry" class="blink">Tap to retry</p>
 </div>
 
 <script type="module" src="src/main.js"></script>
