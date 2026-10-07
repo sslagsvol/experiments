@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Style Test</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #020310; overflow: hidden; touch-action: none; }
+  body { display: flex; align-items: center; justify-content: center; }
+  canvas { height: min(100vh, 177.78vw); aspect-ratio: 9 / 16; display: block; background: #04051a; cursor: grab; touch-action: none; }
+</style>
+</head>
+<body>
+<!-- First Canvas 2D sketch of the neon-swarm look, kept for reference. The real build is ../index.html. -->
+<canvas id="cv"></canvas>
+<script>
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+const W=360,H=640,DPR=Math.min(2,window.devicePixelRatio||1);
+cv.width=W*DPR;cv.height=H*DPR;ctx.scale(DPR,DPR);
+const F=300,CAMH=4,HOR=150,TW=1.8,AZ=4,SP=0.055,MAXV=1200,BS=22;
+const ox=new Float32Array(MAXV),oz=new Float32Array(MAXV);
+for(let i=0;i<MAXV;i++){const r=Math.sqrt(i+0.5),a=i*2.39996;ox[i]=r*Math.cos(a);oz[i]=r*Math.sin(a)*0.8}
+function P(x,z,y){if(z<0.6)return null;const s=F/z;return[W/2+x*s,HOR+(CAMH-(y||0))*s,s]}
+function glow(c,core){const g=document.createElement('canvas');g.width=g.height=32;const q=g.getContext('2d');const r=q.createRadialGradient(16,16,0,16,16,16);r.addColorStop(0,core);r.addColorStop(0.22,c);r.addColorStop(1,'rgba(0,0,0,0)');q.fillStyle=r;q.fillRect(0,0,32,32);return g}
+const SC=glow('rgba(70,210,255,0.85)','#ffffff'),SM=glow('rgba(255,60,150,0.8)','#ffd0e6'),SY=glow('rgba(255,200,60,0.8)','#ffffff');
+const SD=document.createElement('canvas');SD.width=SD.height=32;{const q=SD.getContext('2d');q.translate(16,16);q.rotate(Math.PI/4);q.strokeStyle='#ff3d9a';q.lineWidth=2.2;q.shadowColor='#ff3d9a';q.shadowBlur=7;q.strokeRect(-6,-6,12,12)}
+const stars=[];for(let i=0;i<70;i++)stars.push([Math.random()*W,Math.random()*HOR,Math.random()]);
+const ux=new Float32Array(MAXV),uz=new Float32Array(MAXV);
+const bx=new Float32Array(400),bw=new Float32Array(400);let nb=0;
+const SPN=700,px=new Float32Array(SPN),pz=new Float32Array(SPN),pvx=new Float32Array(SPN),pvz=new Float32Array(SPN),pl=new Float32Array(SPN),pc=new Uint8Array(SPN);let sp=0;
+let N,V,ax,tx,dist,gates,enemies,nextW,pat,over,idle=3,fireAcc,t=0,dragging=false,lastX=0,hint=1,flashN=0;
+function reset(){N=30;V=0;ax=tx=0;dist=0;gates=[];enemies=[];nextW=14;pat=0;over=false;nb=0;fireAcc=0}
+reset();
+function spark(x,z,c,n){for(let k=0;k<n;k++){const i=sp;sp=(sp+1)%SPN;const a=Math.random()*6.283,s=0.5+Math.random()*2.5;px[i]=x;pz[i]=z;pvx[i]=Math.cos(a)*s;pvz[i]=Math.sin(a)*s;pl[i]=0.4+Math.random()*0.4;pc[i]=c}}
+function rgate(){const r=Math.random();if(r<0.3)return{op:'x',m:2,ch:0,f:0};if(r<0.62)return{op:'+',v:5+Math.floor(Math.random()*20),f:0};return{op:'+',v:-(5+Math.floor(Math.random()*30)),f:0}}
+function spawn(){const p='gegeggee'[pat++%8];if(p==='g')gates.push({wz:nextW,L:rgate(),R:rgate(),done:false});else enemies.push({x:(Math.random()*2-1)*0.9,wz:nextW,n:Math.max(8,Math.round(N*(0.25+Math.random()*0.55)))});nextW+=11}
+function hit(s){if(s.op==='x'){s.ch+=0.05;if(s.ch>=1){s.ch=0;s.m++}}else s.v+=1;s.f=1}
+function apply(s){if(s.op==='x')N*=s.m;else N=Math.max(0,N+s.v);N=Math.min(N,99999);flashN=1;if(N<=0)over=true}
+function update(dt){
+if(over)return;
+idle+=dt;if(idle>2.5)tx=Math.sin(t*0.6)*1.1;
+const r=SP*Math.sqrt(Math.min(N,MAXV));const lim=Math.max(0.1,TW-r*0.6);tx=Math.max(-lim,Math.min(lim,tx));
+ax+=(tx-ax)*Math.min(1,dt*14);
+let mul=1;
+for(const e of enemies){const ez=e.wz-dist,er=SP*1.2*Math.sqrt(Math.min(e.n,600));
+if(e.n>0&&ez-er*0.8<=AZ+r*0.8&&ez+er>AZ-r&&Math.abs(e.x-ax)<er+r*0.9){mul=0.25;const k=Math.min(e.n,N,Math.max(1,Math.round(dt*90+N*dt*0.6)));e.n-=k;N-=k;spark((e.x+ax)/2,(ez+AZ+r)/2,1,Math.min(12,k*2));spark(ax,AZ+r*0.7,0,Math.min(6,k));if(N<=0){over=true}}}
+dist+=6*mul*dt;
+while(nextW<dist+45)spawn();
+for(const g of gates){if(!g.done&&g.wz-dist<=AZ){apply(ax<0?g.L:g.R);g.done=true;spark(ax,AZ+r,2,30)}g.L.f=Math.max(0,g.L.f-dt*4);g.R.f=Math.max(0,g.R.f-dt*4)}
+fireAcc+=dt*Math.min(45,3+Math.sqrt(N)*2);
+while(fireAcc>=1&&nb<400){fireAcc-=1;bx[nb]=ax+(Math.random()*2-1)*r*0.8;bw[nb]=dist+AZ+r*0.6;nb++}
+for(let i=nb-1;i>=0;i--){const o=bw[i],nw=o+BS*dt;let dead=nw-dist>32;
+if(!dead)for(const g of gates){if(!g.done&&o<g.wz&&nw>=g.wz&&Math.abs(bx[i])<TW){hit(bx[i]<0?g.L:g.R);dead=true;break}}
+if(!dead)for(const e of enemies){if(e.n<=0)continue;const er=SP*1.2*Math.sqrt(Math.min(e.n,600))+0.05;if(Math.abs(bx[i]-e.x)<er&&nw>=e.wz-er&&o<=e.wz+er){e.n--;spark(bx[i],nw-dist,1,4);dead=true;break}}
+if(dead){nb--;bx[i]=bx[nb];bw[i]=bw[nb]}else bw[i]=nw}
+gates=gates.filter(g=>g.wz-dist>0.7);enemies=enemies.filter(e=>e.n>0&&e.wz-dist>0.5);
+const Vt=Math.min(N,MAXV);while(V<Vt){ux[V]=ax;uz[V]=AZ;V++}
+if(V>Vt){for(let i=Vt;i<V;i+=3)spark(ux[i],uz[i],0,1);V=Vt}
+for(let i=0;i<V;i++){const k=Math.min(1,dt*(5+(i%5)*1.6));ux[i]+=(ax+ox[i]*SP-ux[i])*k;uz[i]+=(AZ+oz[i]*SP-uz[i])*k}
+for(let i=0;i<SPN;i++)if(pl[i]>0){pl[i]-=dt;px[i]+=pvx[i]*dt;pz[i]+=pvz[i]*dt;pvx[i]*=0.94;pvz[i]*=0.94}
+flashN=Math.max(0,flashN-dt*3);hint=Math.max(0,hint-dt*0.15)}
+function line(a,b){if(!a||!b)return;ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1])}
+function draw(){
+ctx.globalCompositeOperation='source-over';ctx.fillStyle='#04051a';ctx.fillRect(0,0,W,H);
+for(const s of stars){ctx.fillStyle='rgba(255,255,255,'+(0.3+0.5*s[2]*(0.6+0.4*Math.sin(t*2+s[0])))+')';ctx.fillRect(s[0],s[1],1.2,1.2)}
+ctx.globalCompositeOperation='lighter';
+ctx.strokeStyle='rgba(255,60,170,0.35)';ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(0,HOR);ctx.lineTo(W,HOR);ctx.stroke();
+ctx.strokeStyle='rgba(55,65,255,0.4)';ctx.lineWidth=1;ctx.beginPath();
+for(let x=-TW;x<=TW+1e-6;x+=0.3)line(P(x,1),P(x,60));
+const off=dist%1;for(let k=1;k<60;k++){const z=k-off;if(z>0.8)line(P(-TW,z),P(TW,z))}
+ctx.stroke();
+ctx.strokeStyle='rgba(30,40,160,0.25)';ctx.beginPath();for(let x=TW+0.6;x<9;x+=0.6){line(P(x,1),P(x,60));line(P(-x,1),P(-x,60))}ctx.stroke();
+for(const [w,c] of [[7,'rgba(70,210,255,0.2)'],[1.6,'rgba(150,235,255,1)']]){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();line(P(-TW,1),P(-TW,60));line(P(TW,1),P(TW,60));ctx.stroke()}
+for(const e of enemies){const ez=e.wz-dist,vn=Math.min(e.n,600);for(let i=0;i<vn;i++){const p=P(e.x+ox[i]*SP*1.2,ez+oz[i]*SP*1.2);if(!p)continue;const s=0.2*p[2];ctx.drawImage(SD,p[0]-s/2,p[1]-s/2,s,s)}
+const r=SP*1.2*Math.sqrt(vn),p=P(e.x,ez+r+0.2,0.35);if(p){ctx.globalCompositeOperation='source-over';ctx.font='bold '+Math.max(9,p[2]*0.28)+'px ui-monospace,monospace';ctx.textAlign='center';ctx.fillStyle='#ff6fb5';ctx.shadowColor='#ff3d9a';ctx.shadowBlur=8;ctx.fillText(e.n,p[0],p[1]);ctx.shadowBlur=0;ctx.globalCompositeOperation='lighter'}}
+const gs=gates.slice().sort((a,b)=>b.wz-a.wz);
+for(const g of gs){const z=g.wz-dist;if(z<0.8)continue;const fade=g.done?0.25:Math.min(1,(45-z)/10);
+for(const [s,x0,x1] of [[g.L,-TW,-0.06],[g.R,0.06,TW]]){const col=s.op==='x'?[255,210,60]:s.v>=0?[60,255,170]:[255,60,130];const cs='rgba('+col.join(',')+',';
+const a=P(x0,z,0),b=P(x1,z,0),c=P(x1,z,1.1),d=P(x0,z,1.1);if(!a)continue;
+ctx.fillStyle=cs+(0.06+s.f*0.25)*fade+')';ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(c[0],c[1]);ctx.lineTo(d[0],d[1]);ctx.closePath();ctx.fill();
+for(const [w,al] of [[6,0.22],[1.8,1]]){ctx.strokeStyle=cs+al*fade+')';ctx.lineWidth=w*Math.min(1.5,a[2]/60);ctx.stroke()}
+if(s.op==='x'&&s.ch>0){const e=P(x0+(x1-x0)*s.ch,z,0.08),f=P(x0,z,0.08);ctx.strokeStyle='rgba(255,255,255,'+fade+')';ctx.lineWidth=3;ctx.beginPath();line(f,e);ctx.stroke()}
+const m=P((x0+x1)/2,z,0.42);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=fade;ctx.font='bold '+(m[2]*(0.5+s.f*0.12))+'px ui-monospace,monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='rgb('+col.join(',')+')';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=12;
+ctx.fillText(s.op==='x'?'×'+s.m:(s.v>=0?'+':'−')+Math.abs(s.v),m[0],m[1]);ctx.shadowBlur=0;ctx.globalAlpha=1;ctx.textBaseline='alphabetic';ctx.globalCompositeOperation='lighter'}}
+ctx.strokeStyle='rgba(255,215,90,0.9)';ctx.lineWidth=1.5;ctx.beginPath();for(let i=0;i<nb;i++){const z=bw[i]-dist;line(P(bx[i],z),P(bx[i],z-0.45))}ctx.stroke();
+for(let i=0;i<V;i++){const p=P(ux[i]+Math.sin(t*9+i)*0.006,uz[i]);if(!p)continue;const s=0.15*p[2];ctx.drawImage(SC,p[0]-s/2,p[1]-s/2,s,s)}
+const SPR=[SC,SM,SY];for(let i=0;i<SPN;i++)if(pl[i]>0){const p=P(px[i],pz[i],0.05);if(!p)continue;const s=0.12*p[2]*Math.min(1,pl[i]*2.5);ctx.drawImage(SPR[pc[i]],p[0]-s/2,p[1]-s/2,s,s)}
+ctx.globalCompositeOperation='source-over';
+const r=SP*Math.sqrt(Math.min(N,MAXV)),lp=P(ax,AZ+r+0.15,0.3);
+if(lp){ctx.font='bold '+(22+flashN*10)+'px ui-monospace,monospace';ctx.textAlign='center';ctx.fillStyle='#ffffff';ctx.shadowColor='#46d2ff';ctx.shadowBlur=14;ctx.fillText(N,lp[0],lp[1]);ctx.shadowBlur=0}
+ctx.font='bold 14px ui-monospace,monospace';ctx.textAlign='left';ctx.fillStyle='#9dff3d';ctx.shadowColor='#9dff3d';ctx.shadowBlur=8;ctx.fillText('Dist '+Math.floor(dist*10),14,26);ctx.shadowBlur=0;
+if(hint>0&&!over){ctx.textAlign='center';ctx.fillStyle='rgba(200,230,255,'+hint+')';ctx.font='13px ui-monospace,monospace';ctx.fillText('Drag anywhere to steer',W/2,H-20)}
+if(over){ctx.fillStyle='rgba(4,5,26,0.6)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.font='bold 26px ui-monospace,monospace';ctx.fillStyle='#ff6fb5';ctx.shadowColor='#ff3d9a';ctx.shadowBlur=16;ctx.fillText('Swarm lost',W/2,H/2-10);ctx.shadowBlur=0;ctx.font='14px ui-monospace,monospace';ctx.fillStyle='#cfe8ff';ctx.fillText('Tap to restart',W/2,H/2+20)}}
+cv.addEventListener('pointerdown',e=>{if(over){reset();return}dragging=true;lastX=e.clientX;idle=0;cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing'});
+cv.addEventListener('pointermove',e=>{if(!dragging)return;const w=cv.getBoundingClientRect().width;tx+=(e.clientX-lastX)/w*(2*TW)/0.6;lastX=e.clientX;idle=0});
+const up=()=>{dragging=false;cv.style.cursor='grab'};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+let last=performance.now();function frame(now){const dt=Math.min(0.033,(now-last)/1000);last=now;t+=dt;update(dt);draw();requestAnimationFrame(frame)}requestAnimationFrame(frame);
+</script>
+</body>
+</html>
