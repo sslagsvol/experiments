@@ -12,7 +12,7 @@ import { UNIT_SPACING } from './formations.js';
 import { DragInput } from './input.js';
 import { Hud } from './hud.js';
 import { Sfx } from './audio.js';
-import { loadScores, rankFor, addScore } from './scores.js';
+import { cachedScores, fetchScores, rankFor, submitScore } from './scores.js';
 
 const params = new URLSearchParams(location.search);
 const START_UNITS = Math.min(CFG.CAPACITY, Math.max(1, parseInt(params.get('units'), 10) || CFG.START_UNITS));
@@ -38,9 +38,16 @@ const syncMute = () => { muteBtn.classList.toggle('off', sfx.muted); muteBtn.set
 muteBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); sfx.unlock(); sfx.setMuted(!sfx.muted); syncMute(); });
 syncMute();
 
-// "Hi" in the HUD is the top of the high score table.
-let best = loadScores()[0]?.score || 0;
+// "Hi" in the HUD is the top of the high score table (refreshed from the
+// global board when it's configured).
+let best = cachedScores()[0]?.score || 0;
 hud.setBest(best);
+const refreshBoard = () => fetchScores().then((list) => {
+  best = list[0]?.score || 0;
+  hud.setBest(best);
+  if (G && G.state === 'title') hud.showTitle(true, list);
+  return list;
+});
 
 let G;
 function newRun() {
@@ -76,7 +83,7 @@ function newRun() {
     leakFlash: 0,
   };
   hud.showOver(null);
-  hud.showTitle(true, loadScores());
+  hud.showTitle(true, cachedScores());
 }
 
 // ---------- Track generation (seeded, so every run of a seed is identical) ----------
@@ -365,23 +372,30 @@ function endRun() {
   const distPts = Math.floor(G.dist * CFG.SCORE_PER_DIST);
   const killPts = TYPE_LIST.map((t, i) => G.stats.kills[i] * t.hp * CFG.SCORE_PER_HP);
   const score = distPts + killPts.reduce((a, b) => a + b, 0);
-  const rank = rankFor(score), newBest = rank === 0;
   army.kill(army.N, unitLost);
   sfx.play('lose');
   world.addRipple(G.ax, G.dist, ANIM.rippleDeath, time);
   sparks.emit(G.ax, 0.3, G.dist, COLORS.you, 80, 5);
-  const stats = { ...G.stats, distPts, killPts, score, newBest };
-  // Made the top 10? Enter initials first, then show the board.
-  hud.showOver(stats, rank < 0 ? null : {
-    rank,
-    onStep: () => sfx.play('gateTick'),
-    onSubmit: (initials) => {
-      const idx = addScore(initials, score);
-      best = loadScores()[0].score;
-      hud.setBest(best);
-      hud.showBoard(loadScores(), idx);
-      sfx.play('maxMult');
-    },
+  // Recap first; then check the (global) board. Made the top 10? Enter
+  // initials, then the board replaces the recap.
+  const run = G;
+  hud.showOver({ ...G.stats, distPts, killPts, score, newBest: false });
+  refreshBoard().then((list) => {
+    if (G !== run) return;   // already restarted
+    const rank = rankFor(score, list);
+    if (rank < 0) { hud.allowRetry(); return; }
+    hud.offerEntry({
+      rank,
+      onStep: () => sfx.play('gateTick'),
+      onSubmit: async (initials) => {
+        sfx.play('maxMult');
+        hud.saving();
+        const { list: board, index } = await submitScore(initials, score);
+        best = board[0]?.score || 0;
+        hud.setBest(best);
+        if (G === run) hud.showBoard(board, index);
+      },
+    });
   });
 }
 
@@ -400,8 +414,7 @@ function update(dt, realDt) {
     }
   } else if (G.state === 'over') {
     // No restart while typing initials, or in the instant after the board appears.
-    const boardSettled = !hud.boardAt || performance.now() - hud.boardAt > 600;
-    if (tapped && time - G.overAt > 0.6 && !hud.entering && boardSettled) newRun();
+    if (tapped && time - G.overAt > 0.6 && hud.canRetry()) newRun();
   }
 
   if (G.state === 'play') {
@@ -547,6 +560,7 @@ if (DEBUG) {
     enemies,
     sfx,
     gates,
+    cfg: CFG,
     steer(x) { G.tx = x; },
     morph() { army.nextFormation(time); return army.formation; },
     lose(n, side = 1) { return army.killSide(side, n, unitLost); },
@@ -562,6 +576,7 @@ if (DEBUG) {
 window.addEventListener('resize', world.resize);
 world.resize();
 newRun();
+refreshBoard();
 
 // Wait (briefly) for the HUD font so gate labels render in it from the start.
 Promise.race([

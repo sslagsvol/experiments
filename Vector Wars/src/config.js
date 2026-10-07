@@ -63,6 +63,11 @@ export const CFG = {
 
   SEED: 1337,
 
+  // Global high scores (Supabase). Leave blank for a per-device board.
+  // The key is the project's public anon / publishable key: safe to ship,
+  // row-level security only allows reading and adding scores. See LEADERBOARD.md.
+  LEADERBOARD: { url: '', key: '' },
+
   CAMERA_LIFT: 0.12,       // shifts the view so the army sits higher, leaving thumb room
   SCORE_PER_DIST: 10,      // points per unit of distance
   SCORE_PER_HP: 5,         // points per hit point of each enemy defeated (grunt 5, brute 40)

@@ -258,6 +258,14 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Title attract mode:** the title alternates between the logo and the board every 5s.
 - **Next step if wanted:** a *global* leaderboard shared by everyone needs a tiny online store (a free key-value service or a small serverless function). `scores.js` is the only file that would change.
 
+## Round 13: global leaderboard (2026-10-07)
+- **Supabase-backed global board** (`src/scores.js`, `CFG.LEADERBOARD`). Uses Supabase's REST API directly (no SDK): one `vector_wars_scores` table, where anyone can read or add a score and nobody can edit or delete. Setup steps and SQL are in `LEADERBOARD.md`.
+- **Still works without it:** blank config = per-device board. Each device caches the last global board for instant display and offline play. Scores saved offline are queued (`vector-wars-pending-scores`), shown on your own board right away, and sent on the next successful load.
+- **Game over flow:** the recap shows immediately, the board is checked (3s timeout), then the initials entry or "Tap to retry" appears.
+- CPU entries fill gaps on a young board; they're never written to the database.
+- Tested against a simulated Supabase server in the browser: correct GET/POST requests, merge with CPU entries, highlight of the new entry, offline queue flushed on reconnect with no duplicates.
+- **Waiting on:** the project URL and public key from the Supabase project.
+
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
 - *(none)*

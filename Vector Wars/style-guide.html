@@ -106,7 +106,7 @@
     <div class="card">
       <div class="stage" style="padding:16px 8px"><div id="sg-board"></div></div>
       <h3>High score board</h3><div class="var">renderBoard() · .board .r0–.r9 · .me</div>
-      <div class="meta">Top 10 from src/scores.js (localStorage, per device; seeded with CPU entries VEC, TOR, WAR…) · per-rank neon colors · dotted leaders · a fresh entry blinks · the title screen alternates logo and board every 5s</div>
+      <div class="meta">Top 10 from src/scores.js: global via Supabase when CFG.LEADERBOARD is set (cached on each device, offline scores queued), otherwise per device; empty slots filled with CPU entries VEC, TOR, WAR… · per-rank neon colors · dotted leaders · a fresh entry blinks · the title screen alternates logo and board every 5s</div>
     </div>
     <div class="card">
       <div class="stage" style="padding:16px 8px"><div id="sg-entry"></div></div>
@@ -178,7 +178,7 @@ import { FORMATIONS, UNIT_SPACING } from './src/formations.js';
 import { enemyFormation, ENEMY_KINDS, ENEMY_TYPES, TYPE_LIST } from './src/enemyFormations.js';
 import { drawEnemy } from './src/sprites.js';
 import { renderRecap, renderBoard, InitialsEntry } from './src/hud.js';
-import { loadScores } from './src/scores.js';
+import { cachedScores } from './src/scores.js';
 import { Sfx, SOUND_NAMES } from './src/audio.js';
 import { SFX } from './src/config.js';
 
@@ -726,7 +726,7 @@ setInterval(() => {
 }, 350);
 
 // High scores: the real board (with a highlighted row) and a live entry.
-renderBoard(document.getElementById('sg-board'), loadScores(), 5);
+renderBoard(document.getElementById('sg-board'), cachedScores(), 5);
 const sgEntry = document.getElementById('sg-entry');
 const startEntry = () => {
   const e = new InitialsEntry(sgEntry, 5, (ini) => { e.close(); sgEntry.innerHTML = `<div class="entry-title">Saved "${ini}"</div><p class="note">(Demo only; nothing stored.)</p>`; setTimeout(startEntry, 2000); });

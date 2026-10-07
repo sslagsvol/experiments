@@ -90,35 +90,47 @@ export class Hud {
     this.attract = setInterval(() => this.title.classList.toggle('show-board'), 5000);
   }
 
-  // Game over. With entry = { rank, onSubmit(initials) }, the player first
-  // enters initials; then the board replaces the recap.
-  showOver(stats, entry = null) {
+  // Game over: the recap shows at once; retry stays locked until the board
+  // check finishes (allowRetry) or initials are saved (showBoard).
+  showOver(stats) {
     this.over.classList.toggle('hidden', !stats);
     if (this.stopRecap) { this.stopRecap(); this.stopRecap = null; }
     if (this.entry) { this.entry.close(); this.entry = null; }
     this.entryEl.classList.add('hidden');
-    if (!stats) return;
-    this.stopRecap = renderRecap(this.recap, stats);
-    this.retry.classList.toggle('hidden', !!entry);
-    if (entry) {
-      this.entryEl.classList.remove('hidden');
-      this.boardAt = 0;
-      this.entry = new InitialsEntry(this.entryEl, entry.rank, (initials) => {
-        this.entry.close();
-        this.entry = null;
-        this.entryEl.classList.add('hidden');
-        entry.onSubmit(initials);
-      });
-      this.entry.onStep = entry.onStep;
-    } else this.boardAt = 0;
+    this.retry.classList.add('hidden');
+    this.retryAt = Infinity;
+    if (stats) this.stopRecap = renderRecap(this.recap, stats);
+  }
+
+  allowRetry() {
+    this.retry.classList.remove('hidden');
+    this.retryAt = performance.now();
+  }
+
+  canRetry() { return !this.entry && performance.now() - this.retryAt > 600; }
+
+  // Made the board: entry = { rank, onStep(), onSubmit(initials) }.
+  offerEntry(entry) {
+    this.entryEl.classList.remove('hidden');
+    this.entry = new InitialsEntry(this.entryEl, entry.rank, (initials) => {
+      this.entry.close();
+      this.entry = null;
+      entry.onSubmit(initials);
+    });
+    this.entry.onStep = entry.onStep;
+  }
+
+  saving() {
+    this.entryEl.innerHTML = '<div class="entry-title">Saving…</div>';
+    this.retryAt = Infinity;
   }
 
   // Replaces the recap with the high score board (after entering initials).
   showBoard(scores, highlight) {
     if (this.stopRecap) { this.stopRecap(); this.stopRecap = null; }
+    this.entryEl.classList.add('hidden');
     renderBoard(this.recap, scores, highlight);
-    this.retry.classList.remove('hidden');
-    this.boardAt = performance.now();
+    this.allowRetry();
   }
 
   debug(text) {
