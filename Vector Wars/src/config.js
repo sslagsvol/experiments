@@ -14,18 +14,19 @@ export const CFG = {
   VIEW_AHEAD: 70,          // how far ahead elements are spawned
 
   START_UNITS: 30,
-  CAPACITY: 1200,          // most units the track holds; the rest fall off
-  FORMATION_FILL: 0.8,     // a full army spans this fraction of the track width
+  CAPACITY: 5000,          // hard cap; a 5,000 army spans the whole track, the rest fall off
+  FORMATION_REF: 1200,     // up to this size the crowd keeps full spacing…
+  FORMATION_FILL: 0.8,     // …and spans this fraction of the track width; above it, units pack tighter
   FORMATION_DEPTH: 0.85,   // z squash of formation patterns
   EDGE_MARGIN: 0.2,        // how close the army's center may get to a rail
-  MAX_PER_SQUAD: 600,
-  MAX_ENEMIES: 2400,
+  MAX_PER_SQUAD: 1500,
+  MAX_ENEMIES: 4000,
   ENEMY_SPACING: 0.17,
-  ENEMY_STRENGTH: 1.5,     // player units each enemy takes out on contact (avg)
+  ENEMY_LEAK_MARGIN: 0.8,  // enemies this far behind the army have slipped past and hit the rear
   ENEMY_TRIGGER: 9,        // squads charge when this close to the army's front
   ENEMY_SPAWN_AHEAD: 38,   // squads are sized and placed when this far ahead (out of the fog)
-  ENEMY_THREAT_MIN: 0.6,   // squad strength vs the reference army size, min…
-  ENEMY_THREAT_MAX: 1.3,   // …and max
+  ENEMY_THREAT_MIN: 0.35,  // squad strength vs the projected army, min…
+  ENEMY_THREAT_MAX: 0.85,  // …and max (above 1.0 is unwinnable: enemies home in)
   ENEMY_CHARGE_SPEED: 3.5, // units/s toward the army
   ENEMY_HOMING: 1.5,       // sideways steering toward the army (units/s)
   ENEMY_WAVES: 3,
@@ -42,6 +43,7 @@ export const CFG = {
   STEER_RESPONSE: 14,      // higher = snappier follow
 
   GATE_H: 1.25,
+  ADD_HITS_PER_STEP: 3,    // bullets to raise a + / − gate by one
   MULT_CHARGE_PER_HIT: 0.05, // ×2→×3 takes 20 hits
   MULT_MAX: 3,
 
@@ -59,6 +61,7 @@ export const ANIM = {
   shakeNegGate: 0.12,      // formation shake amplitude on a bad gate
   shakeDecay: 0.4,         // shake fade (amplitude/s)
   gateFlashDecay: 4,       // gate hit flash fade (1/s)
+  gateShatter: 0.35,       // s for the primary gate to burst apart after the army passes
   rippleSpeed: 9,          // grid ripple ring speed (units/s)
   rippleDecay: 1.6,        // grid ripple fade (1/s)
   rippleLife: 3,           // s before a ripple slot is reused
@@ -88,6 +91,8 @@ export const COLORS = {
   bg: 0x04051a,
   you: [0.25, 0.75, 1.3],
   enemy: [1.6, 0.22, 0.75],
+  enemyHot: [1.9, 0.5, 0.15],
+  enemyHeavy: [1.2, 0.12, 1.4],
   add: [0.3, 1.6, 0.8],
   sub: [1.6, 0.22, 0.42],
   mult: [1.7, 1.25, 0.22],

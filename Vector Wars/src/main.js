@@ -6,7 +6,8 @@ import { CFG, COLORS, ANIM, mulberry32 } from './config.js';
 import { createWorld } from './world.js';
 import { Army } from './crowd.js';
 import { EnemyForce } from './enemies.js';
-import { GatePool, LabelPool, FONT } from './gates.js';
+import { squadMix, mixEst } from './enemyFormations.js';
+import { GatePool, FONT, gateColor } from './gates.js';
 import { Bullets, Sparks, Fallers } from './fx.js';
 import { UNIT_SPACING } from './formations.js';
 import { DragInput } from './input.js';
@@ -22,7 +23,6 @@ const world = createWorld(canvas);
 const army = new Army(world.scene, world.pointScale);
 const enemies = new EnemyForce(world.scene, world.pointScale);
 const gates = new GatePool(world.scene);
-const labels = new LabelPool(world.scene, COLORS.enemy);
 const bullets = new Bullets(world.scene);
 const sparks = new Sparks(world.scene, world.pointScale);
 const fallers = new Fallers(world.scene, world.pointScale, UNIT_SPACING * 1.3);
@@ -36,7 +36,6 @@ hud.setBest(best);
 let G;
 function newRun() {
   gates.clear();
-  for (const s of enemies.squads) labels.release(s.label);
   enemies.reset();
   bullets.clear();
   sparks.clear();
@@ -61,7 +60,8 @@ function newRun() {
     danger: 0,       // incoming enemy strength ÷ army size, smoothed
     timeScale: 1,    // slow motion when the danger is high
     overAt: 0,
-    stats: { peak: START_UNITS, lostEnemy: 0, lostGate: 0, fell: 0, gateHits: 0 },
+    stats: { peak: START_UNITS, lostEnemy: 0, leaked: 0, lostGate: 0, fell: 0, gateHits: 0 },
+    leakFlash: 0,
   };
   hud.showOver(null);
   hud.showTitle(true);
@@ -74,8 +74,8 @@ const PATTERN = 'gegeggee';
 function makeGateSpec(rng, scale) {
   const r = rng();
   if (r < 0.28) return { op: 'x', m: 2, ch: 0, f: 0 };
-  if (r < 0.6) return { op: '+', v: Math.round((4 + rng() * 14) * scale), f: 0 };
-  return { op: '+', v: -Math.round((6 + rng() * 20) * scale), f: 0 };
+  if (r < 0.6) return { op: '+', v: Math.round((4 + rng() * 14) * scale), ch: 0, f: 0 };
+  return { op: '+', v: -Math.round((6 + rng() * 20) * scale), ch: 0, f: 0 };
 }
 
 function spawnNext() {
@@ -84,7 +84,7 @@ function spawnNext() {
   if (kind === 'g') {
     let L, R;
     if (G.gateIdx === 0) {
-      L = { op: '+', v: 10, f: 0 };
+      L = { op: '+', v: 10, ch: 0, f: 0 };
       R = { op: 'x', m: 2, ch: 0, f: 0 };
     } else {
       const scale = Math.pow(1.12, G.gateIdx);
@@ -119,7 +119,7 @@ function projectedArmy(wz) {
   const gain = (s, n) => s.op === 'x' ? n * s.m : Math.max(0, n + s.v);
   const events = [
     ...gates.active.filter((g) => !g.done && g.wz < wz).map((g) => [g.wz, (n) => Math.max(gain(g.L, n), gain(g.R, n))]),
-    ...enemies.squads.filter((s) => s.n > 0 && s.cw < wz).map((s) => [s.cw, (n) => n - s.n * CFG.ENEMY_STRENGTH * 0.7]),
+    ...enemies.squads.filter((s) => s.n > 0 && s.cw < wz).map((s) => [s.cw, (n) => n - enemies.squadStrength(s) * 0.7]),
   ].sort((a, b) => a[0] - b[0]);
   let n = army.N;
   for (const [, apply] of events) n = Math.max(10, Math.min(CFG.CAPACITY, apply(n)));
@@ -135,9 +135,10 @@ function spawnSquad(wz) {
     const par = Math.min(CFG.CAPACITY, 30 * Math.pow(1.3, G.gateIdx));
     const ref = 0.8 * projectedArmy(wz) + 0.2 * par;
     const threat = CFG.ENEMY_THREAT_MIN + G.rng() * (CFG.ENEMY_THREAT_MAX - CFG.ENEMY_THREAT_MIN);
-    n = Math.round(Math.max(8, ref * threat / CFG.ENEMY_STRENGTH));
+    // Size by strength, not headcount: a squad with brutes or bombers has fewer units.
+    n = Math.round(Math.max(8, ref * threat / mixEst(squadMix(kind, G.enemyIdx))));
   }
-  enemies.spawnSquad(kind, n, (G.rng() * 2 - 1) * CFG.TW, wz, G.rng, labels.acquire());
+  enemies.spawnSquad(kind, n, (G.rng() * 2 - 1) * CFG.TW, wz, G.rng, G.enemyIdx);
   G.enemyIdx++;
 }
 
@@ -162,21 +163,46 @@ function spill(n) {
   }
 }
 
-function applyGate(s) {
-  const before = army.N;
-  if (s.op === 'x') spill(army.spawn(before * (s.m - 1)));
-  else if (s.v >= 0) spill(army.spawn(s.v));
-  else army.kill(-s.v, sparkLost);
+// The army crosses a gate pair. Each panel applies only to the units that
+// went through it: × multiplies them, + / − is scaled by their share of the
+// army. The primary panel (where the army's center went) shatters. A wide
+// army that straddles the middle gets both gates, good or bad.
+function crossGate(g) {
+  const [nL, nR] = army.countSides(), total = army.N, before = army.N;
+  g.done = true;
+  g.doneAt = time;
+  g.primary = army.cx < 0 ? 'L' : 'R';
+  let gained = false;
+  for (const [s, n, sign] of [[g.L, nL, -1], [g.R, nR, 1]]) {
+    if (n <= 0) continue;
+    const share = n / total, x = sign * Math.min(1, army.halfW * 0.5);
+    if (s.op === 'x') { spill(army.spawn(n * (s.m - 1), x)); gained = true; }
+    else if (s.v > 0) { spill(army.spawn(Math.max(1, Math.round(s.v * share)), x)); gained = true; }
+    else if (s.v < 0) army.killSide(sign, Math.min(n, Math.round(-s.v * share)), sparkLost);
+    if (s !== (g.primary === 'L' ? g.L : g.R)) s.f = 1;   // secondary panel flashes
+  }
+  shatterSparks(g);
   const d = army.N - before;
-  if (s.op === 'x' || s.v > 0) {
-    feedback(s.op === 'x' ? COLORS.mult : COLORS.add, 1, 40);
+  if (gained && d >= 0) {
+    feedback(gateColor(g.primary === 'L' ? g.L : g.R), 1, 40);
     army.nextFormation(time);
     if (navigator.vibrate) navigator.vibrate(12);
-  } else if (d < 0) {
+  }
+  if (d < 0) {
     G.stats.lostGate -= d;
     feedback(COLORS.sub, 0.8, 30);
     army.shake(ANIM.shakeNegGate);
     G.shake = 0.12;
+  }
+}
+
+// Burst of sparks along the primary panel's outline.
+function shatterSparks(g) {
+  const s = g.primary === 'L' ? g.L : g.R, c = gateColor(s);
+  const x0 = g.primary === 'L' ? -CFG.TW + 0.05 : 0.05, x1 = x0 + CFG.TW - 0.1;
+  for (let k = 0; k < 28; k++) {
+    const t = k / 28, onTop = k % 2;
+    sparks.emit(x0 + (x1 - x0) * t, onTop ? CFG.GATE_H : 0.1 + Math.random() * CFG.GATE_H, g.wz, c, 1, 3);
   }
 }
 
@@ -189,7 +215,9 @@ function hitGate(s) {
       if (s.ch >= 1) { s.ch = 0; s.m++; }
     }
   } else {
-    s.v += 1;
+    // + / − gates fill a charge bar too: ADD_HITS_PER_STEP bullets per +1.
+    s.ch += 1 / CFG.ADD_HITS_PER_STEP;
+    if (s.ch >= 0.999) { s.ch = 0; s.v += 1; }
   }
   s.f = 1;
 }
@@ -201,10 +229,10 @@ function bulletTest(x, oldW, newW) {
       return true;
     }
   }
-  const s = enemies.hitTest(x, oldW, newW);
-  if (s) {
-    sparks.emit(x, 0.2, newW, COLORS.enemy, 3, 2);
-    if (s.n === 0) squadWiped(s);
+  const hit = enemies.hitTest(x, oldW, newW);
+  if (hit) {
+    sparks.emit(x, 0.2, newW, COLORS.enemy, hit.killed ? 3 : 1, 2);
+    if (hit.killed && hit.s.n === 0) squadWiped(hit.s);
     return true;
   }
   return false;
@@ -215,11 +243,21 @@ function squadWiped(s) {
   sparks.emit(s.cx, 0.3, s.cw, COLORS.enemy, 40, 4);
 }
 
-// An enemy reached the army: it dies and takes out the units nearest it.
-function onContact(x, z) {
-  const k = Math.floor(CFG.ENEMY_STRENGTH) + (Math.random() < CFG.ENEMY_STRENGTH % 1 ? 1 : 0);
-  G.stats.lostEnemy += army.killNear(x, z, k, sparkLost);
-  sparks.emit(x, 0.2, G.dist - z, COLORS.enemy, 4, 3);
+// An enemy reached the army (or slipped past and hit the rear): it dies and
+// takes out the units nearest it. Bombers blow up everything around them.
+function onHit(t, x, z, leaked) {
+  let killed;
+  if (t.blast) {
+    killed = army.killRadius(x, z, t.blast * Math.max(0.6, army.pack), t.blastMax, sparkLost);
+    sparks.emit(x, 0.3, G.dist - z, COLORS.enemyHot, 24, 5);
+    world.addRipple(x, G.dist - z, 0.6, time);
+  } else {
+    const k = Math.floor(t.damage) + (Math.random() < t.damage % 1 ? 1 : 0);
+    killed = army.killNear(x, z, k, sparkLost);
+    sparks.emit(x, 0.2, G.dist - z, COLORS[t.color], t.size > 2 ? 12 : 4, 3);
+  }
+  if (leaked) { G.stats.leaked += killed; G.leakFlash = 1; }
+  else G.stats.lostEnemy += killed;
   G.lastContact = time;
   G.shake = Math.min(0.16, Math.max(G.shake, 0.05) + 0.008);
   if (time - G.lastRipple > 0.2) {
@@ -269,7 +307,7 @@ function update(dt, realDt) {
     G.tx = Math.max(-lim, Math.min(lim, G.tx));
     G.ax += (G.tx - G.ax) * Math.min(1, realDt * CFG.STEER_RESPONSE);
 
-    enemies.update(dt, G.dist, army, time, onContact);
+    enemies.update(dt, G.dist, army, time, onHit);
 
     // Battles: the track rolls forward at reduced speed to meet a charging
     // squad, stops dead once it's close, and surges when it's beaten.
@@ -283,7 +321,7 @@ function update(dt, realDt) {
     G.battle += ((close ? 1 : engaged ? 0.4 : 0) - G.battle) * Math.min(1, dt * 3);
 
     // Danger: how much enemy strength is about to hit, relative to the army.
-    const incoming = enemies.threat(G.dist, army, 6) * CFG.ENEMY_STRENGTH;
+    const incoming = enemies.threat(G.dist, army, 6);
     const danger = incoming > 0 ? incoming / Math.max(1, army.N) : 0;
     G.danger += (danger - G.danger) * Math.min(1, realDt * 4);
 
@@ -293,8 +331,7 @@ function update(dt, realDt) {
 
     for (const g of gates.active) {
       if (!g.done && g.wz <= G.dist) {
-        g.done = true;
-        applyGate(G.ax < 0 ? g.L : g.R);
+        crossGate(g);
       }
     }
 
@@ -323,9 +360,10 @@ function update(dt, realDt) {
     g.L.f = Math.max(0, g.L.f - dt * ANIM.gateFlashDecay);
     g.R.f = Math.max(0, g.R.f - dt * ANIM.gateFlashDecay);
     if (g.wz - G.dist < -0.7) { gates.release(g); continue; }
-    g.sync(G.dist);
+    g.sync(G.dist, time);
   }
-  enemies.prune((s) => labels.release(s.label));
+  enemies.prune();
+  G.leakFlash = Math.max(0, G.leakFlash - realDt * 2.5);
   if (G.state !== 'play') enemies.update(dt, G.dist, army, time, () => {});
 
   army.update(dt, G.ax, time, (x, z) => {
@@ -346,13 +384,7 @@ function toScreen(x, y, z) {
 }
 
 function syncLabels() {
-  for (const s of enemies.squads) {
-    const l = s.label;
-    l.set(s.n);
-    l.mesh.position.set(s.cx, 0.8, -(s.cw - G.dist));
-    l.mesh.quaternion.copy(world.camera.quaternion);
-  }
-  hud.setDanger(Math.min(1, Math.max(0, (G.danger - 0.4) / (ANIM.slowMoThreshold - 0.4))));
+  hud.setDanger(Math.min(1, Math.max((G.danger - 0.4) / (ANIM.slowMoThreshold - 0.4), G.leakFlash * 0.7, 0)));
   // The count floats ahead of the army, and drops behind it during battles
   // so it doesn't sit where the enemies hit.
   const cz = (army.front - 0.45) * (1 - G.battle) + (army.back + 0.7) * G.battle;

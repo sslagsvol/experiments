@@ -2,13 +2,14 @@
 // the center outward, stored in polar form (R, A) so the whole pattern can
 // swirl cheaply. D is the spin direction per slot (rings alternate).
 //
-// Every pattern is normalized so that a full army spans the same width
-// (CFG.FORMATION_FILL of the track), which keeps capacity identical across
-// patterns: formations are cosmetic, not a stat.
+// Every pattern is normalized so that an army of CFG.FORMATION_REF spans the
+// same width (CFG.FORMATION_FILL of the track), which keeps capacity
+// identical across patterns: formations are cosmetic, not a stat. Bigger
+// armies pack tighter (see packing()) until CFG.CAPACITY fills the track.
 
 import { CFG, ANIM } from './config.js';
 
-const CAP = CFG.CAPACITY;
+const CAP = CFG.CAPACITY, REF = CFG.FORMATION_REF;
 const GOLDEN = 2.39996;
 const JITTER = 0.15;
 
@@ -36,7 +37,7 @@ function rings() {
 // Lattice patterns: generate a big grid, keep the CAP points with the lowest
 // shape metric, so the crowd grows outward in that shape.
 function lattice(pointAt, metric) {
-  const n = Math.ceil(Math.sqrt(CAP * 4)), pts = [];
+  const n = Math.ceil(Math.sqrt(CAP) * 1.25), pts = [];
   for (let u = -n; u <= n; u++) {
     for (let v = -n; v <= n; v++) {
       const [x, z] = pointAt(u, v);
@@ -66,7 +67,7 @@ const PATTERNS = [
 export const FORMATIONS = PATTERNS.map(({ name, spin, build }) => {
   const pts = build();
   let maxX = 0;
-  for (const p of pts) maxX = Math.max(maxX, Math.abs(p[0]));
+  for (let i = 0; i < REF; i++) maxX = Math.max(maxX, Math.abs(pts[i][0]));
   const scale = CFG.TW * CFG.FORMATION_FILL / maxX;
   const R = new Float32Array(CAP), A = new Float32Array(CAP);
   const D = new Float32Array(CAP), delay = new Float32Array(CAP);
@@ -77,12 +78,20 @@ export const FORMATIONS = PATTERNS.map(({ name, spin, build }) => {
     R[i] = Math.hypot(x, z);
     A[i] = Math.atan2(z, x);
     D[i] = pts[i][2];
-    maxR = Math.max(maxR, R[i]);
+    if (i < REF) maxR = Math.max(maxR, R[i]);
   }
   // Morphs ripple outward from the center.
-  for (let i = 0; i < CAP; i++) delay[i] = R[i] / maxR * ANIM.morphRipple;
+  for (let i = 0; i < CAP; i++) delay[i] = Math.min(1, R[i] / maxR) * ANIM.morphRipple;
   return { name, spin, R, A, D, delay };
 });
 
-// Approximate distance between neighboring units, used to size the dots.
-export const UNIT_SPACING = 2 * CFG.TW * CFG.FORMATION_FILL / Math.sqrt(CAP);
+// Approximate distance between neighboring units (at full spacing), used to size the dots.
+export const UNIT_SPACING = 2 * CFG.TW * CFG.FORMATION_FILL / Math.sqrt(REF);
+
+// Scale applied to slot positions for an army of n. 1 up to FORMATION_REF;
+// above that the crowd still widens, but more slowly, so CAPACITY units just
+// span the track (98% of its width).
+const PACK_EXP = Math.log(0.98 / CFG.FORMATION_FILL) / Math.log(CAP / REF) - 0.5;
+export function packing(n) {
+  return n <= REF ? 1 : Math.pow(n / REF, PACK_EXP);
+}

@@ -56,6 +56,7 @@ export class Hud {
       ['Distance', stats.score],
       ['Peak swarm', fmt(stats.peak)],
       ['Lost to squads', fmt(stats.lostEnemy)],
+      ['Slipped past', fmt(stats.leaked)],
       ['Lost to gates', fmt(stats.lostGate)],
       ['Fell off', fmt(stats.fell)],
       ['Gate hits', fmt(stats.gateHits)],

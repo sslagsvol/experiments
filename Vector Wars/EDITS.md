@@ -136,6 +136,62 @@ Grouped so each batch is playable on its own and later work doesn't redo earlier
 - **Agreed:** the formation plan (tight spacing, patterns that morph on good gates, swirl) and falling off the track (both overflow and steering spill, with the crowd's center kept inside the rails).
 - **Defaults unless changed:** track capacity of about 1,200; formations are cosmetic this round; a mini-boss every 8 segments starting on the second loop.
 
+## Round 2 (2026-10-07, after playing batch C)
+
+### Feedback and what changed (branch `vw/battles`)
+| Feedback | Change |
+|---|---|
+| 1,200 cap is too low; falling off the edges already limits size | Hard cap raised to **5,000** (`CFG.CAPACITY`). Up to 1,200 the crowd keeps full spacing; above that it packs progressively tighter and dims slightly, reaching the rails at 5,000. Steering near an edge with a big army still spills. |
+| Enemies that sneak past should hurt | Enemies that get behind the army hit the rear (`CFG.ENEMY_LEAK_MARGIN`): same damage as a frontal hit, a pink vignette pulse, and a "Slipped past" line in the recap. |
+| Don't show enemy counts | Squad count labels removed. Formation size and unit types show strength. |
+| Should enemies move? Tougher, harder-hitting ones? | Four unit types (`ENEMY_TYPES`): **grunt** (diamond, 1 hp), **drone** (triangle, strafes side to side), **bomber** (pulsing ring, homes on the center, blast kills everything nearby), **brute** (big hexagon, 8 hp, crushes 8). Drones from the 3rd squad, bombers from the 4th, brutes from the 5th. Bullets now chip at hp, with hit flashes. Squads are sized by expected damage, not headcount. |
+| Gates count up too fast | + / − gates fill a charge bar like × gates: **3 hits per +1** (`CFG.ADD_HITS_PER_STEP`). |
+| Split gates (mid-batch request) | Each panel applies only to the units that went through it: × multiplies them; + / − is scaled by their share of the army (−30 clipped by 30% of the army costs 9, from that side only). The **primary** panel (where the army's center went) shatters into sparks; the secondary flashes. A wide army gets both gates. |
+
+### Tuning notes
+- Squad strength is now 0.35–0.85× the projected army (`ENEMY_THREAT_MIN/MAX`). Anything above 1.0 was a guaranteed loss because enemies home in.
+- Enemies are drawn at 55% brightness so dense formations show their shapes instead of blooming into a solid bar.
+- Bot run (sweeping side to side, no real gate choices): 12 battles, peak 1,719, died at distance 286.
+
+### Fixed along the way
+- Recycled enemy slots could be claimed by two squads, leaving a squad "alive" with no units and the track stuck. Each slot now records its owning squad.
+
+### New feature plan: bomb ("Overload")
+The army detonates: **half the army is lost, and every enemy in sight is destroyed.**
+
+**What "in sight" means in code vs. how it feels:**
+- Squads are only created when they come out of the fog (`CFG.ENEMY_SPAWN_AHEAD` = 38 units, roughly the visible horizon). So "every enemy that exists" is already "every enemy the player can see". The bomb clears the whole screen and nothing beyond it, with no special culling.
+- Squads still in the queue past the fog are untouched, so the player can't bomb something they haven't seen.
+- Gates are untouched. A mini-boss (batch D) takes heavy damage but survives.
+
+**Earning and triggering:**
+- Earn a charge the first time the army reaches **1,000**. A bomb icon in the top-right lights up.
+- **Tap to detonate.** The icon must be excluded from the drag input so tapping it doesn't nudge the army.
+- **Last stand:** holding a charge and dropping below **100** during a battle auto-detonates it. This is the comeback moment.
+- Hold one charge at most.
+
+**Feel:**
+- A brief freeze-frame, then a white flash.
+- A fast shockwave ring (about 30 units/s, so about 1.3s to the horizon) races out across the grid. Enemies shatter as the ring reaches them, staggered by distance, so it reads as a wave rather than a blink.
+- The army's outer half flashes white and pops.
+- Short slow-motion (0.3× for 0.5s), camera shake, and a big grid ripple.
+
+**Performance:** up to 4,000 enemies die within about a second, so sparks are sampled (about 1 per 8 kills) and kills are processed per frame as the ring passes, not all at once.
+
+**Open questions:**
+1. After using it, how do you re-earn it: reaching 1,000 again, or every N squads beaten?
+2. Should the last-stand auto-trigger also cost half the army? (Proposed: yes, keeps it simple; half of <100 is the price of surviving.)
+3. One charge, or allow stacking up to 2?
+
+### Checklist
+- [x] R2.1 Capacity 5,000 with progressive packing
+- [x] R2.2 Leaks damage the rear; "Slipped past" recap line
+- [x] R2.3 Remove enemy count labels
+- [x] R2.4 Enemy types: grunt, drone, bomber, brute (hp, damage, movement, shapes)
+- [x] R2.5 3 hits per +1 on + / − gates, with charge bar
+- [x] R2.6 Split gate crossing with primary shatter
+- [ ] R2.7 Bomb: charge, button, auto last stand, shockwave clear (needs answers to the open questions)
+
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
 - *(none)*

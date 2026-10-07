@@ -4,7 +4,7 @@
 
 import * as THREE from 'three';
 import { CFG, COLORS, ANIM } from './config.js';
-import { FORMATIONS, UNIT_SPACING } from './formations.js';
+import { FORMATIONS, UNIT_SPACING, packing } from './formations.js';
 
 const HIDDEN = -100;   // y for unused point slots (drawn off-screen)
 
@@ -87,6 +87,7 @@ export class Army {
     this.clock = 0;          // drives the swirl
     this.shakeAmt = 0;
     this.ax = 0;
+    this.pack = 1;
     this.cx = 0; this.halfW = 0; this.front = 0; this.back = 0; this.radius = 0;
     this.geo.setDrawRange(0, 0);
   }
@@ -96,9 +97,9 @@ export class Army {
   // Writes slot i's offset from the army center into this.tx / this.tz.
   slot(p, i) {
     const f = FORMATIONS[p];
-    const a = f.A[i] + f.D[i] * f.spin * this.clock;
-    this.tx = f.R[i] * Math.cos(a);
-    this.tz = f.R[i] * Math.sin(a) * CFG.FORMATION_DEPTH;
+    const a = f.A[i] + f.D[i] * f.spin * this.clock, r = f.R[i] * this.pack;
+    this.tx = r * Math.cos(a);
+    this.tz = r * Math.sin(a) * CFG.FORMATION_DEPTH;
   }
 
   inBounds(i) {
@@ -109,6 +110,8 @@ export class Army {
   // Adds up to n units into open, on-track slots. Returns how many didn't fit.
   spawn(n, x = this.ax) {
     const p = this.pos;
+    // Tighten to the new size first so units that will fit aren't counted as overflow.
+    this.pack = Math.min(this.pack, packing(Math.min(this.cap, this.N + n)));
     let left = n;
     for (let i = 0; i < this.cap && left > 0; i++) {
       if (this.alive[i] || !this.inBounds(i)) continue;
@@ -159,6 +162,47 @@ export class Army {
     return k;
   }
 
+  // Units on each side of the track's center line: [left, right].
+  countSides() {
+    let left = 0;
+    for (let i = 0; i < this.L; i++) if (this.alive[i] && this.pos[i * 3] < 0) left++;
+    return [left, this.N - left];
+  }
+
+  // Removes up to n units from one side (sign -1 = left, +1 = right), rim first.
+  killSide(sign, n, onLost) {
+    const p = this.pos;
+    let k = 0;
+    for (let i = this.L - 1; i >= 0 && k < n; i--) {
+      if (!this.alive[i] || Math.sign(p[i * 3]) !== sign) continue;
+      this.alive[i] = 0;
+      if (onLost) onLost(p[i * 3], p[i * 3 + 2]);
+      p[i * 3 + 1] = HIDDEN;
+      this.N--;
+      k++;
+    }
+    this.shrink();
+    return k;
+  }
+
+  // Removes every unit within radius r of (x, z), up to max (bomber blasts).
+  killRadius(x, z, r, max, onLost) {
+    const p = this.pos, r2 = r * r;
+    let k = 0;
+    for (let i = 0; i < this.L && k < max; i++) {
+      if (!this.alive[i]) continue;
+      const dx = p[i * 3] - x, dz = p[i * 3 + 2] - z;
+      if (dx * dx + dz * dz > r2) continue;
+      this.alive[i] = 0;
+      if (onLost) onLost(p[i * 3], p[i * 3 + 2]);
+      p[i * 3 + 1] = HIDDEN;
+      this.N--;
+      k++;
+    }
+    this.shrink();
+    return k;
+  }
+
   nextFormation(time) {
     this.prev = this.pat;
     this.pat = (this.pat + 1) % FORMATIONS.length;
@@ -172,6 +216,11 @@ export class Army {
   // onFall(x, z) fires for each unit that crosses a rail.
   update(dt, ax, time, onFall) {
     this.ax = ax;
+    // Big armies pack tighter; shrink the dots and dim them so a dense crowd
+    // still shows its pattern instead of saturating to white.
+    this.pack += (packing(this.N) - this.pack) * Math.min(1, dt * 3);
+    this.mat.uniforms.uSize.value = UNIT_SPACING * 1.3 * this.pack;
+    this.mat.uniforms.uColor.value.set(...COLORS.you).multiplyScalar(Math.pow(this.pack, 0.8));
     const since = time - this.morphT0;
     this.clock += dt * (1 + ANIM.swirlBurst * Math.exp(-since * ANIM.swirlBurstDecay));
     this.shakeAmt = Math.max(0, this.shakeAmt - dt * ANIM.shakeDecay);

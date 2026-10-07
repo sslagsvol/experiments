@@ -1,6 +1,6 @@
-// Enemy squad formations. Returns offsets [x, z] where z = 0 is the row
-// nearest the player and +z is further away. No three.js imports, so the
-// style guide can load this directly.
+// Enemy squad formations and unit types. Formations return offsets [x, z]
+// where z = 0 is the row nearest the player and +z is further away. No
+// three.js imports, so the style guide can load this directly.
 
 import { CFG } from './config.js';
 
@@ -14,6 +14,51 @@ export const ENEMY_KINDS = {
   column:   { spread: 0.6,  label: 'Column',   note: 'Narrow and deep.' },
   waves:    { spread: 1.0,  label: 'Waves',    note: 'Three thin walls, one after another.' },
 };
+
+// Unit types. damage = player units taken out on contact (bombers instead
+// blow up everything within `blast`). est = expected damage, used to size
+// squads by strength rather than headcount.
+export const ENEMY_TYPES = {
+  grunt:  { id: 0, shape: 0, size: 1.0, hp: 1, damage: 1.5, est: 1.5, speed: 1.0, homing: 1.0, color: 'enemy',
+            label: 'Grunt', note: 'Diamond. Marches in formation.' },
+  drone:  { id: 1, shape: 1, size: 1.1, hp: 1, damage: 1, est: 1, speed: 1.2, homing: 2.5, strafe: 0.9, color: 'enemy',
+            label: 'Drone', note: 'Triangle. Strafes side to side; hard to dodge.' },
+  bomber: { id: 2, shape: 2, size: 1.4, hp: 2, damage: 0, blast: 0.45, blastMax: 30, est: 10, speed: 1.35, homing: 3.5, converge: true, color: 'enemyHot',
+            label: 'Bomber', note: 'Pulsing ring. Homes in on the center and explodes.' },
+  brute:  { id: 3, shape: 3, size: 2.3, hp: 8, damage: 8, est: 8, speed: 0.7, homing: 0.8, color: 'enemyHeavy',
+            label: 'Brute', note: 'Big hexagon. 8 hit points; crushes 8 units on contact.' },
+};
+export const TYPE_LIST = Object.values(ENEMY_TYPES);
+
+// Which unit types make up a squad. Tougher types unlock as the run goes on
+// (squadIndex = how many squads have spawned so far).
+export function squadMix(kind, squadIndex) {
+  const drones = squadIndex >= 2, bombers = squadIndex >= 3, brutes = squadIndex >= 4;
+  switch (kind) {
+    case 'skirmish': return { front: [], mix: drones ? [['drone', 1]] : [['grunt', 1]] };
+    case 'column':   return { front: [], mix: bombers ? [['bomber', 0.4], ['grunt', 0.6]] : [['grunt', 1]] };
+    case 'wall':     return { front: brutes ? ['brute', 0.08] : [], mix: [['grunt', 1]] };
+    case 'wedge':    return { front: brutes ? ['brute', 0.05] : [], mix: [['grunt', 1]] };
+    case 'waves':    return { front: [], mix: drones ? [['grunt', 0.7], ['drone', 0.3]] : [['grunt', 1]] };
+    default:         return { front: [], mix: bombers ? [['grunt', 0.88], ['bomber', 0.12]] : [['grunt', 1]] };
+  }
+}
+
+// Average expected damage per unit for a squad mix, for sizing.
+export function mixEst({ front, mix }) {
+  let e = 0;
+  for (const [t, w] of mix) e += ENEMY_TYPES[t].est * w;
+  if (front.length) e = e * (1 - front[1]) + ENEMY_TYPES[front[0]].est * front[1];
+  return e;
+}
+
+// Type for unit i of n (formation order puts the front rows first).
+export function unitType({ front, mix }, i, n, rng) {
+  if (front.length && i < Math.max(1, Math.round(n * front[1]))) return front[0];
+  let r = rng();
+  for (const [t, w] of mix) if ((r -= w) < 0) return t;
+  return mix[0][0];
+}
 
 export function enemyFormation(kind, n, rng = Math.random) {
   const S = CFG.ENEMY_SPACING, W = CFG.TW * 0.92, pts = [];

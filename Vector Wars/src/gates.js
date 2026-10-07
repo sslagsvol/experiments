@@ -1,9 +1,9 @@
-// Gates (pairs of neon panels whose values can be shot up) and the floating
-// count labels above enemy squads. Both are pooled; label textures only
-// redraw when their text changes.
+// Gates: pairs of neon panels whose values can be shot up. Pooled; label
+// textures only redraw when their text changes. When the army crosses, the
+// primary panel (the one its center went through) shatters.
 
 import * as THREE from 'three';
-import { CFG, COLORS, fmt } from './config.js';
+import { CFG, COLORS, ANIM, fmt } from './config.js';
 
 export const FONT = '"Share Tech Mono", ui-monospace, monospace';
 
@@ -68,13 +68,15 @@ class Panel {
       blending: THREE.AdditiveBlending,
       side: THREE.DoubleSide,
     });
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), this.mat);
-    mesh.position.set(x, h / 2, 0);
-    group.add(mesh);
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), this.mat);
+    this.mesh.position.set(x, h / 2, 0);
+    group.add(this.mesh);
+    this.x = x; this.w = w; this.h = h;
     this.label = '';
   }
 
-  sync(s, fade) {
+  // shatter: 0 = intact, 0..1 = breaking apart after the army went through.
+  sync(s, fade, shatter = 0) {
     const label = gateLabel(s);
     if (label !== this.label) {
       this.label = label;
@@ -90,9 +92,11 @@ class Panel {
     }
     const u = this.mat.uniforms;
     u.uColor.value.set(...gateColor(s));
-    u.uFlash.value = s.f;
-    u.uCharge.value = s.op === 'x' ? s.ch : 0;
-    u.uFade.value = fade;
+    u.uFlash.value = Math.max(s.f, shatter > 0 ? 1 - shatter : 0);
+    u.uCharge.value = s.ch || 0;
+    u.uFade.value = fade * (1 - shatter);
+    const k = 1 + shatter * 0.5;
+    this.mesh.scale.set(k, k, 1);
   }
 }
 
@@ -106,12 +110,13 @@ class Gate {
     scene.add(this.group);
   }
 
-  sync(dist) {
+  sync(dist, time) {
     const z = -(this.wz - dist);
     this.group.position.z = z;
     const fade = this.done ? 0.3 : Math.min(1, (CFG.VIEW_AHEAD + z) / 14);
-    this.left.sync(this.L, fade);
-    this.right.sync(this.R, fade);
+    const shatter = this.primary ? Math.min(1, (time - this.doneAt) / ANIM.gateShatter) : 0;
+    this.left.sync(this.L, fade, this.primary === 'L' ? shatter : 0);
+    this.right.sync(this.R, fade, this.primary === 'R' ? shatter : 0);
   }
 }
 
@@ -124,7 +129,7 @@ export class GatePool {
 
   acquire(wz, L, R) {
     const g = this.free.pop() || new Gate(this.scene);
-    Object.assign(g, { wz, L, R, done: false });
+    Object.assign(g, { wz, L, R, done: false, primary: null, doneAt: 0 });
     g.group.visible = true;
     this.active.push(g);
     return g;
@@ -141,50 +146,4 @@ export class GatePool {
   invalidate() {
     for (const g of [...this.active, ...this.free]) { g.left.label = ''; g.right.label = ''; }
   }
-}
-
-export class CountLabel {
-  constructor(scene, color) {
-    this.canvas = document.createElement('canvas');
-    this.canvas.width = 256;
-    this.canvas.height = 128;
-    this.ctx = this.canvas.getContext('2d');
-    this.tex = new THREE.CanvasTexture(this.canvas);
-    this.tex.colorSpace = THREE.SRGBColorSpace;
-    this.mesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(1.1, 0.55),
-      new THREE.MeshBasicMaterial({
-        map: this.tex, color: new THREE.Color(...color),
-        transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-      }),
-    );
-    this.mesh.visible = false;
-    scene.add(this.mesh);
-    this.value = null;
-  }
-
-  set(n) {
-    if (n === this.value) return;
-    this.value = n;
-    const { ctx, canvas } = this;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = `80px ${FONT}`;
-    ctx.fillText(fmt(n), canvas.width / 2, canvas.height / 2);
-    this.tex.needsUpdate = true;
-  }
-}
-
-export class LabelPool {
-  constructor(scene, color) { this.scene = scene; this.color = color; this.free = []; }
-  acquire() {
-    const l = this.free.pop() || new CountLabel(this.scene, this.color);
-    l.mesh.visible = true;
-    l.value = null;
-    return l;
-  }
-  release(l) { l.mesh.visible = false; this.free.push(l); }
 }
