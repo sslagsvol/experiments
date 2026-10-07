@@ -9,3 +9,7 @@ Round-by-round history. The design and roadmap live in `PLAN.md`.
 - **Shortcuts:** ← / → switch sample, Z / X shift the octave.
 - **Outside this folder:** `Vector Wars/src/audio.js` gained `Sfx.attach(ctx, dest)` (logged in Vector Wars `CHANGELOG.md`, Round 24). `.claude/launch.json` gained a `synthlab` preview config.
 - **Verified in the browser pane:** every sample renders non-silent and normalized; pitch ratios (C5 = 2×, G4 ≈ 1.498×); polyphony cap and release cleanup; layout at 375×812, 812×375, 768×1024 and desktop for 12–18 keys (no horizontal scroll, no clipped keys, white keys 47px or wider on a phone); two-finger play, glissando, black-key hit-testing, QWERTY, reload persistence; Vector Wars game and sound lab still play. **Not verified:** real-device multi-touch, latency and the iPhone silent switch.
+
+## Round 2 (2026-10-07): home-page card
+- New "Synthlab" card on the root `index.html` (`Sample keyboard synth`) with an animated vignette: a decaying waveform with a moving playhead above a keyboard whose keys light up and fade like played samples. It uses the page's existing vignette plumbing, so it only animates while on screen and stays a still frame under reduced motion.
+- With seven cards, the page's existing rule makes the last card span the full row on wide screens, so this one does.

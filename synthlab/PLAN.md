@@ -13,7 +13,7 @@ Repo conventions I'm following (from `Vector Wars/CLAUDE.md` and memory): no bui
 
 ## Status (2026-10-07)
 
-Steps 0–5 below are built. Step 6 (the home-page card) is held until the instrument feels right. See `CHANGELOG.md` for the round-by-round history.
+All steps below are built, including step 6 (the home-page card: an animated keyboard vignette, `.vignette-synth` in the root `index.html`). See `CHANGELOG.md` for the round-by-round history.
 
 **Testing.** No build step and `file://` won't work (ES modules), so serve the repo root, e.g. `python3 -m http.server 8000`, and open `/synthlab/index.html`. The page imports `../Vector Wars/src/audio.js`, so keep both folders together. If the game folder is missing, the lab still works without the game-sound starters. `?debug` exposes `window.synthlab` (`engine`, `keyboard`, `lib`, `cfg`, `synth`, `panel`, `select(id)`, `audition()`, `current`) for driving it from the console. In the Claude browser pane, mirror the repo into the session scratchpad first (the preview server can't read `~/Documents`).
 
