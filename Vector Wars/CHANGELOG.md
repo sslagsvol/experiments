@@ -235,3 +235,6 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - `Sfx.play()` now applies `SFX.tune` (semitones) and `SFX.stretch` globally and per sound; slow motion is the two together (rate 0.3 ≈ −21 st, ×3.3). Defaults change nothing.
 - New `sound-lab.html`: every game sound with global and per-sound detune/stretch, presets (A touch, Deeper, Heavy, Game slow-mo), a "run moment" sequence and a settings readout to paste into `SFX`. Published to the same private link as the gate-sound audition.
 - Style guide sound board shows tune/stretch when set and links the lab.
+
+## Round 23: keyboard controls planned (2026-10-07)
+- Planning only. `PLAN.md` item 7: arrow / A-D steering with hold-to-sweep, Space / Enter for start, continue and retry, R restart, M mute, keyboard-only hints.

@@ -103,6 +103,12 @@ These come from the user; the order among them and against D / B / E is still to
    - Today the void grid sits at y = −4 below the track. Options: drop it much deeper, scroll it slower than the track, and/or add a far layer (stars or a horizon skyline) moving slower still. Keep the background dimmer than anything interactive.
    - Check on a phone that it reads as depth, not motion sickness.
 
+7. **Keyboard controls** (desktop play).
+   - **Steer:** ← → or A / D. Holding moves the army across the track at a steady speed with a short ramp-up, so a tap nudges and a hold sweeps; Shift for a faster sweep. It feeds the same target position as the drag (`G.tx`), so the edge spill and steering response stay the same.
+   - **Everything else:** Space or Enter starts a run, continues from pause and retries after game over; R restarts from the pause menu; M toggles mute. Esc / P already pause, and the initials entry already takes typing and arrows.
+   - **Hints:** show the keys on the title screen only when a keyboard is used (first key press), never on touch devices.
+   - The style guide gets a card for any new on-screen hint.
+
 ### Ideas parked for later
 - **Track hazards:** saws, rollers, spike strips; narrow bridges and gaps; rail breaks.
 - **Gates:** locked gates (N hits to open), order-of-operations runs, gates that flip sign on a timer.

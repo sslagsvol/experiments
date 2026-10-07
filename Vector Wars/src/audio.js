@@ -24,10 +24,17 @@ export class Sfx {
     if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
-    const ctx = this.ctx = new AC();
+    this.attach(new AC());
+  }
+
+  // Builds the master chain (compressor, master gain, shared noise) on a
+  // context. unlock() uses a live one; the synth lab (../synthlab) hands in an
+  // OfflineAudioContext to render a sound into a buffer.
+  attach(ctx, dest = ctx.destination) {
+    this.ctx = ctx;
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -14; comp.ratio.value = 6;
-    comp.connect(ctx.destination);
+    comp.connect(dest);
     this.master = ctx.createGain();
     this.master.gain.value = this.muted ? 0 : SFX.master;
     this.master.connect(comp);
