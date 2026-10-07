@@ -9,7 +9,6 @@
 export const CFG = {
   TW: 2.0,                 // track half-width (world units)
   SPEED: 6.5,              // forward speed (units/s)
-  CONTACT_SLOW: 0.3,       // speed multiplier while fighting a squad
   FIRST: 16,               // distance to the first track element
   SEG: 12,                 // spacing between track elements
   VIEW_AHEAD: 70,          // how far ahead elements are spawned
@@ -19,9 +18,18 @@ export const CFG = {
   FORMATION_FILL: 0.8,     // a full army spans this fraction of the track width
   FORMATION_DEPTH: 0.85,   // z squash of formation patterns
   EDGE_MARGIN: 0.2,        // how close the army's center may get to a rail
-  MAX_PER_SQUAD: 900,
-  MAX_ENEMY_VISIBLE: 3000,
-  ENEMY_SPACING: 0.09,
+  MAX_PER_SQUAD: 600,
+  MAX_ENEMIES: 2400,
+  ENEMY_SPACING: 0.17,
+  ENEMY_STRENGTH: 1.5,     // player units each enemy takes out on contact (avg)
+  ENEMY_TRIGGER: 9,        // squads charge when this close to the army's front
+  ENEMY_SPAWN_AHEAD: 38,   // squads are sized and placed when this far ahead (out of the fog)
+  ENEMY_THREAT_MIN: 0.6,   // squad strength vs the reference army size, min…
+  ENEMY_THREAT_MAX: 1.3,   // …and max
+  ENEMY_CHARGE_SPEED: 3.5, // units/s toward the army
+  ENEMY_HOMING: 1.5,       // sideways steering toward the army (units/s)
+  ENEMY_WAVES: 3,
+  ENEMY_WAVE_GAP: 3.2,     // distance between waves
 
   BULLET_SPEED: 26,
   BULLET_RANGE: 34,
@@ -61,6 +69,15 @@ export const ANIM = {
   sparkGravity: 9,
   sparkLifeMin: 0.35,      // s
   sparkLifeMax: 0.8,
+  battleBrake: 4,          // how fast the track eases to a stop in a battle (1/s)
+  approachSpeed: 0.5,      // track speed while a charging squad is still closing in (×)
+  surgeBoost: 0.6,         // extra speed right after winning a battle (×)
+  surgeDecay: 1.2,         // surge fade (1/s)
+  battleCamPush: 0.8,      // camera dolly toward the army during battles (units)
+  slowMoScale: 0.3,        // time scale at the most dangerous moment
+  slowMoThreshold: 0.8,    // danger ratio (incoming strength ÷ army) that triggers it
+  slowMoIn: 1.2,           // s to ease into slow motion
+  slowMoOut: 0.4,          // s to ease back to normal speed
 };
 
 // Bloom post-process (UnrealBloomPass). Threshold keeps gate text readable.

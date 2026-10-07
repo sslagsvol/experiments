@@ -70,6 +70,23 @@ html, body {
 #count.pop { animation: pop 0.25s ease-out; }
 @keyframes pop { 0% { font-size: 36px; } 100% { font-size: 26px; } }
 
+/* Close to losing: the count turns enemy-pink and beats like a heart. */
+#count.danger {
+  color: #ffd0e6;
+  text-shadow: 0 0 10px var(--enemy), 0 0 22px var(--enemy);
+  animation: heartbeat 0.9s ease-out infinite;
+}
+@keyframes heartbeat { 0%, 45%, 100% { scale: 1; } 12% { scale: 1.2; } 28% { scale: 1.08; } }
+
+/* Danger vignette; opacity is driven from JS by how close you are to losing. */
+#danger {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(255, 61, 154, 0.38) 100%);
+}
+
 #debug {
   display: none;
   position: absolute;

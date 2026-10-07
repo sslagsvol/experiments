@@ -106,13 +106,13 @@ Grouped so each batch is playable on its own and later work doesn't redo earlier
 - [ ] B2 Linear DPS with a visible-bullet cap and damage aggregation
 - [ ] B3 Bullet brightness/thickness scales with damage per bullet
 - [ ] B4 Gate toughness (value gained per damage)
-- [ ] C1 Track stops fully during battle; breakthrough surge after
-- [ ] C2 Front-width-based trade rate; enemy strength multiplier
-- [ ] C3 Enemy formations: wall, blob, column
+- [x] C1 Track stops fully during battle; breakthrough surge after
+- [x] C2 Front-width-based trade rate; enemy strength multiplier
+- [x] C3 Enemy formations: wall, blob, column
 - [ ] D1 Mini-boss entity and look, with an HP bar
 - [ ] D2 Slam telegraph and radius kill with a grid shockwave
 - [ ] D3 Shatter death and reward
-- [ ] E1 Par-curve enemy counts
+- [~] E1 Par-curve enemy counts (first pass: projected army + par, in batch C)
 - [ ] E1b ÷2/÷3 gates, more − gates, a gate mix weighted by army size, no ÷/÷ pairs
 - [x] E1c Cap multiplier charging at ×3, with each step costing more hits
 - [ ] E2 Tune capacity, gate toughness, boss HP
@@ -122,6 +122,14 @@ Grouped so each batch is playable on its own and later work doesn't redo earlier
 
 ## Progress notes
 - **Batch A (branch `vw/formations`):** six formations normalized to the same width, so capacity is identical whichever is active (full army = 80% of track width, `CFG.FORMATION_FILL`). Track capacity is 1,200 (`CFG.CAPACITY`). The track is now a raised strip over a void grid, so falling reads visually. A negative gate shakes the formation. 1,200 units cost about 1.5ms/frame on desktop.
+- **Batch B deferred** (2026-10-07): with formations and the cap in place, projectiles feel OK for now. The focus moved to enemies.
+- **Batch C (branch `vw/battles`):**
+  - Enemies are individual units in six formations (blob, wall, wedge, skirmish, column, waves).
+  - Squads hold formation, charge when 9 units away, and turn in on the flanks once level with the army. Each contact takes out about 1.5 of the *nearest* units.
+  - The track rolls in at half speed, stops dead within 3 units, and surges after a win. The camera pushes in.
+  - **Slow motion:** when incoming strength ≥ 0.8× the army, time eases to 0.3× (steering stays real-time), with a pink vignette and a heartbeat on the count.
+  - Squads are sized when they come out of the fog, against the army you'd have from the *best* side of each gate before them, minus what earlier squads will cost. Taking the weak gate makes the next fight harder.
+  - Strength/threat values in `CFG.ENEMY_*`, pacing in `ANIM`.
 - **E1c was pulled forward:** testing showed a 1,000-unit army charging a ×2 gate to ×6 in about two seconds.
 
 ## Decisions

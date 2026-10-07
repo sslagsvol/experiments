@@ -178,13 +178,14 @@ export function createWorld(canvas) {
       ripples[ripI].set(x, wz, time, amp);
       ripI = (ripI + 1) % RIPPLES;
     },
-    update(time, dist, ax, shake) {
+    update(time, dist, ax, shake, battle = 0) {
       floorMat.uniforms.uTime.value = time;
       floorMat.uniforms.uDist.value = dist;
       const sx = shake ? (Math.random() * 2 - 1) * shake : 0;
       const sy = shake ? (Math.random() * 2 - 1) * shake : 0;
-      camera.position.set(ax * 0.3 + sx, 6.2 + sy, 7.4);
-      lookAt.set(ax * 0.45, 0, -7);
+      const push = battle * ANIM.battleCamPush;
+      camera.position.set(ax * 0.3 + sx, 6.2 - push * 0.7 + sy, 7.4 - push);
+      lookAt.set(ax * 0.45, 0, -7 + push * 0.6);
       camera.lookAt(lookAt);
     },
     render() { composer.render(); },

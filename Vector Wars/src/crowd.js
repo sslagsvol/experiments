@@ -1,5 +1,5 @@
-// Crowd rendering: the player's swarm and all enemy squads. Each is a single
-// THREE.Points draw call. Units spring toward formation slots, which reads as
+// Crowd rendering: the player's swarm as a single THREE.Points draw call,
+// plus the shared point-sprite material (also used by enemies.js). Units spring toward formation slots, which reads as
 // organic movement at O(N) cost.
 
 import * as THREE from 'three';
@@ -7,16 +7,6 @@ import { CFG, COLORS, ANIM } from './config.js';
 import { FORMATIONS, UNIT_SPACING } from './formations.js';
 
 const HIDDEN = -100;   // y for unused point slots (drawn off-screen)
-
-const SLOTS = CFG.MAX_PER_SQUAD;
-export const OX = new Float32Array(SLOTS);
-export const OZ = new Float32Array(SLOTS);
-for (let i = 0; i < SLOTS; i++) {
-  const r = Math.sqrt(i + 0.5), a = i * 2.39996;
-  // Jitter breaks up the spiral moiré that a perfect sunflower shows at high density.
-  OX[i] = r * Math.cos(a) + (Math.random() - 0.5) * 0.7;
-  OZ[i] = (r * Math.sin(a) + (Math.random() - 0.5) * 0.7) * 0.75;
-}
 
 const pointVS = /* glsl */ `
 uniform float uSize;
@@ -149,6 +139,26 @@ export class Army {
     return k;
   }
 
+  // Removes up to n units nearest to (x, z): where an enemy hit.
+  killNear(x, z, n, onLost) {
+    const p = this.pos;
+    let k = 0;
+    for (; k < n && this.N > 0; k++) {
+      let best = -1, bd = Infinity;
+      for (let i = 0; i < this.L; i++) {
+        if (!this.alive[i]) continue;
+        const dx = p[i * 3] - x, dz = p[i * 3 + 2] - z, d = dx * dx + dz * dz;
+        if (d < bd) { bd = d; best = i; }
+      }
+      this.alive[best] = 0;
+      if (onLost) onLost(p[best * 3], p[best * 3 + 2]);
+      p[best * 3 + 1] = HIDDEN;
+      this.N--;
+    }
+    this.shrink();
+    return k;
+  }
+
   nextFormation(time) {
     this.prev = this.pat;
     this.pat = (this.pat + 1) % FORMATIONS.length;
@@ -217,37 +227,5 @@ export class Army {
     }
     this.attr.needsUpdate = true;
     this.geo.setDrawRange(0, this.L);
-  }
-}
-
-export function squadGeometry(sq) {
-  const vn = Math.min(sq.n, CFG.MAX_PER_SQUAD);
-  sq.sp = Math.min(CFG.ENEMY_SPACING, CFG.TW * 0.75 / Math.sqrt(Math.max(vn, 1)));
-  sq.r = sq.sp * Math.sqrt(vn);
-}
-
-export class EnemyView {
-  constructor(scene, scaleUniform) {
-    this.max = CFG.MAX_ENEMY_VISIBLE;
-    this.mat = pointMaterial(COLORS.enemy, 1, scaleUniform, 0.24);
-    Object.assign(this, dynamicPoints(scene, this.max, this.mat));
-    this.count = 0;
-  }
-
-  update(squads, dist, time) {
-    const p = this.pos;
-    let c = 0;
-    for (const sq of squads) {
-      const vn = Math.min(sq.n, CFG.MAX_PER_SQUAD);
-      const zc = -(sq.wz - dist);
-      for (let i = 0; i < vn && c < this.max; i++, c++) {
-        p[c * 3] = sq.x + OX[i] * sq.sp + Math.sin(time * 3 + i) * 0.012;
-        p[c * 3 + 1] = 0.14;
-        p[c * 3 + 2] = zc + OZ[i] * sq.sp;
-      }
-    }
-    this.count = c;
-    this.attr.needsUpdate = true;
-    this.geo.setDrawRange(0, c);
   }
 }

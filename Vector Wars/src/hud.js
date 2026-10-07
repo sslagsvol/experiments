@@ -12,7 +12,8 @@ export class Hud {
     this.title = document.getElementById('title');
     this.over = document.getElementById('over');
     this.recap = document.getElementById('recap');
-    this.last = { dist: -1, count: -1 };
+    this.dangerEl = document.getElementById('danger');
+    this.last = { dist: -1, count: -1, danger: -1 };
   }
 
   setDist(d) {
@@ -36,6 +37,14 @@ export class Hud {
       this.count.textContent = fmt(n);
     }
     this.count.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -50%)`;
+  }
+
+  setDanger(level) {
+    const v = Math.round(level * 100) / 100;
+    if (v === this.last.danger) return;
+    this.last.danger = v;
+    this.dangerEl.style.opacity = v;
+    this.count.classList.toggle('danger', v > 0.5);
   }
 
   showTitle(on) { this.title.classList.toggle('hidden', !on); }
