@@ -37,6 +37,7 @@ void main() {
 const floorFS = /* glsl */ `
 uniform float uDist;
 uniform float uTW;
+uniform float uVoid;
 uniform vec3 uGrid;
 uniform vec3 uBg;
 varying vec3 vPos;
@@ -47,7 +48,7 @@ float gridLine(float c, float w) {
 }
 void main() {
   float wz = -vPos.z + uDist;
-  float inT = step(abs(vPos.x), uTW);
+  float inT = step(abs(vPos.x), uTW) * (1.0 - uVoid);
   float inner = max(gridLine(vPos.x / 0.4, 1.3), gridLine(wz, 1.3));
   float outer = max(gridLine(vPos.x / 0.8, 1.0), gridLine(wz * 0.5, 1.0)) * 0.3;
   float l = mix(outer, inner, inT);
@@ -81,24 +82,46 @@ export function createWorld(canvas) {
   const ripples = Array.from({ length: RIPPLES }, () => new THREE.Vector4(0, 0, -99, 0));
   let ripI = 0;
 
-  const floorMat = new THREE.ShaderMaterial({
-    vertexShader: floorVS,
-    fragmentShader: floorFS,
-    uniforms: {
-      uTime: { value: 0 },
-      uDist: { value: 0 },
-      uRip: { value: ripples },
-      uTW: { value: CFG.TW },
-      uGrid: { value: new THREE.Vector3(...COLORS.grid) },
-      uBg: { value: new THREE.Vector3(bg.r, bg.g, bg.b) },
-    },
+  // The track is a raised strip; the outer grid sits far below it so units
+  // that run off the edge visibly fall.
+  const shared = {
+    uTime: { value: 0 },
+    uDist: { value: 0 },
+    uRip: { value: ripples },
+    uTW: { value: CFG.TW },
+    uGrid: { value: new THREE.Vector3(...COLORS.grid) },
+    uBg: { value: new THREE.Vector3(bg.r, bg.g, bg.b) },
+  };
+  function floorMesh(width, segX, y, isVoid) {
+    const geo = new THREE.PlaneGeometry(width, 130, segX, 260);
+    geo.rotateX(-Math.PI / 2);
+    geo.translate(0, y, -55);
+    const mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({
+      vertexShader: floorVS,
+      fragmentShader: floorFS,
+      uniforms: { ...shared, uVoid: { value: isVoid ? 1 : 0 } },
+    }));
+    mesh.frustumCulled = false;
+    scene.add(mesh);
+    return mesh;
+  }
+  floorMesh(2 * CFG.TW, 16, 0, false);
+  floorMesh(60, 60, -4, true);
+  const floorMat = { uniforms: shared };
+
+  // Faint walls under the rails so the track reads as a raised platform.
+  const wallGeo = new THREE.PlaneGeometry(130, 0.6);
+  wallGeo.rotateY(Math.PI / 2);
+  wallGeo.translate(0, -0.3, -55);
+  const wallMat = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(...COLORS.rail).multiplyScalar(0.12),
+    side: THREE.DoubleSide, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
   });
-  const floorGeo = new THREE.PlaneGeometry(36, 130, 72, 260);
-  floorGeo.rotateX(-Math.PI / 2);
-  floorGeo.translate(0, 0, -55);
-  const floor = new THREE.Mesh(floorGeo, floorMat);
-  floor.frustumCulled = false;
-  scene.add(floor);
+  for (const s of [-1, 1]) {
+    const wall = new THREE.Mesh(wallGeo, wallMat);
+    wall.position.x = s * CFG.TW;
+    scene.add(wall);
+  }
 
   const railMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(...COLORS.rail) });
   const railGeo = new THREE.BoxGeometry(0.05, 0.05, 130);

@@ -117,9 +117,9 @@ The swarm stays as points of light so it scales. **Large objects shatter like vo
 | Problem | Solution |
 |---|---|
 | Drawing thousands of units | One `Points` draw call per team with a custom glow/diamond sprite shader |
-| Crowd simulation | No boids. Units spring toward jittered sunflower-spiral slots. O(N). Dense crowds pack tighter to fit the track. |
+| Crowd simulation | No boids. Units spring toward slots in one of six formation patterns (`src/formations.js`). O(N). |
 | Memory churn | Preallocated typed arrays for units, bullets and sparks. No per-frame allocation in hot loops. |
-| Very large armies | Above 4,000, each dot stands in for several units. The counter always shows the true number. |
+| Very large armies | The track holds at most 1,200 units (`CFG.CAPACITY`); overflow falls off the edges, so every dot is exactly one unit. |
 | Crowd-vs-crowd fights | Losses traded 1:1 along the contact line, with sparks |
 | Bullets | Bounded fire rate (≤ 50/s), one line-segment draw call, a 1D sweep test against gates and squads |
 | Gate text | Canvas texture redrawn only when the value changes |

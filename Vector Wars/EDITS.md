@@ -96,12 +96,12 @@ Grouped so each batch is playable on its own and later work doesn't redo earlier
 | — | **Mobile check** | Retest on a phone after A and after C | — | Phase 0 runs well on mobile; recheck as entity counts change |
 
 ### Checklist
-- [ ] A1 Slot generator per pattern with fixed spacing
-- [ ] A2 Pattern library (sunflower, hex, rings, wedge, diamond, phalanx)
-- [ ] A3 Morph to the next pattern on positive gates, with a staggered ripple
-- [ ] A4 Slow swirl, with a speed burst after power-ups
-- [ ] A5 Units outside the rails fall and die; "fell off" added to the recap
-- [ ] A6 Remove the stand-in-dot compromise; dot count equals unit count
+- [x] A1 Slot generator per pattern with fixed spacing
+- [x] A2 Pattern library (sunflower, hex, rings, wedge, diamond, phalanx)
+- [x] A3 Morph to the next pattern on positive gates, with a staggered ripple
+- [x] A4 Slow swirl, with a speed burst after power-ups
+- [x] A5 Units outside the rails fall and die; "fell off" added to the recap
+- [x] A6 Remove the stand-in-dot compromise; dot count equals unit count
 - [ ] B1 Volley fire from front-rank positions
 - [ ] B2 Linear DPS with a visible-bullet cap and damage aggregation
 - [ ] B3 Bullet brightness/thickness scales with damage per bullet
@@ -114,11 +114,15 @@ Grouped so each batch is playable on its own and later work doesn't redo earlier
 - [ ] D3 Shatter death and reward
 - [ ] E1 Par-curve enemy counts
 - [ ] E1b ÷2/÷3 gates, more − gates, a gate mix weighted by army size, no ÷/÷ pairs
-- [ ] E1c Cap multiplier charging at ×3, with each step costing more hits
+- [x] E1c Cap multiplier charging at ×3, with each step costing more hits
 - [ ] E2 Tune capacity, gate toughness, boss HP
 - [ ] Mobile test after C
 
 ---
+
+## Progress notes
+- **Batch A (branch `vw/formations`):** six formations normalized to the same width, so capacity is identical whichever is active (full army = 80% of track width, `CFG.FORMATION_FILL`). Track capacity is 1,200 (`CFG.CAPACITY`). The track is now a raised strip over a void grid, so falling reads visually. A negative gate shakes the formation. 1,200 units cost about 1.5ms/frame on desktop.
+- **E1c was pulled forward:** testing showed a 1,000-unit army charging a ×2 gate to ×6 in about two seconds.
 
 ## Decisions
 - **Agreed:** the formation plan (tight spacing, patterns that morph on good gates, swirl) and falling off the track (both overflow and steering spill, with the crowd's center kept inside the rails).

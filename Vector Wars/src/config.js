@@ -10,9 +10,10 @@ export const CFG = {
   VIEW_AHEAD: 70,          // how far ahead elements are spawned
 
   START_UNITS: 30,
-  UNIT_CAP: 999999,
-  MAX_UNITS_VISIBLE: 4000, // above this, each dot stands in for several units
-  UNIT_SPACING: 0.075,
+  CAPACITY: 1200,          // most units the track holds; the rest fall off
+  FORMATION_FILL: 0.8,     // a full army spans this fraction of the track width
+  FORMATION_DEPTH: 0.85,   // z squash of formation patterns
+  EDGE_MARGIN: 0.2,        // how close the army's center may get to a rail
   MAX_PER_SQUAD: 900,
   MAX_ENEMY_VISIBLE: 3000,
   ENEMY_SPACING: 0.09,
@@ -28,7 +29,8 @@ export const CFG = {
   STEER_RESPONSE: 14,      // higher = snappier follow
 
   GATE_H: 1.25,
-  MULT_CHARGE_PER_HIT: 0.05,
+  MULT_CHARGE_PER_HIT: 0.05, // ×2→×3 takes 20 hits
+  MULT_MAX: 3,
 
   SEED: 1337,
 };

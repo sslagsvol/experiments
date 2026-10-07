@@ -136,3 +136,65 @@ export class Sparks {
 
   clear() { this.life.fill(0); }
 }
+
+// Units falling off the track. They keep running sideways until they pass a
+// rail, then drop into the void with gravity and fade out.
+export class Fallers {
+  constructor(scene, scaleUniform, size, max = 1500) {
+    this.max = max;
+    this.i = 0;
+    this.x = new Float32Array(max); this.y = new Float32Array(max); this.w = new Float32Array(max);
+    this.vx = new Float32Array(max); this.vy = new Float32Array(max); this.vw = new Float32Array(max);
+    this.life = new Float32Array(max);
+    this.pos = new Float32Array(max * 3);
+    this.lifeAttr = new THREE.BufferAttribute(new Float32Array(max), 1).setUsage(THREE.DynamicDrawUsage);
+    this.posAttr = new THREE.BufferAttribute(this.pos, 3).setUsage(THREE.DynamicDrawUsage);
+    const col = new Float32Array(max * 3);
+    for (let i = 0; i < max; i++) col.set(COLORS.you, i * 3);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', this.posAttr);
+    geo.setAttribute('aColor', new THREE.BufferAttribute(col, 3));
+    geo.setAttribute('aLife', this.lifeAttr);
+    const pts = new THREE.Points(geo, new THREE.ShaderMaterial({
+      vertexShader: sparkVS, fragmentShader: sparkFS,
+      uniforms: { uSize: { value: size }, uScale: scaleUniform },
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    }));
+    pts.frustumCulled = false;
+    scene.add(pts);
+  }
+
+  // dir = -1 runs off the left rail, +1 the right. vw carries forward motion.
+  drop(x, w, dir, vw) {
+    const i = this.i;
+    this.i = (this.i + 1) % this.max;
+    this.x[i] = x; this.y[i] = 0.12; this.w[i] = w;
+    this.vx[i] = dir * (1.5 + Math.random() * 2);
+    this.vy[i] = 0;
+    this.vw[i] = vw * (0.6 + Math.random() * 0.4);
+    this.life[i] = 1;
+  }
+
+  update(dt, dist) {
+    const L = this.lifeAttr.array, p = this.pos;
+    for (let i = 0; i < this.max; i++) {
+      if (this.life[i] <= 0) { L[i] = 0; continue; }
+      this.x[i] += this.vx[i] * dt;
+      this.w[i] += this.vw[i] * dt;
+      this.vw[i] *= Math.pow(0.3, dt);
+      if (Math.abs(this.x[i]) > CFG.TW) {
+        this.vy[i] -= 14 * dt;
+        this.y[i] += this.vy[i] * dt;
+        this.vx[i] *= Math.pow(0.5, dt);
+        this.life[i] = Math.max(0, 1 + this.y[i] / 5);
+      }
+      p[i * 3] = this.x[i]; p[i * 3 + 1] = this.y[i]; p[i * 3 + 2] = -(this.w[i] - dist);
+      // Flicker as they fall, like a dying vector beam.
+      L[i] = this.life[i] * (this.y[i] < 0 ? 0.6 + 0.4 * Math.sin(i + this.y[i] * 9) : 1);
+    }
+    this.lifeAttr.needsUpdate = true;
+    this.posAttr.needsUpdate = true;
+  }
+
+  clear() { this.life.fill(0); }
+}
