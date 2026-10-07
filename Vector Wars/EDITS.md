@@ -251,6 +251,13 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Moving gates** (uncommon, about 15% of gate spots): a single 1.5-wide panel sways side to side. 65% are worth chasing (+ or ×), the rest are bad (− or ÷) to dodge. Only units that pass through it are affected; it only shatters if someone did. Shootable like any gate.
 - **× gates climb more slowly:** 4 hits per step at the start (was 2), about 110 hits for ×1→×3. Reaching ×3.0 plays a loud chord (`maxMult`), bursts gold and sends a ripple.
 
+## Round 12: 80s high scores (2026-10-07)
+- **Top-10 board** (`src/scores.js`), kept in localStorage: per device, no security. Seeded with arcade CPU entries (VEC 20,000 … ACE 1,000) so it's never empty. The HUD "Hi" shows the top score.
+- **Initials entry** when a score makes the board: "New high score" flashing gold/pink, the place (e.g. "6th place"), three big slots with ▲▼ (hold to repeat) cycling A–Z, 0–9 and `! ? . - * # @ & $ % + = < > / _` plus space; tap a slot to select it; keyboard typing works on desktop. ENTER saves and plays the max-multiplier chord. "Tap to retry" is hidden, and taps can't restart the game, until it's done.
+- **Board** replaces the recap after entry: per-rank neon colors, dotted leaders, the new entry blinking. The game-over backdrop is darker so it reads over the scene.
+- **Title attract mode:** the title alternates between the logo and the board every 5s.
+- **Next step if wanted:** a *global* leaderboard shared by everyone needs a tiny online store (a free key-value service or a small serverless function). `scores.js` is the only file that would change.
+
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
 - *(none)*

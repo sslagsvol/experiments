@@ -5,6 +5,7 @@
 import { fmt } from './config.js';
 import { TYPE_LIST } from './enemyFormations.js';
 import { drawEnemy } from './sprites.js';
+import { CHARSET, INITIALS, ordinal } from './scores.js';
 
 const commas = (n) => Math.round(n).toLocaleString('en-US');
 
@@ -20,9 +21,17 @@ export class Hud {
     this.over = document.getElementById('over');
     this.recap = document.getElementById('recap');
     this.dangerEl = document.getElementById('danger');
+    this.titleLogo = document.getElementById('title-logo');
+    this.titleBoard = document.getElementById('title-board');
+    this.entryEl = document.getElementById('entry');
+    this.retry = document.getElementById('retry');
     this.last = { dist: -1, count: -1, danger: -1, live: null };
     this.stopRecap = null;
+    this.entry = null;        // the initials entry while it's open
+    this.attract = 0;         // title-screen timer alternating logo / high scores
   }
+
+  get entering() { return !!this.entry; }
 
   setDist(d) {
     if (d === this.last.dist) return;
@@ -30,7 +39,7 @@ export class Hud {
     this.dist.textContent = d;
   }
 
-  setBest(b) { this.best.textContent = 'Best ' + commas(b); }
+  setBest(b) { this.best.textContent = 'Hi ' + commas(b); }
 
   setCount(n, visible) {
     this.armyHud.style.visibility = visible ? 'visible' : 'hidden';
@@ -71,12 +80,45 @@ export class Hud {
     this.count.classList.toggle('danger', v > 0.5);
   }
 
-  showTitle(on) { this.title.classList.toggle('hidden', !on); }
+  // Title screen, arcade attract mode: alternates the logo and the board.
+  showTitle(on, scores) {
+    this.title.classList.toggle('hidden', !on);
+    clearInterval(this.attract);
+    this.title.classList.remove('show-board');
+    if (!on) return;
+    renderBoard(this.titleBoard, scores);
+    this.attract = setInterval(() => this.title.classList.toggle('show-board'), 5000);
+  }
 
-  showOver(stats) {
+  // Game over. With entry = { rank, onSubmit(initials) }, the player first
+  // enters initials; then the board replaces the recap.
+  showOver(stats, entry = null) {
     this.over.classList.toggle('hidden', !stats);
     if (this.stopRecap) { this.stopRecap(); this.stopRecap = null; }
-    if (stats) this.stopRecap = renderRecap(this.recap, stats);
+    if (this.entry) { this.entry.close(); this.entry = null; }
+    this.entryEl.classList.add('hidden');
+    if (!stats) return;
+    this.stopRecap = renderRecap(this.recap, stats);
+    this.retry.classList.toggle('hidden', !!entry);
+    if (entry) {
+      this.entryEl.classList.remove('hidden');
+      this.boardAt = 0;
+      this.entry = new InitialsEntry(this.entryEl, entry.rank, (initials) => {
+        this.entry.close();
+        this.entry = null;
+        this.entryEl.classList.add('hidden');
+        entry.onSubmit(initials);
+      });
+      this.entry.onStep = entry.onStep;
+    } else this.boardAt = 0;
+  }
+
+  // Replaces the recap with the high score board (after entering initials).
+  showBoard(scores, highlight) {
+    if (this.stopRecap) { this.stopRecap(); this.stopRecap = null; }
+    renderBoard(this.recap, scores, highlight);
+    this.retry.classList.remove('hidden');
+    this.boardAt = performance.now();
   }
 
   debug(text) {
@@ -135,4 +177,92 @@ export function renderRecap(el, stats) {
   };
   raf = requestAnimationFrame(tick);
   return () => cancelAnimationFrame(raf);
+}
+
+// 80s high score board: rank, initials, dotted leader, score. The highlighted
+// row (a fresh entry) blinks.
+export function renderBoard(el, scores, highlight = -1) {
+  el.innerHTML = `<div class="board-title">High scores</div><ol class="board">${scores.map((e, i) => `
+    <li class="r${i}${i === highlight ? ' me' : ''}"><span class="rank">${ordinal(i)}</span><span class="ini">${escapeHtml(e.initials.padEnd(INITIALS, ' '))}</span><span class="lead"></span><span class="sc">${commas(e.score)}</span></li>`).join('')}</ol>`;
+}
+
+const escapeHtml = (t) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+// Arcade initials entry: three slots, ▲▼ cycle through CHARSET (hold to
+// repeat), tap a slot to pick it, or type on a keyboard. ENTER submits.
+export class InitialsEntry {
+  constructor(el, rank, onSubmit) {
+    this.el = el;
+    this.onSubmit = onSubmit;
+    this.chars = Array(INITIALS).fill(0);
+    this.cur = 0;
+    el.classList.add('entry-ui');
+    el.innerHTML = `
+      <div class="entry-title">New high score</div>
+      <div class="entry-rank">${ordinal(rank)} place · enter your initials</div>
+      <div class="slots">${this.chars.map((_, i) => `
+        <div class="slot" data-i="${i}">
+          <button type="button" class="up" aria-label="Next character">▲</button>
+          <div class="ch"></div>
+          <button type="button" class="down" aria-label="Previous character">▼</button>
+        </div>`).join('')}</div>
+      <button type="button" class="enter">Enter</button>`;
+    // Buttons swallow their pointer events so they never steer or restart the game.
+    const stop = (e) => e.stopPropagation();
+    el.addEventListener('pointerdown', stop);
+    this.repeat = null;
+    el.querySelectorAll('.slot').forEach((slot) => {
+      const i = +slot.dataset.i;
+      slot.querySelector('.ch').addEventListener('pointerdown', () => { this.cur = i; this.render(); });
+      for (const [cls, dir] of [['.up', 1], ['.down', -1]]) {
+        const b = slot.querySelector(cls);
+        b.addEventListener('pointerdown', () => {
+          this.cur = i; this.step(dir);
+          clearTimeout(this.repeat);
+          const go = () => { this.step(dir); this.repeat = setTimeout(go, 90); };
+          this.repeat = setTimeout(go, 380);
+        });
+        for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(ev, () => clearTimeout(this.repeat));
+      }
+    });
+    el.querySelector('.enter').addEventListener('pointerdown', () => this.submit());
+    this.onKey = (e) => {
+      if (e.key === 'Enter') this.submit();
+      else if (e.key === 'ArrowUp') this.step(1);
+      else if (e.key === 'ArrowDown') this.step(-1);
+      else if (e.key === 'ArrowLeft') { this.cur = Math.max(0, this.cur - 1); this.render(); }
+      else if (e.key === 'ArrowRight') { this.cur = Math.min(INITIALS - 1, this.cur + 1); this.render(); }
+      else if (e.key === 'Backspace') { this.chars[this.cur] = 0; this.cur = Math.max(0, this.cur - 1); this.render(); }
+      else if (e.key.length === 1 && CHARSET.includes(e.key.toUpperCase())) {
+        this.chars[this.cur] = CHARSET.indexOf(e.key.toUpperCase());
+        this.cur = Math.min(INITIALS - 1, this.cur + 1);
+        this.render();
+      } else return;
+      e.preventDefault();
+    };
+    window.addEventListener('keydown', this.onKey);
+    this.render();
+  }
+
+  step(dir) {
+    this.chars[this.cur] = (this.chars[this.cur] + dir + CHARSET.length) % CHARSET.length;
+    if (this.onStep) this.onStep();
+    this.render();
+  }
+
+  render() {
+    this.el.querySelectorAll('.slot').forEach((slot, i) => {
+      slot.querySelector('.ch').textContent = CHARSET[this.chars[i]] === ' ' ? '·' : CHARSET[this.chars[i]];
+      slot.classList.toggle('cur', i === this.cur);
+    });
+  }
+
+  get initials() { return this.chars.map((c) => CHARSET[c]).join(''); }
+
+  submit() { this.onSubmit(this.initials); }
+
+  close() {
+    clearTimeout(this.repeat);
+    window.removeEventListener('keydown', this.onKey);
+  }
 }

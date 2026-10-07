@@ -166,6 +166,9 @@ html, body {
 
 .hidden { display: none; }
 
+/* Game over sits on a darker backdrop so the recap and board read over the scene. */
+#over { background: radial-gradient(ellipse at center, rgba(4, 5, 26, 0.62), rgba(4, 5, 26, 0.85)); }
+
 .overlay h1 {
   margin: 0 0 8px;
   font-family: 'Audiowide', sans-serif;
@@ -205,3 +208,81 @@ html, body {
 #recap .row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-bottom: 1px solid rgba(70, 210, 255, 0.2); }
 #recap .row span:last-child { color: #fff; text-align: right; }
 #recap .row.small { font-size: 12px; }
+
+/* ---- 80s high score board ---- */
+.board-title {
+  font-family: 'Audiowide', sans-serif;
+  font-size: 22px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--hud);
+  text-shadow: 0 0 10px var(--hud);
+  margin-bottom: 8px;
+}
+.board { list-style: none; margin: 0 auto; padding: 0; width: min(290px, 100%); font-size: 19px; }
+.board li { display: flex; align-items: baseline; gap: 10px; padding: 2px 0; }
+.board .rank { width: 44px; text-align: left; }
+.board .ini { letter-spacing: .18em; white-space: pre; color: #fff; }
+.board .lead { flex: 1; border-bottom: 2px dotted currentColor; opacity: .45; transform: translateY(-5px); }
+.board .sc { color: #fff; }
+/* Classic per-rank colors, cycling through the palette. */
+.board li { color: var(--you); text-shadow: 0 0 6px currentColor; }
+.board .r0 { color: #ffd23d; } .board .r1 { color: #ff8cc6; } .board .r2 { color: #9dff3d; }
+.board .r3, .board .r6, .board .r9 { color: #7fe8ff; } .board .r4, .board .r7 { color: #c69bff; } .board .r5, .board .r8 { color: #ff9a5a; }
+.board .me { animation: board-me 0.5s steps(2, start) infinite; }
+.board .me .ini, .board .me .sc { color: inherit; }
+@keyframes board-me { to { color: #fff; text-shadow: 0 0 12px #fff; } }
+
+/* ---- Initials entry ---- */
+#entry { pointer-events: auto; margin-top: 10px; }
+.entry-title {
+  font-family: 'Audiowide', sans-serif;
+  font-size: 20px;
+  text-transform: uppercase;
+  animation: entry-title 0.6s steps(2, start) infinite;
+}
+@keyframes entry-title { from { color: #ffd23d; text-shadow: 0 0 10px #ffd23d; } to { color: #ff8cc6; text-shadow: 0 0 10px #ff8cc6; } }
+.entry-rank { font-size: 13px; opacity: .8; margin: 2px 0 6px; }
+.slots { display: flex; justify-content: center; gap: 14px; }
+.slot { display: flex; flex-direction: column; align-items: center; }
+.slot button, .entry-ui .enter {
+  font: inherit;
+  color: var(--hud);
+  background: none;
+  border: 0;
+  padding: 4px 12px;
+  font-size: 20px;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.slot .ch {
+  width: 46px;
+  font-size: 46px;
+  line-height: 1.1;
+  color: #fff;
+  text-shadow: 0 0 10px var(--you);
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+}
+.slot.cur .ch { border-bottom-color: var(--hud); animation: cursor 0.8s steps(2, start) infinite; }
+@keyframes cursor { to { border-bottom-color: transparent; } }
+.entry-ui .enter {
+  margin-top: 8px;
+  padding: 8px 26px;
+  font-size: 18px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  border: 2px solid var(--hud);
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(157, 255, 61, 0.5), inset 0 0 10px rgba(157, 255, 61, 0.3);
+}
+
+/* ---- Title attract mode: logo and high scores take turns ---- */
+/* Logo and board share one grid cell so the prompt below never moves. */
+.title-stage { display: grid; align-items: center; justify-items: center; min-height: 340px; }
+#title-logo, #title-board { grid-area: 1 / 1; transition: opacity 0.5s; }
+#title-board { opacity: 0; }
+#title.show-board #title-logo { opacity: 0; }
+#title.show-board #title-board { opacity: 1; }

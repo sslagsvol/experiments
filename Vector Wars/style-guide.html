@@ -104,6 +104,16 @@
       <div class="meta">The real recap from src/hud.js with sample stats. Score = distance × CFG.SCORE_PER_DIST + each enemy defeated × its hp × CFG.SCORE_PER_HP · numbers count up over 0.9s · sprites idle (grunts bob, drones sway, bombers pulse, brutes turn)</div>
     </div>
     <div class="card">
+      <div class="stage" style="padding:16px 8px"><div id="sg-board"></div></div>
+      <h3>High score board</h3><div class="var">renderBoard() · .board .r0–.r9 · .me</div>
+      <div class="meta">Top 10 from src/scores.js (localStorage, per device; seeded with CPU entries VEC, TOR, WAR…) · per-rank neon colors · dotted leaders · a fresh entry blinks · the title screen alternates logo and board every 5s</div>
+    </div>
+    <div class="card">
+      <div class="stage" style="padding:16px 8px"><div id="sg-entry"></div></div>
+      <h3>Initials entry (try it)</h3><div class="var">InitialsEntry · CHARSET · .slot.cur · .enter</div>
+      <div class="meta">3 slots · ▲▼ cycle A–Z, 0–9 and ! ? . - * # @ &amp; $ % + = &lt; &gt; / _ space (hold to repeat) · tap a slot to select · keyboard typing, arrows, Backspace, Enter · "New high score" flashes gold/pink</div>
+    </div>
+    <div class="card">
       <div class="stage hud-stage"><div id="hud"><div id="dist">2059</div><div id="best">Best 24,869</div><button id="mute" type="button" aria-label="Mute sound (demo)"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="on" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/><path class="x" d="M16 9l5 6M21 9l-5 6"/></svg></button><div id="army-hud"><div id="count">640</div><div id="delta" class="gain live">+371</div></div></div></div>
       <h3>In-game HUD</h3><div class="var">#dist · #best · #mute (.off) · #army-hud #count · #delta</div>
       <div class="meta">Share Tech Mono · distance 22px --hud (it's also the distance score) · best score 14px · army count 34px white with --you glow, fixed at the bottom center · delta 20px to its right</div>
@@ -167,7 +177,8 @@ import { CFG, COLORS, ANIM, BLOOM, multHitsForStep } from './src/config.js';
 import { FORMATIONS, UNIT_SPACING } from './src/formations.js';
 import { enemyFormation, ENEMY_KINDS, ENEMY_TYPES, TYPE_LIST } from './src/enemyFormations.js';
 import { drawEnemy } from './src/sprites.js';
-import { renderRecap } from './src/hud.js';
+import { renderRecap, renderBoard, InitialsEntry } from './src/hud.js';
+import { loadScores } from './src/scores.js';
 import { Sfx, SOUND_NAMES } from './src/audio.js';
 import { SFX } from './src/config.js';
 
@@ -713,6 +724,14 @@ setInterval(() => {
     deltaEl.className = 'loss fade'; lossRun = 0;
   } else if (demoStep === 11 && countVal > 600) countVal = 300;
 }, 350);
+
+// High scores: the real board (with a highlighted row) and a live entry.
+renderBoard(document.getElementById('sg-board'), loadScores(), 5);
+const sgEntry = document.getElementById('sg-entry');
+const startEntry = () => {
+  const e = new InitialsEntry(sgEntry, 5, (ini) => { e.close(); sgEntry.innerHTML = `<div class="entry-title">Saved "${ini}"</div><p class="note">(Demo only; nothing stored.)</p>`; setTimeout(startEntry, 2000); });
+};
+startEntry();
 
 // Recap: the real renderer with sample stats.
 renderRecap(document.getElementById('recap'), {

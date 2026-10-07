@@ -44,15 +44,21 @@
 </div>
 
 <div id="title" class="overlay">
-  <h1>Vector Wars</h1>
-  <p class="sub">Drag to steer · Shoot gates to raise them</p>
+  <div class="title-stage">
+    <div id="title-logo">
+      <h1>Vector Wars</h1>
+      <p class="sub">Drag to steer · Shoot gates to raise them</p>
+    </div>
+    <div id="title-board"></div>
+  </div>
   <p class="blink">Touch to start</p>
 </div>
 
 <div id="over" class="overlay hidden">
   <h2>Swarm lost</h2>
   <div id="recap"></div>
-  <p class="blink">Tap to retry</p>
+  <div id="entry" class="hidden"></div>
+  <p id="retry" class="blink">Tap to retry</p>
 </div>
 
 <script type="module" src="src/main.js"></script>

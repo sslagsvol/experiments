@@ -12,6 +12,7 @@ import { UNIT_SPACING } from './formations.js';
 import { DragInput } from './input.js';
 import { Hud } from './hud.js';
 import { Sfx } from './audio.js';
+import { loadScores, rankFor, addScore } from './scores.js';
 
 const params = new URLSearchParams(location.search);
 const START_UNITS = Math.min(CFG.CAPACITY, Math.max(1, parseInt(params.get('units'), 10) || CFG.START_UNITS));
@@ -37,9 +38,8 @@ const syncMute = () => { muteBtn.classList.toggle('off', sfx.muted); muteBtn.set
 muteBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); sfx.unlock(); sfx.setMuted(!sfx.muted); syncMute(); });
 syncMute();
 
-let best = 0;
-// Score-based best (distance + enemies defeated); the old distance-only key is ignored.
-try { best = parseInt(localStorage.getItem('vector-wars-best-score'), 10) || 0; } catch { /* storage unavailable */ }
+// "Hi" in the HUD is the top of the high score table.
+let best = loadScores()[0]?.score || 0;
 hud.setBest(best);
 
 let G;
@@ -76,7 +76,7 @@ function newRun() {
     leakFlash: 0,
   };
   hud.showOver(null);
-  hud.showTitle(true);
+  hud.showTitle(true, loadScores());
 }
 
 // ---------- Track generation (seeded, so every run of a seed is identical) ----------
@@ -365,17 +365,24 @@ function endRun() {
   const distPts = Math.floor(G.dist * CFG.SCORE_PER_DIST);
   const killPts = TYPE_LIST.map((t, i) => G.stats.kills[i] * t.hp * CFG.SCORE_PER_HP);
   const score = distPts + killPts.reduce((a, b) => a + b, 0);
-  const newBest = score > best;
-  if (newBest) {
-    best = score;
-    try { localStorage.setItem('vector-wars-best-score', String(best)); } catch { /* storage unavailable */ }
-    hud.setBest(best);
-  }
+  const rank = rankFor(score), newBest = rank === 0;
   army.kill(army.N, unitLost);
   sfx.play('lose');
   world.addRipple(G.ax, G.dist, ANIM.rippleDeath, time);
   sparks.emit(G.ax, 0.3, G.dist, COLORS.you, 80, 5);
-  hud.showOver({ ...G.stats, dist: distPts / CFG.SCORE_PER_DIST, distPts, killPts, score, newBest });
+  const stats = { ...G.stats, distPts, killPts, score, newBest };
+  // Made the top 10? Enter initials first, then show the board.
+  hud.showOver(stats, rank < 0 ? null : {
+    rank,
+    onStep: () => sfx.play('gateTick'),
+    onSubmit: (initials) => {
+      const idx = addScore(initials, score);
+      best = loadScores()[0].score;
+      hud.setBest(best);
+      hud.showBoard(loadScores(), idx);
+      sfx.play('maxMult');
+    },
+  });
 }
 
 // dt is simulation time (slowed during slow motion); realDt drives anything
@@ -392,7 +399,9 @@ function update(dt, realDt) {
       hud.showTitle(false);
     }
   } else if (G.state === 'over') {
-    if (tapped && time - G.overAt > 0.6) newRun();
+    // No restart while typing initials, or in the instant after the board appears.
+    const boardSettled = !hud.boardAt || performance.now() - hud.boardAt > 600;
+    if (tapped && time - G.overAt > 0.6 && !hud.entering && boardSettled) newRun();
   }
 
   if (G.state === 'play') {
