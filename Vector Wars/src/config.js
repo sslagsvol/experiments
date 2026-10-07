@@ -45,9 +45,11 @@ export const CFG = {
   STEER_RESPONSE: 14,      // higher = snappier follow
 
   GATE_H: 1.25,
-  ADD_HITS_PER_STEP: 3,    // bullets to raise a + / − gate by one
-  MULT_CHARGE_PER_HIT: 0.05, // ×2→×3 takes 20 hits
-  MULT_MAX: 3,
+  ADD_HITS_PER_STEP: 4,    // bullets to raise a + / − gate by one
+  MULT_START: 1.0,         // × gates start doing nothing…
+  MULT_STEP: 0.1,          // …and climb in steps of 0.1…
+  MULT_MAX: 3,             // …up to ×3
+  MULT_HITS_BASE: 2,       // bullets per step at ×1.0, +1 more every ×0.5 (≈70 hits for ×1→×3)
 
   SEED: 1337,
 };
@@ -104,6 +106,11 @@ export const COLORS = {
   bullet: [2.0, 1.45, 0.45],
   white: [1.6, 1.6, 1.6],
 };
+
+// Bullets needed for a × gate's next 0.1 step at multiplier m.
+export function multHitsForStep(m) {
+  return CFG.MULT_HITS_BASE + Math.floor((m - 1) / 0.5 + 1e-6);
+}
 
 export function mulberry32(seed) {
   let a = seed >>> 0;

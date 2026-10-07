@@ -2,7 +2,7 @@
 // ?debug (FPS / unit counts overlay).
 
 import * as THREE from 'three';
-import { CFG, COLORS, ANIM, mulberry32 } from './config.js';
+import { CFG, COLORS, ANIM, mulberry32, multHitsForStep } from './config.js';
 import { createWorld } from './world.js';
 import { Army } from './crowd.js';
 import { EnemyForce } from './enemies.js';
@@ -73,9 +73,9 @@ const PATTERN = 'gegeggee';
 
 function makeGateSpec(rng, scale) {
   const r = rng();
-  if (r < 0.28) return { op: 'x', m: 2, ch: 0, f: 0 };
+  if (r < 0.28) return { op: 'x', m: CFG.MULT_START, ch: 0, f: 0 };
   if (r < 0.6) return { op: '+', v: Math.round((4 + rng() * 14) * scale), ch: 0, f: 0 };
-  return { op: '+', v: -Math.round((6 + rng() * 20) * scale), ch: 0, f: 0 };
+  return { op: '+', v: -Math.round((18 + rng() * 42) * scale), ch: 0, f: 0 };
 }
 
 function spawnNext() {
@@ -85,7 +85,7 @@ function spawnNext() {
     let L, R;
     if (G.gateIdx === 0) {
       L = { op: '+', v: 10, ch: 0, f: 0 };
-      R = { op: 'x', m: 2, ch: 0, f: 0 };
+      R = { op: 'x', m: CFG.MULT_START, ch: 0, f: 0 };
     } else {
       const scale = Math.pow(1.12, G.gateIdx);
       L = makeGateSpec(G.rng, scale);
@@ -176,7 +176,10 @@ function crossGate(g) {
   for (const [s, n, sign] of [[g.L, nL, -1], [g.R, nR, 1]]) {
     if (n <= 0) continue;
     const share = n / total, x = sign * Math.min(1, army.halfW * 0.5);
-    if (s.op === 'x') { spill(army.spawn(n * (s.m - 1), x)); gained = true; }
+    if (s.op === 'x') {
+      const add = Math.round(n * (s.m - 1));
+      if (add > 0) { spill(army.spawn(add, x)); gained = true; }
+    }
     else if (s.v > 0) { spill(army.spawn(Math.max(1, Math.round(s.v * share)), x)); gained = true; }
     else if (s.v < 0) army.killSide(sign, Math.min(n, Math.round(-s.v * share)), sparkLost);
     if (s !== (g.primary === 'L' ? g.L : g.R)) s.f = 1;   // secondary panel flashes
@@ -209,10 +212,10 @@ function shatterSparks(g) {
 function hitGate(s) {
   G.stats.gateHits++;
   if (s.op === 'x') {
-    if (s.m < CFG.MULT_MAX) {
-      // Each step costs more hits than the last.
-      s.ch += CFG.MULT_CHARGE_PER_HIT / (s.m - 1);
-      if (s.ch >= 1) { s.ch = 0; s.m++; }
+    if (s.m < CFG.MULT_MAX - 1e-6) {
+      // Climbs in 0.1 steps; higher steps cost more hits.
+      s.ch += 1 / multHitsForStep(s.m);
+      if (s.ch >= 0.999) { s.ch = 0; s.m = Math.round((s.m + CFG.MULT_STEP) * 10) / 10; }
     }
   } else {
     // + / − gates fill a charge bar too: ADD_HITS_PER_STEP bullets per +1.

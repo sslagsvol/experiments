@@ -196,6 +196,15 @@ The army detonates: **half the army is lost, and every enemy in sight is destroy
 | Enemies clumped too tight | `ENEMY_SPACING` 0.17 → 0.27, looser rows, wave gaps 3.2 → 4.5, skirmishers spread up to 9 deep. Formations deeper than `ENEMY_MAX_DEPTH` (9) compress, so a huge squad reads as a dense mob instead of stretching down the track. |
 | Drones stray far off the track | Bug: waiting drones swayed around the squad's live centroid, which included their own sway, so the squad drifted. They now sway around a fixed anchor and are clamped to the rails. Max enemy offset in a full test run: 1.95 (track half-width 2.0). |
 
+## Round 4: gates (2026-10-07)
+| Feedback | Change |
+|---|---|
+| Negative gates should be bigger | − gates now roll −18 to −60 (was −6 to −26), still scaling ×1.12 per gate. |
+| 4–5 bullets per step on + / − gates | `CFG.ADD_HITS_PER_STEP` = 4 (one setting; 5 makes bad gates much harder to rescue). |
+| × gates should climb visibly from 1.0 | × gates start at **×1.0** (no effect unless shot) and climb **0.1 per step** to ×3.0. Steps cost 2 hits up to ×1.5, then 3, 4 and 5 near the top (`multHitsForStep()`, about 70 hits for ×1.0→×3.0). Labels show one decimal. |
+
+Notes: squads are still sized against the gates' current values when they come out of the fog, so a multiplier you charge up after that is a real advantage. A sweeping bot that splits its fire now dies earlier (peak about 50), so check that the early game doesn't feel too punishing when you aim properly.
+
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
 - *(none)*

@@ -40,7 +40,7 @@ export function gateColor(s) {
 }
 
 export function gateLabel(s) {
-  return s.op === 'x' ? '×' + s.m : (s.v >= 0 ? '+' : '−') + fmt(Math.abs(s.v));
+  return s.op === 'x' ? '×' + s.m.toFixed(1) : (s.v >= 0 ? '+' : '−') + fmt(Math.abs(s.v));
 }
 
 class Panel {
