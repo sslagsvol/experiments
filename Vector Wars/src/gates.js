@@ -102,6 +102,8 @@ class Panel {
   }
 }
 
+// A gate is either a pair (L / R panels splitting the track) or a single
+// moving panel (S) that sways side to side; sx is its current center.
 class Gate {
   constructor(scene) {
     this.group = new THREE.Group();
@@ -109,7 +111,17 @@ class Gate {
     const w = CFG.TW - 0.1, h = CFG.GATE_H;
     this.left = new Panel(this.group, -(0.05 + w / 2), w, h);
     this.right = new Panel(this.group, 0.05 + w / 2, w, h);
+    this.single = new Panel(this.group, 0, CFG.MOVING_GATE_WIDTH, h);
     scene.add(this.group);
+  }
+
+  get panels() { return this.S ? [this.S] : [this.L, this.R]; }
+
+  // Current center of a moving gate (it keeps swaying until crossed).
+  moveTo(time) {
+    if (!this.S || this.done) return;
+    const amp = CFG.TW - CFG.MOVING_GATE_WIDTH / 2 - 0.05;
+    this.sx = amp * Math.sin(time * CFG.MOVING_GATE_SPEED + this.phase);
   }
 
   sync(dist, time) {
@@ -117,8 +129,15 @@ class Gate {
     this.group.position.z = z;
     const fade = this.done ? 0.3 : Math.min(1, (CFG.VIEW_AHEAD + z) / 14);
     const shatter = this.primary ? Math.min(1, (time - this.doneAt) / ANIM.gateShatter) : 0;
-    this.left.sync(this.L, fade, this.primary === 'L' ? shatter : 0);
-    this.right.sync(this.R, fade, this.primary === 'R' ? shatter : 0);
+    this.left.mesh.visible = this.right.mesh.visible = !this.S;
+    this.single.mesh.visible = !!this.S;
+    if (this.S) {
+      this.single.mesh.position.x = this.sx;
+      this.single.sync(this.S, fade, this.primary === 'S' ? shatter : 0);
+    } else {
+      this.left.sync(this.L, fade, this.primary === 'L' ? shatter : 0);
+      this.right.sync(this.R, fade, this.primary === 'R' ? shatter : 0);
+    }
   }
 }
 
@@ -129,9 +148,10 @@ export class GatePool {
     this.active = [];
   }
 
-  acquire(wz, L, R) {
+  // A pair (L, R), or a moving single gate when S is given.
+  acquire(wz, L, R, S = null, phase = 0) {
     const g = this.free.pop() || new Gate(this.scene);
-    Object.assign(g, { wz, L, R, done: false, primary: null, doneAt: 0 });
+    Object.assign(g, { wz, L, R, S, phase, sx: 0, done: false, primary: null, doneAt: 0 });
     g.group.visible = true;
     this.active.push(g);
     return g;
@@ -146,6 +166,6 @@ export class GatePool {
   clear() { while (this.active.length) this.release(this.active[0]); }
 
   invalidate() {
-    for (const g of [...this.active, ...this.free]) { g.left.label = ''; g.right.label = ''; }
+    for (const g of [...this.active, ...this.free]) { g.left.label = ''; g.right.label = ''; g.single.label = ''; }
   }
 }

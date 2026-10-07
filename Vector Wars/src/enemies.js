@@ -56,6 +56,10 @@ void main() {
 
 // Dimmed below the bloom threshold so dense formations keep readable shapes;
 // hit flashes push them back over it.
+// Enemies keep clear of the rails, where they'd be hard to hit.
+const EDGE = CFG.TW - CFG.ENEMY_EDGE_MARGIN;
+const clampX = (x) => Math.max(-EDGE, Math.min(EDGE, x));
+
 const TYPE_COLORS = TYPE_LIST.map((t) => COLORS[t.color].map((v) => v * 0.55));
 
 export class EnemyForce {
@@ -103,7 +107,7 @@ export class EnemyForce {
   spawnSquad(kind, n, anchorX, anchorW, rng, squadIndex) {
     const { pts, halfW } = enemyFormation(kind, Math.min(n, CFG.MAX_PER_SQUAD), rng);
     const mix = squadMix(kind, squadIndex);
-    const lim = Math.max(0, CFG.TW * 0.95 - halfW);
+    const lim = Math.max(0, CFG.TW - CFG.ENEMY_EDGE_MARGIN - halfW);
     anchorX = Math.max(-lim, Math.min(lim, anchorX));
     const s = { id: this.nextId++, kind, ax: anchorX, spread: ENEMY_KINDS[kind].spread, units: [], n: 0, charging: false,
       minX: 0, maxX: 0, minW: anchorW, maxW: anchorW, cx: anchorX, cw: anchorW };
@@ -157,7 +161,7 @@ export class EnemyForce {
           // Drones hover side to side even while waiting.
           // (Around the squad's fixed anchor; using the live centroid fed back
           // into itself and let drones drift off the track.)
-          if (t.strafe) this.x[i] = Math.max(-CFG.TW + 0.05, Math.min(CFG.TW - 0.05, s.ax + this.ox[i] + Math.sin(time * 2 + i) * 0.15));
+          if (t.strafe) this.x[i] = clampX(s.ax + this.ox[i] + Math.sin(time * 2 + i) * 0.15);
           continue;
         }
         // Stragglers far from the fight run faster so battles don't drag.
@@ -172,7 +176,7 @@ export class EnemyForce {
         if (t.strafe && !close) tx += Math.sin(time * 2.5 + i * 1.3) * t.strafe;
         const step = CFG.ENEMY_HOMING * t.homing * (close ? 3 : 1) * dt;
         this.x[i] += Math.max(-step, Math.min(step, tx - this.x[i]));
-        this.x[i] = Math.max(-CFG.TW + 0.05, Math.min(CFG.TW - 0.05, this.x[i]));
+        this.x[i] = clampX(this.x[i]);
         if (army.N <= 0) continue;
         if (rz >= army.front - 0.05 && rz <= army.back + 0.3 && Math.abs(this.x[i] - army.cx) <= army.halfW + 0.12) {
           this.kill(i, s);

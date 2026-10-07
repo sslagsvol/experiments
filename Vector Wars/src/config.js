@@ -23,6 +23,7 @@ export const CFG = {
   MAX_PER_SQUAD: 1500,
   MAX_ENEMIES: 4000,
   ENEMY_SPACING: 0.27,
+  ENEMY_EDGE_MARGIN: 0.45, // enemies stay this far in from the rails (hard to hit at the edge)
   ENEMY_MAX_DEPTH: 9,      // squads deeper than this compress (big squads become dense mobs)
   ENEMY_LEAK_MARGIN: 0.8,  // enemies this far behind the army have slipped past and hit the rear
   ENEMY_TRIGGER: 18,       // squads start charging when this close to the army's front
@@ -50,10 +51,15 @@ export const CFG = {
   MULT_START: 1.0,         // × gates start doing nothing…
   MULT_STEP: 0.1,          // …and climb in steps of 0.1…
   MULT_MAX: 3,             // …up to ×3
-  MULT_HITS_BASE: 2,       // bullets per step at ×1.0, +1 more every ×0.5 (≈70 hits for ×1→×3)
+  MULT_HITS_BASE: 4,       // bullets per step at ×1.0, +1 more every ×0.5 (≈110 hits for ×1→×3)
   // Gate mix (must sum to 1). × gates are rare; ÷ gates start at ÷2–÷3 and
   // shooting walks them down toward ÷1.0 (no effect), mirroring ×.
   GATE_MIX: { mult: 0.08, add: 0.32, sub: 0.35, div: 0.25 },
+  // Moving gates: an uncommon single gate that slides side to side.
+  MOVING_GATE_CHANCE: 0.15,  // chance a gate spot is a moving gate instead of a pair
+  MOVING_GATE_WIDTH: 1.5,    // panel width (a pair's panels are 1.9)
+  MOVING_GATE_SPEED: 1.1,    // sway speed (rad/s)
+  MOVING_GATE_GOOD: 0.65,    // share that are worth chasing (+ or ×); the rest are bad (− or ÷)
 
   SEED: 1337,
 
@@ -72,6 +78,7 @@ export const SFX = {
   gateUp:   { volume: 0.5 },               // passing a good gate
   gateDown: { volume: 0.5 },               // passing a bad gate
   gateTick: { volume: 0.18, maxRate: 10 }, // a gate's value ticking up from shooting
+  maxMult: { volume: 0.8 },                // a × gate reaching its ×3.0 cap
   blast:   { volume: 0.55, maxRate: 5 },   // bomber explosion
   stomp:   { volume: 0.65, maxRate: 4 },   // brute stomp
   win:     { volume: 0.55 },               // battle won: the blast plus an echoing crackle

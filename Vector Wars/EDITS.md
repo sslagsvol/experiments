@@ -246,6 +246,11 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **They feel dangerous:** both throb brighter over their last 4 units of approach. On impact: a shockwave ring of sparks at the blast radius, a big grid ripple (blast 1.6, stomp 2.0), heavy screen shake, and a new brute **stomp** sound. Lost units fizzle red into a visible crater.
 - Measured in a test run: bomber hits averaged 44 kills, brute stomps 41. Squad-sizing estimates raised to match (bomber 35, brute 38).
 
+## Round 11 (2026-10-07)
+- **Enemies stay off the edges:** formations and charging enemies keep `CFG.ENEMY_EDGE_MARGIN` (0.45) in from the rails, where they were hard to hit. Measured max offset: 1.55 of 2.0.
+- **Moving gates** (uncommon, about 15% of gate spots): a single 1.5-wide panel sways side to side. 65% are worth chasing (+ or ×), the rest are bad (− or ÷) to dodge. Only units that pass through it are affected; it only shatters if someone did. Shootable like any gate.
+- **× gates climb more slowly:** 4 hits per step at the start (was 2), about 110 hits for ×1→×3. Reaching ×3.0 plays a loud chord (`maxMult`), bursts gold and sends a ripple.
+
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
 - *(none)*

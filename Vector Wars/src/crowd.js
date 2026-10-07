@@ -169,12 +169,24 @@ export class Army {
     return [left, this.N - left];
   }
 
+  // Units with x in [x0, x1] (a moving gate's span).
+  countRange(x0, x1) {
+    let n = 0;
+    for (let i = 0; i < this.L; i++) if (this.alive[i] && this.pos[i * 3] >= x0 && this.pos[i * 3] <= x1) n++;
+    return n;
+  }
+
   // Removes up to n units from one side (sign -1 = left, +1 = right), rim first.
   killSide(sign, n, onLost) {
+    return this.killRange(sign < 0 ? -Infinity : 0, sign < 0 ? 0 : Infinity, n, onLost);
+  }
+
+  // Removes up to n units with x in [x0, x1], rim first.
+  killRange(x0, x1, n, onLost) {
     const p = this.pos;
     let k = 0;
     for (let i = this.L - 1; i >= 0 && k < n; i--) {
-      if (!this.alive[i] || Math.sign(p[i * 3]) !== sign) continue;
+      if (!this.alive[i] || p[i * 3] < x0 || p[i * 3] > x1) continue;
       this.alive[i] = 0;
       if (onLost) onLost(p[i * 3], p[i * 3 + 2]);
       p[i * 3 + 1] = HIDDEN;

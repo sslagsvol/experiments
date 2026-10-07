@@ -114,6 +114,12 @@ const RECIPES = {
   gateTick(a, out, t, p, s) {
     a.tone(out, t, { type: 'sine', f0: 880 * p, f1: 1320 * p, dur: 0.06 * s, vol: 0.7 });
   },
+  // × gate maxed out at ×3.0: a loud, bright major chord with a rising sweep.
+  maxMult(a, out, t, p, s) {
+    [392, 494, 587, 784, 988].forEach((f, i) => a.tone(out, t + i * 0.025 * s, { type: i % 2 ? 'square' : 'sawtooth', f0: f * p, dur: 0.7 * s, vol: 0.28 }));
+    a.tone(out, t, { type: 'sine', f0: 196 * p, dur: 0.6 * s, vol: 0.8 });
+    a.hiss(out, t, { type: 'highpass', f0: 2000 * p, f1: 9000 * p, dur: 0.5 * s, vol: 0.35, attack: 0.03 });
+  },
   // Bomber blast: low boom and a burst of noise.
   blast(a, out, t, p, s) {
     a.tone(out, t, { type: 'sine', f0: 110 * p, f1: 35 * p, dur: 0.5 * s, vol: 1 });

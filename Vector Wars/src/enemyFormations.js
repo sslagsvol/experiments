@@ -69,7 +69,7 @@ export function unitType({ back, mix }, i, n, rng) {
 }
 
 export function enemyFormation(kind, n, rng = Math.random) {
-  const S = CFG.ENEMY_SPACING, W = CFG.TW * 0.92, pts = [];
+  const S = CFG.ENEMY_SPACING, W = CFG.TW - CFG.ENEMY_EDGE_MARGIN, pts = [];
   const perRow = Math.floor(2 * W / S) + 1;
   switch (kind) {
     case 'wall':

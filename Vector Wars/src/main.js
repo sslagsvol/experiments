@@ -96,7 +96,18 @@ const isBad = (s) => s.op === '/' || (s.op === '+' && s.v < 0);
 function spawnNext() {
   const kind = PATTERN[G.seg % PATTERN.length];
   const wz = G.nextW;
-  if (kind === 'g') {
+  if (kind === 'g' && G.gateIdx > 0 && G.rng() < CFG.MOVING_GATE_CHANCE) {
+    // Uncommon: a single gate swaying side to side. Mostly worth chasing.
+    const scale = Math.pow(1.12, G.gateIdx);
+    let S;
+    if (G.rng() < CFG.MOVING_GATE_GOOD) {
+      S = G.rng() < 0.3 ? { op: 'x', m: CFG.MULT_START, ch: 0, f: 0 } : { op: '+', v: Math.round((10 + G.rng() * 20) * scale), ch: 0, f: 0 };
+    } else {
+      S = G.rng() < 0.5 ? { op: '/', d: 2, ch: 0, f: 0 } : { op: '+', v: -Math.round((20 + G.rng() * 40) * scale), ch: 0, f: 0 };
+    }
+    gates.acquire(wz, null, null, S, G.rng() * Math.PI * 2);
+    G.gateIdx++;
+  } else if (kind === 'g') {
     let L, R;
     if (G.gateIdx === 0) {
       L = { op: '+', v: 10, ch: 0, f: 0 };
@@ -133,7 +144,7 @@ function pickKind() {
 function projectedArmy(wz) {
   const gain = (s, n) => s.op === 'x' ? n * s.m : s.op === '/' ? n / s.d : Math.max(0, n + s.v);
   const events = [
-    ...gates.active.filter((g) => !g.done && g.wz < wz).map((g) => [g.wz, (n) => Math.max(gain(g.L, n), gain(g.R, n))]),
+    ...gates.active.filter((g) => !g.done && g.wz < wz).map((g) => [g.wz, (n) => g.S ? Math.max(n, gain(g.S, n)) : Math.max(gain(g.L, n), gain(g.R, n))]),
     ...enemies.squads.filter((s) => s.n > 0 && s.cw < wz).map((s) => [s.cw, (n) => n - enemies.squadStrength(s) * 0.7]),
   ].sort((a, b) => a[0] - b[0]);
   let n = army.N;
@@ -190,24 +201,34 @@ function spill(n) {
 // went through it: × multiplies them, + / − is scaled by their share of the
 // army. The primary panel (where the army's center went) shatters. A wide
 // army that straddles the middle gets both gates, good or bad.
+// A moving gate works the same way over just its span: only the units that
+// pass through it are affected, and it only shatters if someone did.
 function crossGate(g) {
-  const [nL, nR] = army.countSides(), total = army.N, before = army.N;
+  const total = army.N, before = army.N;
+  const half = CFG.MOVING_GATE_WIDTH / 2;
+  const regions = g.S
+    ? [[g.S, g.sx - half, g.sx + half, 'S']]
+    : [[g.L, -Infinity, 0, 'L'], [g.R, 0, Infinity, 'R']];
   g.done = true;
   g.doneAt = time;
-  g.primary = army.cx < 0 ? 'L' : 'R';
+  g.primary = g.S ? null : army.cx < 0 ? 'L' : 'R';
   let gained = false;
-  for (const [s, n, sign] of [[g.L, nL, -1], [g.R, nR, 1]]) {
+  for (const [s, x0, x1, key] of regions) {
+    const n = army.countRange(x0, x1);
     if (n <= 0) continue;
-    const share = n / total, x = sign * Math.min(1, army.halfW * 0.5);
+    if (g.S) g.primary = 'S';
+    // New units appear where this panel's units are.
+    const share = n / total, x = g.S ? g.sx : (key === 'L' ? -1 : 1) * Math.min(1, army.halfW * 0.5);
     if (s.op === 'x') {
       const add = Math.round(n * (s.m - 1));
       if (add > 0) { spill(army.spawn(add, x)); gained = true; }
     }
-    else if (s.op === '/') army.killSide(sign, n - Math.round(n / s.d), unitLost);
+    else if (s.op === '/') army.killRange(x0, x1, n - Math.round(n / s.d), unitLost);
     else if (s.v > 0) { spill(army.spawn(Math.max(1, Math.round(s.v * share)), x)); gained = true; }
-    else if (s.v < 0) army.killSide(sign, Math.min(n, Math.round(-s.v * share)), unitLost);
-    if (s !== (g.primary === 'L' ? g.L : g.R)) s.f = 1;   // secondary panel flashes
+    else if (s.v < 0) army.killRange(x0, x1, Math.min(n, Math.round(-s.v * share)), unitLost);
+    if (key !== g.primary) s.f = 1;   // secondary panel flashes
   }
+  if (!g.primary) return;   // a moving gate nobody touched just slides past
   shatterSparks(g);
   const d = army.N - before;
   G.loss.n = 0;
@@ -215,7 +236,7 @@ function crossGate(g) {
   if (gained && d >= 0) sfx.play('gateUp');
   else if (d < 0) sfx.play('gateDown');
   if (gained && d >= 0) {
-    feedback(gateColor(g.primary === 'L' ? g.L : g.R), ANIM.rippleGate, 40);
+    feedback(gateColor(primarySpec(g)), ANIM.rippleGate, 40);
     army.nextFormation(time);
     if (navigator.vibrate) navigator.vibrate(12);
   }
@@ -227,10 +248,13 @@ function crossGate(g) {
   }
 }
 
+const primarySpec = (g) => g.primary === 'S' ? g.S : g.primary === 'L' ? g.L : g.R;
+
 // Burst of sparks along the primary panel's outline.
 function shatterSparks(g) {
-  const s = g.primary === 'L' ? g.L : g.R, c = gateColor(s);
-  const x0 = g.primary === 'L' ? -CFG.TW + 0.05 : 0.05, x1 = x0 + CFG.TW - 0.1;
+  const s = primarySpec(g), c = gateColor(s);
+  const x0 = g.primary === 'S' ? g.sx - CFG.MOVING_GATE_WIDTH / 2 : g.primary === 'L' ? -CFG.TW + 0.05 : 0.05;
+  const x1 = x0 + (g.primary === 'S' ? CFG.MOVING_GATE_WIDTH : CFG.TW - 0.1);
   for (let k = 0; k < 28; k++) {
     const t = k / 28, onTop = k % 2;
     sparks.emit(x0 + (x1 - x0) * t, onTop ? CFG.GATE_H : 0.1 + Math.random() * CFG.GATE_H, g.wz, c, 1, 3);
@@ -245,7 +269,11 @@ function hitGate(s) {
     if (s.m < CFG.MULT_MAX - 1e-6) {
       // Climbs in 0.1 steps; higher steps cost more hits.
       s.ch += 1 / multHitsForStep(s.m);
-      if (s.ch >= 0.999) { s.ch = 0; s.m = Math.round((s.m + CFG.MULT_STEP) * 10) / 10; }
+      if (s.ch >= 0.999) {
+        s.ch = 0;
+        s.m = Math.round((s.m + CFG.MULT_STEP) * 10) / 10;
+        if (s.m >= CFG.MULT_MAX - 1e-6) s.maxed = true;   // the caller celebrates
+      }
     }
   } else if (s.op === '/') {
     // ÷ gates walk down toward ÷1.0 (no effect); steps near ÷3 cost the most.
@@ -267,12 +295,14 @@ function hitGate(s) {
 
 function bulletTest(x, oldW, newW) {
   for (const g of gates.active) {
-    if (!g.done && oldW < g.wz && newW >= g.wz && Math.abs(x) < CFG.TW) {
-      const side = x < 0 ? g.L : g.R;
-      if (hitGate(side)) sfx.play('gateTick', { pitch: 1 + Math.min(1, side.op === '+' ? Math.max(0, side.v) / 60 : side.op === 'x' ? side.m - 1 : 3 - side.d) * 0.6 });
-      else sfx.play('hit');
-      return true;
-    }
+    if (g.done || oldW >= g.wz || newW < g.wz || Math.abs(x) >= CFG.TW) continue;
+    if (g.S && Math.abs(x - g.sx) > CFG.MOVING_GATE_WIDTH / 2) continue;   // missed the moving gate
+    const side = g.S || (x < 0 ? g.L : g.R);
+    if (hitGate(side)) {
+      if (side.maxed) { side.maxed = false; maxedOut(g, side); }
+      else sfx.play('gateTick', { pitch: 1 + Math.min(1, side.op === '+' ? Math.max(0, side.v) / 60 : side.op === 'x' ? side.m - 1 : 3 - side.d) * 0.6 });
+    } else sfx.play('hit');
+    return true;
   }
   const hit = enemies.hitTest(x, oldW, newW);
   if (hit) {
@@ -282,6 +312,15 @@ function bulletTest(x, oldW, newW) {
     return true;
   }
   return false;
+}
+
+// A × gate hit its ×3.0 cap: loud chord, a gold burst and a ripple.
+function maxedOut(g, s) {
+  sfx.play('maxMult');
+  const x = g.S ? g.sx : s === g.L ? -CFG.TW / 2 : CFG.TW / 2;
+  sparks.emit(x, CFG.GATE_H * 0.6, g.wz, COLORS.mult, 60, 5);
+  sparks.ring(x, CFG.GATE_H * 0.5, g.wz, 0.9, COLORS.mult, 30);
+  world.addRipple(x, g.wz, ANIM.rippleGate, time);
 }
 
 function squadWiped(s) {
@@ -420,8 +459,8 @@ function update(dt, realDt) {
   // Housekeeping (runs in every state so the scene settles after a loss).
   bullets.update(dt, G.dist, G.state === 'play' ? bulletTest : () => false);
   for (const g of [...gates.active]) {
-    g.L.f = Math.max(0, g.L.f - dt * ANIM.gateFlashDecay);
-    g.R.f = Math.max(0, g.R.f - dt * ANIM.gateFlashDecay);
+    g.moveTo(time);
+    for (const s of g.panels) s.f = Math.max(0, s.f - dt * ANIM.gateFlashDecay);
     if (g.wz - G.dist < -0.7) { gates.release(g); continue; }
     g.sync(G.dist, time);
   }
