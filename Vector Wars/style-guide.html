@@ -104,8 +104,8 @@
       <div class="meta">The real recap from src/hud.js with sample stats. Score = distance × CFG.SCORE_PER_DIST + each enemy defeated × its hp × CFG.SCORE_PER_HP · numbers count up over 0.9s · sprites idle (grunts bob, drones sway, bombers pulse, brutes turn)</div>
     </div>
     <div class="card">
-      <div class="stage hud-stage"><div id="hud"><div id="dist">2059</div><div id="best">Best 24,869</div><div id="army-hud"><div id="count">640</div><div id="delta" class="gain live">+371</div></div></div></div>
-      <h3>In-game HUD</h3><div class="var">#dist · #best · #army-hud #count · #delta</div>
+      <div class="stage hud-stage"><div id="hud"><div id="dist">2059</div><div id="best">Best 24,869</div><button id="mute" type="button" aria-label="Mute sound (demo)"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="on" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/><path class="x" d="M16 9l5 6M21 9l-5 6"/></svg></button><div id="army-hud"><div id="count">640</div><div id="delta" class="gain live">+371</div></div></div></div>
+      <h3>In-game HUD</h3><div class="var">#dist · #best · #mute (.off) · #army-hud #count · #delta</div>
       <div class="meta">Share Tech Mono · distance 22px --hud (it's also the distance score) · best score 14px · army count 34px white with --you glow, fixed at the bottom center · delta 20px to its right</div>
     </div>
     <div class="card">
@@ -146,6 +146,10 @@
     </div>
   </div>
 
+  <h2 class="sg-h">Sound effects <span class="badge live">live · src/audio.js · SFX</span></h2>
+  <p class="sg-sub">Synthesized with WebAudio, so there are no audio files. Tap to play each sound. Volumes and rate limits come from <code>SFX</code> in <code>src/config.js</code>; rate limits keep big battles from turning into a wall of noise. In slow motion every sound plays lower and longer. The mute choice is saved per device.</p>
+  <div class="grid" id="sounds"></div>
+
   <h2 class="sg-h">Glow and post-processing <span class="badge live">live · BLOOM</span></h2>
   <p class="sg-sub">Bloom only picks up pixels brighter than the threshold, which is why HDR colors above 1.0 glow and gate text stays readable. Tone mapping is off; OutputPass converts to sRGB.</p>
   <div class="card"><table class="cfg" id="bloom"></table></div>
@@ -164,6 +168,8 @@ import { FORMATIONS, UNIT_SPACING } from './src/formations.js';
 import { enemyFormation, ENEMY_KINDS, ENEMY_TYPES, TYPE_LIST } from './src/enemyFormations.js';
 import { drawEnemy } from './src/sprites.js';
 import { renderRecap } from './src/hud.js';
+import { Sfx, SOUND_NAMES } from './src/audio.js';
+import { SFX } from './src/config.js';
 
 const FONT = '"Share Tech Mono", ui-monospace, monospace';
 const $ = (id) => document.getElementById(id);
@@ -203,8 +209,8 @@ function vline(ctx, x1, y1, x2, y2, c, w = 1.5) {
 }
 
 // Mirrors gateColor / gateLabel in src/gates.js (kept here to avoid loading three.js).
-const gateColor = (s) => s.op === 'x' ? COLORS.mult : s.op === '/' ? COLORS.sub : s.v >= 0 ? COLORS.add : COLORS.sub;
-const gateLabel = (s) => s.op === 'x' ? '×' + s.m.toFixed(1) : (s.v >= 0 ? '+' : '−') + Math.abs(s.v);
+const gateColor = (s) => s.op === 'x' ? COLORS.mult : s.op === '/' ? COLORS.div : s.v >= 0 ? COLORS.add : COLORS.sub;
+const gateLabel = (s) => s.op === 'x' ? '×' + s.m.toFixed(1) : s.op === '/' ? '÷' + s.d.toFixed(1) : (s.v >= 0 ? '+' : '−') + Math.abs(s.v);
 function gate(ctx, x, y, w, h, s) {
   const c = gateColor(s);
   ctx.fillStyle = css(c, 0.07 + (s.f || 0) * 0.3); ctx.fillRect(x, y, w, h);
@@ -273,6 +279,7 @@ const ROLES = {
   rail: 'Track rails; edge walls at ×0.12',
   horizon: 'Horizon line',
   bullet: 'Bullet streaks',
+  div: '÷ gates',
   dying: 'Lost units burn to this, then fade to black',
   white: 'Highlights',
 };
@@ -327,9 +334,10 @@ elementCard({ title: 'Enemy unit (grunt)', vars: 'COLORS.enemy × 0.55 · enemy 
 for (const [title, s, v] of [
   ['Add gate', { op: '+', v: 12, ch: 0.33 }, 'COLORS.add · v ≥ 0 · charge bar'],
   ['Subtract gate', { op: '+', v: -18, ch: 0.66 }, 'COLORS.sub · v < 0 · charge bar'],
-  ['Multiply gate', { op: 'x', m: 1.4, ch: 0.55 }, 'COLORS.mult · charge bar = ch'],
+  ['Multiply gate', { op: 'x', m: 1.4, ch: 0.55 }, `COLORS.mult · rare (${Math.round(CFG.GATE_MIX.mult * 100)}% of gates)`],
+  ['Divide gate', { op: '/', d: 2.5, ch: 0.3 }, `COLORS.div · ${Math.round(CFG.GATE_MIX.div * 100)}% of gates`],
 ]) {
-  elementCard({ title, vars: v, meta: `panel ${(CFG.TW - 0.1).toFixed(2)} × ${CFG.GATE_H} · border, faint fill, value text`, note: s.op === 'x' ? `Starts at ×${CFG.MULT_START.toFixed(1)} (does nothing). Shooting fills the bar; each fill adds ${CFG.MULT_STEP}, up to ×${CFG.MULT_MAX}. Higher steps take more hits.` : `Shooting fills the bar; every ${CFG.ADD_HITS_PER_STEP} hits add +1. Color flips when the value crosses zero.` }, (ctx, w, h) => {
+  elementCard({ title, vars: v, meta: `panel ${(CFG.TW - 0.1).toFixed(2)} × ${CFG.GATE_H} · border, faint fill, value text`, note: s.op === '/' ? `Starts at ÷2.0, ÷2.5 or ÷3.0. Shooting walks it down ${CFG.MULT_STEP} at a time toward ÷1.0 (no effect); steps near ÷3 cost the most hits. A pair never has two bad gates.` : s.op === 'x' ? `Starts at ×${CFG.MULT_START.toFixed(1)} (does nothing). Shooting fills the bar; each fill adds ${CFG.MULT_STEP}, up to ×${CFG.MULT_MAX}. Higher steps take more hits.` : `Shooting fills the bar; every ${CFG.ADD_HITS_PER_STEP} hits add +1. Color flips when the value crosses zero.` }, (ctx, w, h) => {
     const gw = Math.min(w * 0.6, 170), gh = gw * CFG.GATE_H / (CFG.TW - 0.1);
     gate(ctx, (w - gw) / 2, (h - gh) / 2, gw, gh, { f: 0, ...s });
   });
@@ -482,7 +490,7 @@ animCard({ title: 'Gate hit flash and charge', vars: 'ANIM.gateFlashDecay · CFG
     for (let i = 0; i < 10; i++) { const x = w / 2 + (i < 5 ? -gw / 2 - 4 : gw / 2 + 4) + ((i % 5) - 2) * 10, y = gy + gh + ((t * 300 + i * 23) % (h - gy - gh)); vline(ctx, x, y, x, y + 14, COLORS.bullet, 1.5); }
   }, {});
 
-animCard({ title: 'Grid ripple', vars: 'ANIM.rippleSpeed · rippleDecay · rippleLife · rippleDepth', meta: `ring ${ANIM.rippleSpeed} units/s · fade e^(−${ANIM.rippleDecay}t) · ${ANIM.rippleLife}s life · dips grid ${ANIM.rippleDepth}`, note: 'Gate passes, squad wipes and death. Top-down; the real one also bends the floor down.', tall: true },
+animCard({ title: 'Grid ripple', vars: 'ANIM.rippleSpeed · rippleDecay · rippleLife · rippleDepth · rippleWidth · ripple*', meta: `ring ${ANIM.rippleSpeed} units/s, ${ANIM.rippleWidth} wide · fade e^(−${ANIM.rippleDecay}t) · ${ANIM.rippleLife}s life · dips the floor ${ANIM.rippleDepth} × strength (capped at 2.5) · strengths: battle won ${ANIM.rippleWin}, gate ${ANIM.rippleGate}, squad wiped ${ANIM.rippleWipe}, blast ${ANIM.rippleBlast}, enemy hit ${ANIM.rippleHit}, army lost ${ANIM.rippleDeath}`, note: 'Top-down sketch; in game the floor visibly bends down into a rolling wave. Shown at gate strength.', tall: true },
   (ctx, w, h, t) => {
     const s = topDown(w), age = t % 2.2, cx = w / 2, cy = h * 0.6;
     const r = age * ANIM.rippleSpeed * s, fade = Math.exp(-age * ANIM.rippleDecay);
@@ -490,7 +498,7 @@ animCard({ title: 'Grid ripple', vars: 'ANIM.rippleSpeed · rippleDecay · rippl
     for (let gx = -CFG.TW; gx <= CFG.TW + 1e-6; gx += 0.4) { ctx.strokeStyle = css(COLORS.grid, 0.5); ctx.beginPath(); ctx.moveTo(cx + gx * s, 0); ctx.lineTo(cx + gx * s, h); ctx.stroke(); }
     for (let gz = -10; gz <= 10; gz++) { ctx.strokeStyle = css(COLORS.grid, 0.5); ctx.beginPath(); ctx.moveTo(cx - CFG.TW * s, cy + gz * s); ctx.lineTo(cx + CFG.TW * s, cy + gz * s); ctx.stroke(); }
     ctx.save(); ctx.beginPath(); ctx.rect(cx - CFG.TW * s, 0, 2 * CFG.TW * s, h); ctx.clip();
-    for (const [lw, a] of [[18, 0.12], [6, 0.35], [2, 0.9]]) { ctx.strokeStyle = `rgba(150,110,255,${a * fade})`; ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke(); }
+    for (const [lw, a] of [[26 * ANIM.rippleWidth, 0.14], [9 * ANIM.rippleWidth, 0.4], [3, 0.95]]) { ctx.strokeStyle = `rgba(150,110,255,${a * fade})`; ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke(); }
     ctx.restore(); rails(ctx, w, h, s);
   });
 
@@ -574,7 +582,7 @@ animCard({ title: 'Slow motion near defeat', vars: 'ANIM.slowMoThreshold · slow
   });
 
 // Enemy charge: a wall holds formation, charges, then turns in on the flanks.
-animCard({ title: 'Enemy charge and flank', vars: 'CFG.ENEMY_CHARGE_SPEED · ENEMY_HOMING · ENEMY_TYPES.grunt.damage', meta: `charge ${CFG.ENEMY_CHARGE_SPEED} units/s (+0.6/s per unit of distance beyond 3) · homing ${CFG.ENEMY_HOMING}/s, ×3 once level with the army · each grunt that connects takes out ~${ENEMY_TYPES.grunt.damage} nearest units`, note: 'Top-down. Enemies that reach the army die and take the closest units with them.', tall: true },
+animCard({ title: 'Enemy charge and flank', vars: 'CFG.ENEMY_CHARGE_SPEED · ENEMY_HOMING · ENEMY_TYPES.grunt.damage', meta: `starts at ${CFG.ENEMY_TRIGGER} units · charge ${CFG.ENEMY_CHARGE_SPEED} units/s (+${CFG.ENEMY_CATCHUP}/s per unit of distance beyond 6) · homing ${CFG.ENEMY_HOMING}/s, ×3 once level with the army · each grunt that connects takes out ~${ENEMY_TYPES.grunt.damage} nearest units`, note: 'Top-down. Enemies that reach the army die and take the closest units with them.', tall: true },
   (ctx, w, h, t, dt, st) => {
     const s = Math.min(topDown(w), (h - 20) / 9), cx = w / 2, armyZ = 1.2;
     if (!st.e || st.reset < t) {
@@ -589,7 +597,7 @@ animCard({ title: 'Enemy charge and flank', vars: 'CFG.ENEMY_CHARGE_SPEED · ENE
     if (t > st.go) for (const e of st.e) {
       if (!e.a) continue;
       const gap = e.z - (armyZ + front);
-      e.z -= (CFG.ENEMY_CHARGE_SPEED + Math.max(0, gap - 3) * 0.6) * dt;
+      e.z -= (CFG.ENEMY_CHARGE_SPEED + Math.max(0, gap - 6) * CFG.ENEMY_CATCHUP) * dt;
       const close = e.z < armyZ + front + 1.2;
       const tx = close ? 0 : e.ox, step = CFG.ENEMY_HOMING * (close ? 3 : 1) * dt;
       e.x += Math.max(-step, Math.min(step, tx - e.x));
@@ -666,6 +674,32 @@ renderRecap(document.getElementById('recap'), {
   killPts: TYPE_LIST.map((t, i) => [2388, 137, 72, 84][i] * t.hp * CFG.SCORE_PER_HP),
   peak: 813, lostEnemy: 2159, leaked: 0, lostGate: 42, fell: 0, newBest: true,
 });
+
+// ---------- Sounds ----------
+const SOUND_NOTES = {
+  death: 'A unit fizzling out: noise crackle sweeping down plus a falling zap. Every lost unit and every faller.',
+  hit: 'Bullet chipping an enemy or a gate: a tiny glassy tick.',
+  pop: 'Enemy destroyed: bright chirp and click.',
+  gateUp: 'Passing a good gate: shimmering rising arpeggio and swoosh.',
+  gateDown: 'Passing a bad gate: falling buzz and low thud.',
+  gateTick: 'A gate value ticking up from fire; pitch rises with the value.',
+  blast: 'Bomber explosion: low boom and noise burst.',
+  win: 'Battle won: two-note chime as the track surges.',
+  lose: 'Army wiped out: long dive and rumble.',
+};
+const guideSfx = new Sfx();
+for (const name of SOUND_NAMES) {
+  const cfg = SFX[name], el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `<div class="controls" style="margin:0"><button type="button">Play ${name}</button><button type="button">×5 burst</button><button type="button">Slow-mo</button></div>
+    <h3>${name}</h3><div class="var">SFX.${name}</div>
+    <div class="meta">volume ${cfg.volume}${cfg.maxRate ? ` · max ${cfg.maxRate}/s` : ''}</div><div class="note">${SOUND_NOTES[name] || ''}</div>`;
+  const [one, burst, slow] = el.querySelectorAll('button');
+  one.onclick = () => { guideSfx.unlock(); guideSfx.rate = 1; guideSfx.play(name); };
+  burst.onclick = () => { guideSfx.unlock(); guideSfx.rate = 1; for (let i = 0; i < 5; i++) setTimeout(() => guideSfx.play(name), i * 60); };
+  slow.onclick = () => { guideSfx.unlock(); guideSfx.rate = ANIM.slowMoScale; guideSfx.play(name); guideSfx.rate = 1; };
+  $('sounds').appendChild(el);
+}
 
 // ---------- Tables ----------
 function table(el, obj, prefix) { el.innerHTML = Object.entries(obj).map(([k, v]) => `<tr><td>${prefix}.${k}</td><td>${fmtN(v)}</td></tr>`).join(''); }

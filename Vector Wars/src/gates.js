@@ -36,11 +36,13 @@ void main() {
 }`;
 
 export function gateColor(s) {
-  return s.op === 'x' ? COLORS.mult : s.v >= 0 ? COLORS.add : COLORS.sub;
+  return s.op === 'x' ? COLORS.mult : s.op === '/' ? COLORS.div : s.v >= 0 ? COLORS.add : COLORS.sub;
 }
 
 export function gateLabel(s) {
-  return s.op === 'x' ? '×' + s.m.toFixed(1) : (s.v >= 0 ? '+' : '−') + fmt(Math.abs(s.v));
+  if (s.op === 'x') return '×' + s.m.toFixed(1);
+  if (s.op === '/') return '÷' + s.d.toFixed(1);
+  return (s.v >= 0 ? '+' : '−') + fmt(Math.abs(s.v));
 }
 
 class Panel {

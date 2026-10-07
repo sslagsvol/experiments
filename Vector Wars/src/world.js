@@ -25,9 +25,10 @@ void main() {
     if (r.w == 0.0 || age < 0.0 || age > ${ANIM.rippleLife.toFixed(2)}) continue;
     vec2 c = vec2(r.x, -(r.y - uDist));
     float d = distance(p.xz, c);
-    float ring = exp(-pow((d - age * ${ANIM.rippleSpeed.toFixed(2)}) * 1.4, 2.0)) * exp(-age * ${ANIM.rippleDecay.toFixed(2)}) * r.w;
+    float ring = exp(-pow((d - age * ${ANIM.rippleSpeed.toFixed(2)}) / ${ANIM.rippleWidth.toFixed(2)}, 2.0)) * exp(-age * ${ANIM.rippleDecay.toFixed(2)}) * r.w;
     rip += ring;
   }
+  rip = min(rip, 2.5);
   p.y -= rip * ${ANIM.rippleDepth.toFixed(2)};
   vPos = p;
   vRip = rip;

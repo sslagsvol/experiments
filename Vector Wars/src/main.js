@@ -11,6 +11,7 @@ import { Bullets, Sparks, Fallers, Fizzles } from './fx.js';
 import { UNIT_SPACING } from './formations.js';
 import { DragInput } from './input.js';
 import { Hud } from './hud.js';
+import { Sfx } from './audio.js';
 
 const params = new URLSearchParams(location.search);
 const START_UNITS = Math.min(CFG.CAPACITY, Math.max(1, parseInt(params.get('units'), 10) || CFG.START_UNITS));
@@ -28,6 +29,13 @@ const fallers = new Fallers(world.scene, world.pointScale, UNIT_SPACING * 1.3);
 const fizzles = new Fizzles(world.scene, world.pointScale, UNIT_SPACING * 1.3);
 const input = new DragInput(window);
 const hud = new Hud();
+const sfx = new Sfx();
+// Audio can only start from a user gesture.
+window.addEventListener('pointerdown', () => sfx.unlock(), { capture: true });
+const muteBtn = document.getElementById('mute');
+const syncMute = () => { muteBtn.classList.toggle('off', sfx.muted); muteBtn.setAttribute('aria-pressed', String(sfx.muted)); };
+muteBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); sfx.unlock(); sfx.setMuted(!sfx.muted); syncMute(); });
+syncMute();
 
 let best = 0;
 // Score-based best (distance + enemies defeated); the old distance-only key is ignored.
@@ -76,11 +84,14 @@ function newRun() {
 const PATTERN = 'gegeggee';
 
 function makeGateSpec(rng, scale) {
-  const r = rng();
-  if (r < 0.28) return { op: 'x', m: CFG.MULT_START, ch: 0, f: 0 };
-  if (r < 0.6) return { op: '+', v: Math.round((4 + rng() * 14) * scale), ch: 0, f: 0 };
-  return { op: '+', v: -Math.round((18 + rng() * 42) * scale), ch: 0, f: 0 };
+  const { mult, add, sub } = CFG.GATE_MIX, r = rng();
+  if (r < mult) return { op: 'x', m: CFG.MULT_START, ch: 0, f: 0 };
+  if (r < mult + add) return { op: '+', v: Math.round((4 + rng() * 14) * scale), ch: 0, f: 0 };
+  if (r < mult + add + sub) return { op: '+', v: -Math.round((18 + rng() * 42) * scale), ch: 0, f: 0 };
+  return { op: '/', d: 2 + Math.floor(rng() * 3) * 0.5, ch: 0, f: 0 };   // ÷2.0, ÷2.5 or ÷3.0
 }
+
+const isBad = (s) => s.op === '/' || (s.op === '+' && s.v < 0);
 
 function spawnNext() {
   const kind = PATTERN[G.seg % PATTERN.length];
@@ -94,8 +105,8 @@ function spawnNext() {
       const scale = Math.pow(1.12, G.gateIdx);
       L = makeGateSpec(G.rng, scale);
       R = makeGateSpec(G.rng, scale);
-      // Never two dead ends: if both sides subtract, make one a small add.
-      if (L.op === '+' && R.op === '+' && L.v < 0 && R.v < 0) R.v = Math.round(3 * scale);
+      // Never two dead ends: if both sides hurt, make one a small add.
+      if (isBad(L) && isBad(R)) R = { op: '+', v: Math.round(3 * scale), ch: 0, f: 0 };
     }
     if (G.rng() < 0.5) [L, R] = [R, L];
     gates.acquire(wz, L, R);
@@ -120,7 +131,7 @@ function pickKind() {
 // Squads are sized against this, so taking the weaker gate makes the next
 // fight harder, and back-to-back squads don't stack into a wall of death.
 function projectedArmy(wz) {
-  const gain = (s, n) => s.op === 'x' ? n * s.m : Math.max(0, n + s.v);
+  const gain = (s, n) => s.op === 'x' ? n * s.m : s.op === '/' ? n / s.d : Math.max(0, n + s.v);
   const events = [
     ...gates.active.filter((g) => !g.done && g.wz < wz).map((g) => [g.wz, (n) => Math.max(gain(g.L, n), gain(g.R, n))]),
     ...enemies.squads.filter((s) => s.n > 0 && s.cw < wz).map((s) => [s.cw, (n) => n - enemies.squadStrength(s) * 0.7]),
@@ -154,7 +165,7 @@ function feedback(color, amp, count) {
 }
 
 // Every lost unit fizzles out where it stood: cyan → red → black.
-const unitLost = (x, z) => fizzles.add(x, 0.12, G.dist - z);
+const unitLost = (x, z) => { fizzles.add(x, 0.12, G.dist - z); sfx.play('death'); };
 
 // Battle and fall losses add up into one running "−N" next to the count.
 function noteLoss(n) {
@@ -192,6 +203,7 @@ function crossGate(g) {
       const add = Math.round(n * (s.m - 1));
       if (add > 0) { spill(army.spawn(add, x)); gained = true; }
     }
+    else if (s.op === '/') army.killSide(sign, n - Math.round(n / s.d), unitLost);
     else if (s.v > 0) { spill(army.spawn(Math.max(1, Math.round(s.v * share)), x)); gained = true; }
     else if (s.v < 0) army.killSide(sign, Math.min(n, Math.round(-s.v * share)), unitLost);
     if (s !== (g.primary === 'L' ? g.L : g.R)) s.f = 1;   // secondary panel flashes
@@ -200,14 +212,16 @@ function crossGate(g) {
   const d = army.N - before;
   G.loss.n = 0;
   hud.flashDelta(d);
+  if (gained && d >= 0) sfx.play('gateUp');
+  else if (d < 0) sfx.play('gateDown');
   if (gained && d >= 0) {
-    feedback(gateColor(g.primary === 'L' ? g.L : g.R), 1, 40);
+    feedback(gateColor(g.primary === 'L' ? g.L : g.R), ANIM.rippleGate, 40);
     army.nextFormation(time);
     if (navigator.vibrate) navigator.vibrate(12);
   }
   if (d < 0) {
     G.stats.lostGate -= d;
-    feedback(COLORS.sub, 0.8, 30);
+    feedback(COLORS.sub, ANIM.rippleGate, 30);
     army.shake(ANIM.shakeNegGate);
     G.shake = 0.12;
   }
@@ -223,13 +237,21 @@ function shatterSparks(g) {
   }
 }
 
+// Returns true when the gate's value stepped (for the tick sound).
 function hitGate(s) {
   G.stats.gateHits++;
+  const before = s.op === 'x' ? s.m : s.op === '/' ? s.d : s.v;
   if (s.op === 'x') {
     if (s.m < CFG.MULT_MAX - 1e-6) {
       // Climbs in 0.1 steps; higher steps cost more hits.
       s.ch += 1 / multHitsForStep(s.m);
       if (s.ch >= 0.999) { s.ch = 0; s.m = Math.round((s.m + CFG.MULT_STEP) * 10) / 10; }
+    }
+  } else if (s.op === '/') {
+    // ÷ gates walk down toward ÷1.0 (no effect); steps near ÷3 cost the most.
+    if (s.d > 1 + 1e-6) {
+      s.ch += 1 / multHitsForStep(s.d - CFG.MULT_STEP);
+      if (s.ch >= 0.999) { s.ch = 0; s.d = Math.round((s.d - CFG.MULT_STEP) * 10) / 10; }
     }
   } else {
     // + / − gates fill a charge bar too: ADD_HITS_PER_STEP bullets per +1.
@@ -237,19 +259,22 @@ function hitGate(s) {
     if (s.ch >= 0.999) { s.ch = 0; s.v += 1; }
   }
   s.f = 1;
+  return (s.op === 'x' ? s.m : s.op === '/' ? s.d : s.v) !== before;
 }
 
 function bulletTest(x, oldW, newW) {
   for (const g of gates.active) {
     if (!g.done && oldW < g.wz && newW >= g.wz && Math.abs(x) < CFG.TW) {
-      hitGate(x < 0 ? g.L : g.R);
+      const side = x < 0 ? g.L : g.R;
+      if (hitGate(side)) sfx.play('gateTick', { pitch: 1 + Math.min(1, side.op === '+' ? Math.max(0, side.v) / 60 : side.op === 'x' ? side.m - 1 : 3 - side.d) * 0.6 });
+      else sfx.play('hit');
       return true;
     }
   }
   const hit = enemies.hitTest(x, oldW, newW);
   if (hit) {
     sparks.emit(x, 0.2, newW, COLORS.enemy, hit.killed ? 3 : 1, 2);
-    if (hit.killed) G.stats.kills[hit.t.id]++;
+    if (hit.killed) { G.stats.kills[hit.t.id]++; sfx.play('pop'); } else sfx.play('hit');
     if (hit.killed && hit.s.n === 0) squadWiped(hit.s);
     return true;
   }
@@ -257,7 +282,7 @@ function bulletTest(x, oldW, newW) {
 }
 
 function squadWiped(s) {
-  world.addRipple(s.cx, s.cw, 0.7, time);
+  world.addRipple(s.cx, s.cw, ANIM.rippleWipe, time);
   sparks.emit(s.cx, 0.3, s.cw, COLORS.enemy, 40, 4);
 }
 
@@ -267,8 +292,9 @@ function onHit(t, x, z, leaked) {
   let killed;
   if (t.blast) {
     killed = army.killRadius(x, z, t.blast * Math.max(0.6, army.pack), t.blastMax, unitLost);
+    sfx.play('blast');
     sparks.emit(x, 0.3, G.dist - z, COLORS.enemyHot, 24, 5);
-    world.addRipple(x, G.dist - z, 0.6, time);
+    world.addRipple(x, G.dist - z, ANIM.rippleBlast, time);
   } else {
     const k = Math.floor(t.damage) + (Math.random() < t.damage % 1 ? 1 : 0);
     killed = army.killNear(x, z, k, unitLost);
@@ -280,7 +306,7 @@ function onHit(t, x, z, leaked) {
   G.lastContact = time;
   G.shake = Math.min(0.16, Math.max(G.shake, 0.05) + 0.008);
   if (time - G.lastRipple > 0.2) {
-    world.addRipple(x, G.dist - z, 0.35, time);
+    world.addRipple(x, G.dist - z, ANIM.rippleHit, time);
     G.lastRipple = time;
   }
 }
@@ -299,7 +325,8 @@ function endRun() {
     hud.setBest(best);
   }
   army.kill(army.N, unitLost);
-  world.addRipple(G.ax, G.dist, 1.4, time);
+  sfx.play('lose');
+  world.addRipple(G.ax, G.dist, ANIM.rippleDeath, time);
   sparks.emit(G.ax, 0.3, G.dist, COLORS.you, 80, 5);
   hud.showOver({ ...G.stats, dist: distPts / CFG.SCORE_PER_DIST, distPts, killPts, score, newBest });
 }
@@ -335,7 +362,12 @@ function update(dt, realDt) {
     // squad, stops dead once it's close, and surges when it's beaten.
     const close = enemies.threat(G.dist, army, 3) > 0 || time - G.lastContact < 0.4;
     const engaged = close || enemies.battling();
-    if (G.engaged && !engaged) G.surge = 1;
+    if (G.engaged && !engaged && army.N > 0) {
+      // Battle won: big ripple from the army as the track lurches forward.
+      G.surge = 1;
+      world.addRipple(army.cx, G.dist, ANIM.rippleWin, time);
+      sfx.play('win');
+    }
     G.engaged = engaged;
     G.surge = Math.max(0, G.surge - dt * ANIM.surgeDecay);
     const targetSpeed = close ? 0 : engaged ? ANIM.approachSpeed : 1 + ANIM.surgeBoost * G.surge;
@@ -375,6 +407,7 @@ function update(dt, realDt) {
   const targetScale = slow ? ANIM.slowMoScale : 1;
   const ease = targetScale < G.timeScale ? ANIM.slowMoIn : ANIM.slowMoOut;
   G.timeScale += (targetScale - G.timeScale) * Math.min(1, realDt / ease);
+  sfx.rate = G.timeScale;
 
   // Housekeeping (runs in every state so the scene settles after a loss).
   bullets.update(dt, G.dist, G.state === 'play' ? bulletTest : () => false);
@@ -391,6 +424,7 @@ function update(dt, realDt) {
   army.update(dt, G.ax, time, (x, z) => {
     G.stats.fell++;
     noteLoss(1);
+    sfx.play('death');
     fallers.drop(x, G.dist - z, Math.sign(x), CFG.SPEED);
   });
   fallers.update(dt, G.dist);
@@ -455,6 +489,8 @@ if (DEBUG) {
     get state() { return G; },
     army,
     enemies,
+    sfx,
+    gates,
     steer(x) { G.tx = x; },
     morph() { army.nextFormation(time); return army.formation; },
     lose(n, side = 1) { return army.killSide(side, n, unitLost); },

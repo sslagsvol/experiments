@@ -25,11 +25,12 @@ export const CFG = {
   ENEMY_SPACING: 0.27,
   ENEMY_MAX_DEPTH: 9,      // squads deeper than this compress (big squads become dense mobs)
   ENEMY_LEAK_MARGIN: 0.8,  // enemies this far behind the army have slipped past and hit the rear
-  ENEMY_TRIGGER: 9,        // squads charge when this close to the army's front
+  ENEMY_TRIGGER: 18,       // squads start charging when this close to the army's front
   ENEMY_SPAWN_AHEAD: 38,   // squads are sized and placed when this far ahead (out of the fog)
   ENEMY_THREAT_MIN: 0.35,  // squad strength vs the projected army, min…
   ENEMY_THREAT_MAX: 0.85,  // …and max (above 1.0 is unwinnable: enemies home in)
-  ENEMY_CHARGE_SPEED: 3.5, // units/s toward the army
+  ENEMY_CHARGE_SPEED: 2.2, // units/s toward the army
+  ENEMY_CATCHUP: 0.25,     // extra speed per unit of distance for stragglers more than 6 behind
   ENEMY_HOMING: 1.5,       // sideways steering toward the army (units/s)
   ENEMY_WAVES: 3,
   ENEMY_WAVE_GAP: 4.5,     // distance between waves
@@ -50,12 +51,30 @@ export const CFG = {
   MULT_STEP: 0.1,          // …and climb in steps of 0.1…
   MULT_MAX: 3,             // …up to ×3
   MULT_HITS_BASE: 2,       // bullets per step at ×1.0, +1 more every ×0.5 (≈70 hits for ×1→×3)
+  // Gate mix (must sum to 1). × gates are rare; ÷ gates start at ÷2–÷3 and
+  // shooting walks them down toward ÷1.0 (no effect), mirroring ×.
+  GATE_MIX: { mult: 0.08, add: 0.32, sub: 0.35, div: 0.25 },
 
   SEED: 1337,
 
   CAMERA_LIFT: 0.12,       // shifts the view so the army sits higher, leaving thumb room
   SCORE_PER_DIST: 10,      // points per unit of distance
   SCORE_PER_HP: 5,         // points per hit point of each enemy defeated (grunt 5, brute 40)
+};
+
+// Sound effects (src/audio.js), synthesized with WebAudio. Volumes 0–1;
+// maxRate = most plays per second (big battles would otherwise be a wall of noise).
+export const SFX = {
+  master: 0.55,
+  death:   { volume: 0.22, maxRate: 18 },  // a unit fizzling out
+  hit:     { volume: 0.12, maxRate: 24 },  // bullet chipping an enemy or a gate
+  pop:     { volume: 0.2,  maxRate: 16 },  // enemy destroyed
+  gateUp:   { volume: 0.5 },               // passing a good gate
+  gateDown: { volume: 0.5 },               // passing a bad gate
+  gateTick: { volume: 0.18, maxRate: 10 }, // a gate's value ticking up from shooting
+  blast:   { volume: 0.5,  maxRate: 4 },   // bomber explosion
+  win:     { volume: 0.4 },                // battle won
+  lose:    { volume: 0.6 },                // army wiped out
 };
 
 // Animation timings. The style guide (style-guide.html) renders these live,
@@ -71,9 +90,16 @@ export const ANIM = {
   gateFlashDecay: 4,       // gate hit flash fade (1/s)
   gateShatter: 0.35,       // s for the primary gate to burst apart after the army passes
   rippleSpeed: 9,          // grid ripple ring speed (units/s)
-  rippleDecay: 1.6,        // grid ripple fade (1/s)
-  rippleLife: 3,           // s before a ripple slot is reused
-  rippleDepth: 0.35,       // how far the grid dips under a ripple
+  rippleDecay: 1.2,        // grid ripple fade (1/s)
+  rippleLife: 3.5,         // s before a ripple slot is reused
+  rippleDepth: 1.0,        // how far the grid dips under a ripple (× its strength)
+  rippleWidth: 1.0,        // ring thickness (units)
+  rippleGate: 1.6,         // ripple strength when passing a gate
+  rippleWipe: 1.5,         // … wiping out a squad
+  rippleWin: 2.2,          // … winning a battle (track starts moving again)
+  rippleHit: 0.5,          // … enemy contact (rate-limited)
+  rippleBlast: 1.2,        // … bomber blast
+  rippleDeath: 2.4,        // … losing the whole army
   fallGravity: 14,         // units falling off the track (units/s²)
   fallRunMin: 1.5,         // sideways run speed of spilled units (units/s)
   fallRunMax: 3.5,
@@ -111,6 +137,7 @@ export const COLORS = {
   horizon: [1.0, 0.15, 0.7],
   bullet: [2.0, 1.45, 0.45],
   dying: [1.8, 0.1, 0.06],   // lost units burn from cyan to this, then to black
+  div: [1.5, 0.12, 0.3],     // ÷ gates (a deeper red than − gates)
   white: [1.6, 1.6, 1.6],
 };
 

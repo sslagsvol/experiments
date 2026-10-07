@@ -36,26 +36,31 @@ export function squadMix(kind, squadIndex) {
   const drones = squadIndex >= 2, bombers = squadIndex >= 3, brutes = squadIndex >= 4;
   switch (kind) {
     // Grunts are 80–90% of every squad; specials are the seasoning.
-    case 'skirmish': return { front: [], mix: drones ? [['grunt', 0.82], ['drone', 0.18]] : [['grunt', 1]] };
-    case 'column':   return { front: [], mix: bombers ? [['grunt', 0.85], ['bomber', 0.15]] : [['grunt', 1]] };
-    case 'wall':     return { front: brutes ? ['brute', 0.1] : [], mix: [['grunt', 1]] };
-    case 'wedge':    return { front: brutes ? ['brute', 0.08] : [], mix: [['grunt', 1]] };
-    case 'waves':    return { front: [], mix: drones ? [['grunt', 0.85], ['drone', 0.15]] : [['grunt', 1]] };
-    default:         return { front: [], mix: bombers ? [['grunt', 0.88], ['bomber', 0.12]] : [['grunt', 1]] };
+    case 'skirmish': return { back: [], mix: drones ? [['grunt', 0.82], ['drone', 0.18]] : [['grunt', 1]] };
+    case 'column':   return { back: [], mix: bombers ? [['grunt', 0.85], ['bomber', 0.15]] : [['grunt', 1]] };
+    case 'wall':     return { back: brutes ? ['brute', 0.1] : [], mix: [['grunt', 1]] };
+    case 'wedge':    return { back: brutes ? ['brute', 0.08] : [], mix: [['grunt', 1]] };
+    case 'waves':    return { back: [], mix: drones ? [['grunt', 0.85], ['drone', 0.15]] : [['grunt', 1]] };
+    default:         return { back: [], mix: bombers ? [['grunt', 0.88], ['bomber', 0.12]] : [['grunt', 1]] };
   }
 }
 
 // Average expected damage per unit for a squad mix, for sizing.
-export function mixEst({ front, mix }) {
+export function mixEst({ back, mix }) {
   let e = 0;
   for (const [t, w] of mix) e += ENEMY_TYPES[t].est * w;
-  if (front.length) e = e * (1 - front[1]) + ENEMY_TYPES[front[0]].est * front[1];
+  if (back.length) e = e * (1 - back[1]) + ENEMY_TYPES[back[0]].est * back[1];
   return e;
 }
 
-// Type for unit i of n (formation order puts the front rows first).
-export function unitType({ front, mix }, i, n, rng) {
-  if (front.length && i < Math.max(1, Math.round(n * front[1]))) return front[0];
+// Type for unit i of n. Formation order runs front row first, so `back`
+// types (brutes) take every 3rd slot counting from the rear: they stand
+// behind the grunts, spread out, and the grunts take the first hits.
+export function unitType({ back, mix }, i, n, rng) {
+  if (back.length) {
+    const m = Math.max(1, Math.round(n * back[1])), fromRear = n - 1 - i;
+    if (fromRear % 3 === 0 && fromRear < m * 3) return back[0];
+  }
   let r = rng();
   for (const [t, w] of mix) if ((r -= w) < 0) return t;
   return mix[0][0];

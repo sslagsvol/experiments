@@ -161,7 +161,7 @@ export class EnemyForce {
         }
         // Stragglers far from the fight run faster so battles don't drag.
         const gap = this.w[i] - dist + army.front;
-        this.w[i] -= (CFG.ENEMY_CHARGE_SPEED * t.speed + Math.max(0, gap - 3) * 0.6) * dt;
+        this.w[i] -= (CFG.ENEMY_CHARGE_SPEED * t.speed + Math.max(0, gap - 6) * CFG.ENEMY_CATCHUP) * dt;
         // Hold formation on the approach; once level with the army, turn
         // inward and hit its flank. Bombers always home on the center;
         // drones weave.

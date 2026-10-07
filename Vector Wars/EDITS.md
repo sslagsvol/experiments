@@ -223,6 +223,15 @@ Also fixed: the style guide's enemy-charge card still referenced `ENEMY_STRENGTH
 
 Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style guide. The style guide renders the real recap through `renderRecap()`.
 
+## Round 7 (2026-10-07)
+| Feedback | Change |
+|---|---|
+| Grid distortion should be more extreme, especially after battles and gates | Ripples dip the floor up to 1.0 × strength (was 0.35), rings are wider and fade slower. New strengths in `ANIM`: battle won 2.2 (new: fires as the track starts moving again), gate 1.6, squad wiped 1.5, blast 1.2, army lost 2.4. Dip capped at 2.5 so stacked ripples don't tear the floor. |
+| × gates very rare; more ÷ and − gates | `CFG.GATE_MIX`: × 8%, + 32%, − 35%, **÷ 25%** (new). ÷ gates start at ÷2.0 / ÷2.5 / ÷3.0 and shooting walks them down 0.1 at a time toward ÷1.0 (no effect), mirroring ×. A pair never has two bad gates. |
+| Enemies should start toward the player earlier and slower | Squads start charging 18 units out (was 9) at 2.2 units/s (was 3.5). The straggler catch-up is gentler (`ENEMY_CATCHUP`). Measured charge starts: about 16–17 units from the army's front. |
+| Bosses go behind the diamonds, spread out | Brutes take every 3rd slot counting from the *rear* of walls and wedges: behind the grunts, with gaps between them. (The mini-boss itself is still batch D.) |
+| Sound effects: unit deaths, bullet hits, gates | New `src/audio.js`: WebAudio-synthesized sounds, with no files. Death fizzle, bullet tick, enemy pop, gate up/down, gate value tick (pitch rises with value), bomber blast, battle won, army lost. Rate-limited per sound (`SFX` in config). Pitched down in slow motion. Mute button under the best score, saved per device. |
+
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
 - *(none)*
