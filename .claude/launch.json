@@ -4,8 +4,18 @@
     {
       "name": "static-site",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["/private/tmp/claude-501/-Users-scottslagsvol-Documents-GitHub-experiments/00266a17-c150-4df7-9ce9-91de8725cf1f/scratchpad/serve.py"],
+      "runtimeArgs": [
+        "/private/tmp/claude-501/-Users-scottslagsvol-Documents-GitHub-experiments/00266a17-c150-4df7-9ce9-91de8725cf1f/scratchpad/serve.py"
+      ],
       "port": 8743
+    },
+    {
+      "name": "vector-wars",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "/private/tmp/claude-501/-Users-scottslagsvol-Documents-GitHub-experiments/85c0fded-7919-4cb5-be2a-bdc17b68c25c/scratchpad/serve.py"
+      ],
+      "port": 8750
     }
   ]
 }
