@@ -1,5 +1,10 @@
-// Tunables and palette. Everything that affects feel lives here so it can be
-// tweaked without touching game code.
+// Tunables, palette, and animation timings. Everything that affects feel or
+// look lives here so it can be tweaked without touching game code.
+//
+// STYLE GUIDE: style-guide.html reads COLORS, ANIM, BLOOM and the formation
+// settings from this file. If you add or rename a visual value, or change how
+// something animates, update style-guide.html in the same change (or flag it
+// under "Style guide debt" in EDITS.md).
 
 export const CFG = {
   TW: 2.0,                 // track half-width (world units)
@@ -35,7 +40,33 @@ export const CFG = {
   SEED: 1337,
 };
 
-// Linear HDR colors (values > 1 feed the bloom pass).
+// Animation timings. The style guide (style-guide.html) renders these live,
+// so change them here rather than inline in the code.
+export const ANIM = {
+  bobFreq: 11,             // unit march bob speed (rad/s)
+  bobHeight: 0.04,         // unit march bob height (world units)
+  morphRipple: 0.35,       // s for a formation morph to ripple from center to rim
+  swirlBurst: 5,           // extra swirl speed right after a morph (×)
+  swirlBurstDecay: 1.5,    // how fast the swirl burst fades (1/s)
+  shakeNegGate: 0.12,      // formation shake amplitude on a bad gate
+  shakeDecay: 0.4,         // shake fade (amplitude/s)
+  gateFlashDecay: 4,       // gate hit flash fade (1/s)
+  rippleSpeed: 9,          // grid ripple ring speed (units/s)
+  rippleDecay: 1.6,        // grid ripple fade (1/s)
+  rippleLife: 3,           // s before a ripple slot is reused
+  rippleDepth: 0.35,       // how far the grid dips under a ripple
+  fallGravity: 14,         // units falling off the track (units/s²)
+  fallRunMin: 1.5,         // sideways run speed of spilled units (units/s)
+  fallRunMax: 3.5,
+  sparkGravity: 9,
+  sparkLifeMin: 0.35,      // s
+  sparkLifeMax: 0.8,
+};
+
+// Bloom post-process (UnrealBloomPass). Threshold keeps gate text readable.
+export const BLOOM = { strength: 0.85, radius: 0.35, threshold: 0.55 };
+
+// Linear HDR colors (values > 1 feed the bloom pass). Shown in style-guide.html.
 export const COLORS = {
   bg: 0x04051a,
   you: [0.25, 0.75, 1.3],

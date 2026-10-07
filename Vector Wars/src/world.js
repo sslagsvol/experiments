@@ -6,7 +6,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { CFG, COLORS } from './config.js';
+import { CFG, COLORS, ANIM, BLOOM } from './config.js';
 
 const RIPPLES = 8;
 
@@ -22,13 +22,13 @@ void main() {
   for (int i = 0; i < ${RIPPLES}; i++) {
     vec4 r = uRip[i];
     float age = uTime - r.z;
-    if (r.w == 0.0 || age < 0.0 || age > 3.0) continue;
+    if (r.w == 0.0 || age < 0.0 || age > ${ANIM.rippleLife.toFixed(2)}) continue;
     vec2 c = vec2(r.x, -(r.y - uDist));
     float d = distance(p.xz, c);
-    float ring = exp(-pow((d - age * 9.0) * 1.4, 2.0)) * exp(-age * 1.6) * r.w;
+    float ring = exp(-pow((d - age * ${ANIM.rippleSpeed.toFixed(2)}) * 1.4, 2.0)) * exp(-age * ${ANIM.rippleDecay.toFixed(2)}) * r.w;
     rip += ring;
   }
-  p.y -= rip * 0.35;
+  p.y -= rip * ${ANIM.rippleDepth.toFixed(2)};
   vPos = p;
   vRip = rip;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
@@ -72,7 +72,7 @@ export function createWorld(canvas) {
 
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.85, 0.35, 0.55);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), BLOOM.strength, BLOOM.radius, BLOOM.threshold);
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
 

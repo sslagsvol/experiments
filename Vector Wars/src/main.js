@@ -2,7 +2,7 @@
 // ?debug (FPS / unit counts overlay).
 
 import * as THREE from 'three';
-import { CFG, COLORS, mulberry32 } from './config.js';
+import { CFG, COLORS, ANIM, mulberry32 } from './config.js';
 import { createWorld } from './world.js';
 import { Army, EnemyView, squadGeometry } from './crowd.js';
 import { GatePool, LabelPool, FONT } from './gates.js';
@@ -131,7 +131,7 @@ function applyGate(s) {
   } else if (d < 0) {
     G.stats.lostGate -= d;
     feedback(COLORS.sub, 0.8, 30);
-    army.shake(0.12);
+    army.shake(ANIM.shakeNegGate);
     G.shake = 0.12;
   }
 }
@@ -257,8 +257,8 @@ function update(dt) {
   // Housekeeping (runs in every state so the scene settles after a loss).
   bullets.update(dt, G.dist, G.state === 'play' ? bulletTest : () => false);
   for (const g of [...gates.active]) {
-    g.L.f = Math.max(0, g.L.f - dt * 4);
-    g.R.f = Math.max(0, g.R.f - dt * 4);
+    g.L.f = Math.max(0, g.L.f - dt * ANIM.gateFlashDecay);
+    g.R.f = Math.max(0, g.R.f - dt * ANIM.gateFlashDecay);
     if (g.wz - G.dist < -0.7) { gates.release(g); continue; }
     g.sync(G.dist);
   }

@@ -128,6 +128,10 @@ Grouped so each batch is playable on its own and later work doesn't redo earlier
 - **Agreed:** the formation plan (tight spacing, patterns that morph on good gates, swirl) and falling off the track (both overflow and steering spill, with the crowd's center kept inside the rails).
 - **Defaults unless changed:** track capacity of about 1,200; formations are cosmetic this round; a mini-boss every 8 segments starting on the second loop.
 
+## Style guide debt
+Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
+- *(none)*
+
 ## Version history workflow
 - One commit per checklist batch (A, B, C…), with messages starting `Vector Wars:`.
 - A **tag** at each playable milestone (`vector-wars-v0.1` = Phase 0 as shipped).

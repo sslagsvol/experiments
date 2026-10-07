@@ -2,7 +2,7 @@
 // call). Both use preallocated typed arrays — nothing is allocated per frame.
 
 import * as THREE from 'three';
-import { CFG, COLORS } from './config.js';
+import { CFG, COLORS, ANIM } from './config.js';
 
 export class Bullets {
   constructor(scene) {
@@ -110,7 +110,7 @@ export class Sparks {
       this.x[i] = x; this.y[i] = y; this.w[i] = w;
       this.vx[i] = Math.cos(a) * s; this.vw[i] = Math.sin(a) * s;
       this.vy[i] = 1 + Math.random() * speed;
-      this.span[i] = this.life[i] = 0.35 + Math.random() * 0.45;
+      this.span[i] = this.life[i] = ANIM.sparkLifeMin + Math.random() * (ANIM.sparkLifeMax - ANIM.sparkLifeMin);
       this.col[i * 3] = color[0]; this.col[i * 3 + 1] = color[1]; this.col[i * 3 + 2] = color[2];
     }
     this.colAttr.needsUpdate = true;
@@ -122,7 +122,7 @@ export class Sparks {
     for (let i = 0; i < this.max; i++) {
       if (this.life[i] <= 0) { L[i] = 0; continue; }
       this.life[i] -= dt;
-      this.vy[i] -= 9 * dt;
+      this.vy[i] -= ANIM.sparkGravity * dt;
       this.vx[i] *= drag; this.vw[i] *= drag;
       this.x[i] += this.vx[i] * dt;
       this.y[i] = Math.max(0.02, this.y[i] + this.vy[i] * dt);
@@ -169,7 +169,7 @@ export class Fallers {
     const i = this.i;
     this.i = (this.i + 1) % this.max;
     this.x[i] = x; this.y[i] = 0.12; this.w[i] = w;
-    this.vx[i] = dir * (1.5 + Math.random() * 2);
+    this.vx[i] = dir * (ANIM.fallRunMin + Math.random() * (ANIM.fallRunMax - ANIM.fallRunMin));
     this.vy[i] = 0;
     this.vw[i] = vw * (0.6 + Math.random() * 0.4);
     this.life[i] = 1;
@@ -183,7 +183,7 @@ export class Fallers {
       this.w[i] += this.vw[i] * dt;
       this.vw[i] *= Math.pow(0.3, dt);
       if (Math.abs(this.x[i]) > CFG.TW) {
-        this.vy[i] -= 14 * dt;
+        this.vy[i] -= ANIM.fallGravity * dt;
         this.y[i] += this.vy[i] * dt;
         this.vx[i] *= Math.pow(0.5, dt);
         this.life[i] = Math.max(0, 1 + this.y[i] / 5);

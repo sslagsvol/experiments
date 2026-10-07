@@ -6,7 +6,7 @@
 // (CFG.FORMATION_FILL of the track), which keeps capacity identical across
 // patterns: formations are cosmetic, not a stat.
 
-import { CFG } from './config.js';
+import { CFG, ANIM } from './config.js';
 
 const CAP = CFG.CAPACITY;
 const GOLDEN = 2.39996;
@@ -80,7 +80,7 @@ export const FORMATIONS = PATTERNS.map(({ name, spin, build }) => {
     maxR = Math.max(maxR, R[i]);
   }
   // Morphs ripple outward from the center.
-  for (let i = 0; i < CAP; i++) delay[i] = R[i] / maxR * 0.35;
+  for (let i = 0; i < CAP; i++) delay[i] = R[i] / maxR * ANIM.morphRipple;
   return { name, spin, R, A, D, delay };
 });
 

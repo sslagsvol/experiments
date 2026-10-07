@@ -2,7 +2,9 @@
 
 A crowd-runner in the style of the "army through gates" mobile ads, redesigned around the things those games get wrong: fake choices, hidden numbers, no skill expression, and art that buries the numbers. One thumb, thousands of units, 60fps on a mid-range phone.
 
-**Play it:** `index.html` (add `?debug` for an FPS/unit overlay, `?units=4000` to stress-test, `?seed=42` for a different track).
+**Play it:** `index.html` (add `?debug` for an FPS/unit overlay, `?units=1000` to stress-test, `?seed=42` for a different track).
+
+**Style guide:** `style-guide.html` shows every color, type style, element, formation and animation. Any visual or animation change must update it (see `CLAUDE.md`).
 
 ---
 

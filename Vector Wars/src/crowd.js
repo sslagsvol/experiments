@@ -3,7 +3,7 @@
 // organic movement at O(N) cost.
 
 import * as THREE from 'three';
-import { CFG, COLORS } from './config.js';
+import { CFG, COLORS, ANIM } from './config.js';
 import { FORMATIONS, UNIT_SPACING } from './formations.js';
 
 const HIDDEN = -100;   // y for unused point slots (drawn off-screen)
@@ -163,8 +163,8 @@ export class Army {
   update(dt, ax, time, onFall) {
     this.ax = ax;
     const since = time - this.morphT0;
-    this.clock += dt * (1 + 5 * Math.exp(-since * 1.5));   // swirl burst after a morph
-    this.shakeAmt = Math.max(0, this.shakeAmt - dt * 0.4);
+    this.clock += dt * (1 + ANIM.swirlBurst * Math.exp(-since * ANIM.swirlBurstDecay));
+    this.shakeAmt = Math.max(0, this.shakeAmt - dt * ANIM.shakeDecay);
 
     const p = this.pos, alive = this.alive, cur = FORMATIONS[this.pat];
     let minX = 1e9, maxX = -1e9, minZ = 1e9, maxZ = -1e9, sumX = 0;
@@ -178,7 +178,7 @@ export class Army {
       }
       const j = i * 3, k = Math.min(1, dt * (6 + (i % 5) * 1.5));
       p[j] += (tx - p[j]) * k;
-      p[j + 1] = 0.12 + Math.abs(Math.sin(time * 11 + i * 1.7)) * 0.04;
+      p[j + 1] = 0.12 + Math.abs(Math.sin(time * ANIM.bobFreq + i * 1.7)) * ANIM.bobHeight;
       p[j + 2] += (tz - p[j + 2]) * k;
       if (Math.abs(p[j]) > CFG.TW) {
         alive[i] = 0;

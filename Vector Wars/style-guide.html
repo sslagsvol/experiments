@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#04051a">
+<title>Vector Wars Style Guide</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%276%27 fill=%27%2304051a%27/%3E%3Cpath d=%27M16 5 27 16 16 27 5 16Z%27 fill=%27none%27 stroke=%27%2346d2ff%27 stroke-width=%273%27/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<!-- The real game stylesheet, so HUD typography and keyframes below are the actual styles. -->
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* Undo the game's full-screen, no-scroll page setup. */
+  html, body { height: auto; overflow: auto; touch-action: auto; user-select: text; -webkit-user-select: text; overscroll-behavior: auto; }
+  body { font-family: system-ui, -apple-system, sans-serif; color: var(--text); line-height: 1.5; }
+  main { max-width: 1120px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1.sg-title { font-family: 'Audiowide', sans-serif; font-weight: 400; font-size: clamp(28px, 6vw, 44px); margin: 0; color: #9ff0ff; text-shadow: 0 0 12px var(--you); }
+  .sg-lede { margin: 6px 0 24px; color: #9fb4cc; max-width: 760px; }
+  h2.sg-h { font-family: 'Audiowide', sans-serif; font-weight: 400; font-size: 20px; margin: 48px 0 4px; color: #cfe8ff; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .sg-sub { margin: 0 0 16px; color: #8aa0b8; font-size: 14px; max-width: 760px; }
+  .badge { font-family: 'Share Tech Mono', monospace; font-size: 11px; padding: 2px 8px; border-radius: 99px; letter-spacing: .04em; }
+  .badge.live { color: #9dff3d; border: 1px solid rgba(157,255,61,.5); }
+  .badge.manual { color: #ffd23d; border: 1px solid rgba(255,210,61,.5); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 12px; }
+  .grid.wide { grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); }
+  .card { background: #070926; border: 1px solid rgba(70,210,255,.14); border-radius: 10px; padding: 12px; min-width: 0; }
+  .card canvas { display: block; width: 100%; height: 150px; border-radius: 6px; background: var(--bg); }
+  .card canvas.tall { height: 220px; }
+  .card h3 { margin: 10px 0 2px; font-size: 14px; font-weight: 600; color: #e6f3ff; }
+  .var { font-family: 'Share Tech Mono', monospace; color: var(--hud); font-size: 13px; word-break: break-word; }
+  .meta { font-family: 'Share Tech Mono', monospace; color: #8aa0b8; font-size: 12px; margin-top: 4px; word-break: break-word; }
+  .note { font-size: 12px; color: #8aa0b8; margin-top: 6px; }
+  .rule { border: 1px solid rgba(255,210,61,.45); background: rgba(255,210,61,.06); border-radius: 10px; padding: 14px 16px; margin: 0 0 8px; }
+  .rule strong { color: #ffd23d; }
+  .rule ol { margin: 8px 0 0; padding-left: 20px; }
+  .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 16px 0 0; font-family: 'Share Tech Mono', monospace; font-size: 13px; }
+  .controls button { font: inherit; color: var(--text); background: #0b0f33; border: 1px solid rgba(70,210,255,.35); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+  .controls button[aria-pressed="true"] { border-color: var(--hud); color: var(--hud); }
+  table.cfg { width: 100%; border-collapse: collapse; font-family: 'Share Tech Mono', monospace; font-size: 13px; }
+  table.cfg td { padding: 5px 8px; border-bottom: 1px solid rgba(70,210,255,.12); vertical-align: top; }
+  table.cfg td:first-child { color: var(--hud); white-space: nowrap; }
+  table.cfg td:last-child { color: #fff; text-align: right; }
+  .swatch { height: 36px; border-radius: 6px; margin-top: 8px; border: 1px solid rgba(255,255,255,.1); }
+  /* Real game classes, re-housed inside static boxes. */
+  .stage { position: relative; background: var(--bg); border-radius: 6px; overflow: hidden; }
+  .stage .overlay { position: relative; inset: auto; min-height: 250px; }
+  .stage #hud { position: absolute; }
+  .stage.hud-stage { height: 120px; }
+  .stage #count { position: absolute; left: 50%; top: 70px; transform: translate(-50%, -50%); visibility: visible; }
+  .pop-stage { height: 150px; }
+  .pop-stage #count { top: 75px; }
+  code { font-family: 'Share Tech Mono', monospace; color: #cfe8ff; }
+  a { color: var(--you); }
+</style>
+</head>
+<body>
+<main>
+  <h1 class="sg-title">Vector Wars style guide</h1>
+  <p class="sg-lede">Every color, type style, game element, formation and animation, side by side and drawn the way it appears in the game. <a href="index.html">Play the game</a> · <a href="PLAN.md">Plan</a> · <a href="EDITS.md">Edits</a></p>
+
+  <div class="rule">
+    <strong>Keep this page in sync.</strong> Any change to a color, font, size, HUD style, glow, formation or animation must update this page in the same commit.
+    <ol>
+      <li><span class="badge live">live</span> sections read their values straight from <code>src/config.js</code>, <code>src/formations.js</code> and <code>styles.css</code>. After a change, reload and check they still look right. New values need a label or card added here.</li>
+      <li><span class="badge manual">manual</span> sections are hand-drawn approximations of shaders and effect code. Edit them by hand when the look or behavior changes.</li>
+      <li>If you can't update it right away, add an item under <strong>Style guide debt</strong> in <code>EDITS.md</code> so it isn't forgotten.</li>
+    </ol>
+  </div>
+
+  <div class="controls">
+    <button id="pause" aria-pressed="false">Pause animations</button>
+    <span>Speed</span>
+    <button class="spd" data-s="1" aria-pressed="true">1×</button>
+    <button class="spd" data-s="0.5" aria-pressed="false">0.5×</button>
+    <button class="spd" data-s="0.25" aria-pressed="false">0.25×</button>
+  </div>
+
+  <h2 class="sg-h">Color palette <span class="badge live">live · COLORS</span></h2>
+  <p class="sg-sub">Linear HDR values from <code>src/config.js</code>. Channels above 1.0 push past the bloom threshold and glow. Each tile shows the color the way the game uses it: a glowing point and a vector line on the background.</p>
+  <div class="grid" id="palette"></div>
+
+  <h2 class="sg-h">CSS variables <span class="badge live">live · styles.css :root</span></h2>
+  <p class="sg-sub">Used by the DOM HUD and overlays. These are display (sRGB) colors and should stay close to their HDR counterparts above.</p>
+  <div class="grid" id="cssvars"></div>
+
+  <h2 class="sg-h">Typography and HUD <span class="badge live">live · styles.css</span></h2>
+  <p class="sg-sub">Titles use <code>Audiowide</code>; everything else uses <code>Share Tech Mono</code>, including the gate and squad labels drawn into textures (<code>FONT</code> in <code>src/gates.js</code>). These use the real game classes.</p>
+  <div class="grid wide">
+    <div class="card">
+      <div class="stage"><div class="overlay"><h1>Vector Wars</h1><p class="sub">Drag to steer · Shoot gates to raise them</p><p class="blink">Touch to start</p></div></div>
+      <h3>Title screen</h3><div class="var">.overlay h1 · .overlay .sub · .blink</div>
+      <div class="meta">Audiowide clamp(40px, 13vw, 76px), --you glow · blink 1.2s steps(2)</div>
+    </div>
+    <div class="card">
+      <div class="stage"><div class="overlay"><h2>Swarm lost</h2>
+        <div id="recap"><div class="row"><span>Distance</span><span>2059</span></div><div class="row"><span>Peak swarm</span><span>1200</span></div><div class="row"><span>Lost to squads</span><span>81</span></div><div class="row"><span>Fell off</span><span>416</span></div><div class="new-best">New best</div></div>
+        <p class="blink">Tap to retry</p></div></div>
+      <h3>Game-over recap</h3><div class="var">.overlay h2 · #recap .row · .new-best</div>
+      <div class="meta">Audiowide clamp(28px, 9vw, 44px), --enemy glow</div>
+    </div>
+    <div class="card">
+      <div class="stage hud-stage"><div id="hud"><div id="dist">2059</div><div id="best">Best 8320</div><div id="count">640</div></div></div>
+      <h3>In-game HUD</h3><div class="var">#dist · #best · #count</div>
+      <div class="meta">Share Tech Mono · distance 22px --hud · best 14px · army count 26px white with --you glow, floats above the army</div>
+    </div>
+    <div class="card">
+      <canvas id="type-labels"></canvas>
+      <h3>Texture labels</h3><div class="var">gateLabel() · CountLabel</div>
+      <div class="meta">Gate value: 62% of panel height (50% when 5+ chars), tinted toward white for legibility · squad count: 80px, COLORS.enemy</div>
+    </div>
+  </div>
+
+  <h2 class="sg-h">Game elements <span class="badge manual">manual · approximates shaders</span></h2>
+  <p class="sg-sub">Sizes come from the code (<span class="var">UNIT_SPACING</span>, <span class="var">CFG.GATE_H</span>, <span class="var">CFG.TW</span>). Drawing is a 2D approximation of the WebGL shaders.</p>
+  <div class="grid" id="elements"></div>
+
+  <h2 class="sg-h">Formations <span class="badge live">live · FORMATIONS</span></h2>
+  <p class="sg-sub">Generated by the real <code>src/formations.js</code>, shown at 300 units top-down between the rails. Each is normalized so a full army (<span class="var" id="cap-label"></span>) spans <span class="var" id="fill-label"></span> of the track. Good gates advance to the next pattern in this order.</p>
+  <div class="grid" id="formations"></div>
+
+  <h2 class="sg-h">Animations <span class="badge live">timings live · ANIM</span> <span class="badge manual">drawing manual</span></h2>
+  <p class="sg-sub">Each demo runs on the real values in <code>ANIM</code>. Use 0.25× to study fast ones like the grid ripple.</p>
+  <div class="grid wide" id="anims">
+    <div class="card">
+      <div class="stage pop-stage"><div id="hud"><div id="count">300</div></div></div>
+      <h3>Army count pop</h3><div class="var">#count.pop · @keyframes pop</div>
+      <div class="meta">0.25s ease-out, 36px → 26px · fires when the count goes up</div>
+    </div>
+  </div>
+
+  <h2 class="sg-h">Glow and post-processing <span class="badge live">live · BLOOM</span></h2>
+  <p class="sg-sub">Bloom only picks up pixels brighter than the threshold, which is why HDR colors above 1.0 glow and gate text stays readable. Tone mapping is off; OutputPass converts to sRGB.</p>
+  <div class="card"><table class="cfg" id="bloom"></table></div>
+
+  <h2 class="sg-h">All tunables <span class="badge live">live · CFG · ANIM</span></h2>
+  <p class="sg-sub">Every value in <code>src/config.js</code>, for reference.</p>
+  <div class="grid wide">
+    <div class="card"><h3>CFG</h3><table class="cfg" id="cfg"></table></div>
+    <div class="card"><h3>ANIM</h3><table class="cfg" id="anim"></table></div>
+  </div>
+</main>
+
+<script type="module">
+import { CFG, COLORS, ANIM, BLOOM } from './src/config.js';
+import { FORMATIONS, UNIT_SPACING } from './src/formations.js';
+
+const FONT = '"Share Tech Mono", ui-monospace, monospace';
+const $ = (id) => document.getElementById(id);
+const fmtN = (v) => typeof v === 'number' ? (Number.isInteger(v) ? String(v) : v.toFixed(3).replace(/0+$/, '')) : String(v);
+
+// ---------- Color helpers (linear HDR → display) ----------
+const toSrgb = (v) => { v = Math.max(0, Math.min(1, v)); return v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055; };
+const css = (c, a = 1) => `rgba(${c.map((v) => Math.round(toSrgb(v) * 255)).join(',')},${a})`;
+const hex = (c) => '#' + c.map((v) => Math.round(toSrgb(v) * 255).toString(16).padStart(2, '0')).join('');
+const BG = css([0, 0, 0].map((_, i) => [0.0012, 0.0015, 0.0103][i]));
+
+const spriteCache = new Map();
+function glow(c) {
+  const key = c.join();
+  if (spriteCache.has(key)) return spriteCache.get(key);
+  const g = document.createElement('canvas'); g.width = g.height = 64;
+  const q = g.getContext('2d');
+  const hot = Math.max(...c);
+  const r = q.createRadialGradient(32, 32, 0, 32, 32, 32);
+  r.addColorStop(0, hot > 1 ? 'rgba(255,255,255,1)' : css(c, 1));
+  r.addColorStop(0.18, css(c, 0.95));
+  r.addColorStop(0.45, css(c, 0.25 * Math.min(hot, 2)));
+  r.addColorStop(1, 'rgba(0,0,0,0)');
+  q.fillStyle = r; q.fillRect(0, 0, 64, 64);
+  spriteCache.set(key, g);
+  return g;
+}
+function dot(ctx, x, y, s, c, a = 1) { ctx.globalAlpha = a; ctx.drawImage(glow(c), x - s / 2, y - s / 2, s, s); ctx.globalAlpha = 1; }
+function diamond(ctx, x, y, s, c) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(Math.PI / 4);
+  ctx.strokeStyle = css(c); ctx.lineWidth = Math.max(1, s * 0.12); ctx.shadowColor = css(c); ctx.shadowBlur = s * 0.6;
+  ctx.strokeRect(-s / 3, -s / 3, s * 2 / 3, s * 2 / 3); ctx.restore();
+}
+function vline(ctx, x1, y1, x2, y2, c, w = 1.5) {
+  ctx.save(); ctx.strokeStyle = css(c); ctx.lineWidth = w; ctx.shadowColor = css(c); ctx.shadowBlur = 8 * Math.min(Math.max(...c), 2);
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore();
+}
+
+// Mirrors gateColor / gateLabel in src/gates.js (kept here to avoid loading three.js).
+const gateColor = (s) => s.op === 'x' ? COLORS.mult : s.op === '/' ? COLORS.sub : s.v >= 0 ? COLORS.add : COLORS.sub;
+const gateLabel = (s) => s.op === 'x' ? '×' + s.m : (s.v >= 0 ? '+' : '−') + Math.abs(s.v);
+function gate(ctx, x, y, w, h, s) {
+  const c = gateColor(s);
+  ctx.fillStyle = css(c, 0.07 + (s.f || 0) * 0.3); ctx.fillRect(x, y, w, h);
+  ctx.save(); ctx.strokeStyle = css(c); ctx.lineWidth = 2; ctx.shadowColor = css(c); ctx.shadowBlur = 10;
+  ctx.strokeRect(x + 1, y + 1, w - 2, h - 2); ctx.restore();
+  const label = gateLabel(s);
+  const ink = c.map((v) => v * 0.55 * 0.65 + 0.9 * 0.35);
+  ctx.fillStyle = css(ink); ctx.font = `${Math.round(h * (label.length > 4 ? 0.5 : 0.62))}px ${FONT}`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, x + w / 2, y + h * 0.52);
+  if (s.op === 'x' && s.ch > 0) { ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.fillRect(x, y + h * 0.9, w * s.ch, h * 0.06); }
+}
+
+// ---------- Canvas + animation loop ----------
+const demos = [];
+let paused = false, speed = 1;
+function demo(canvas, draw, opts = {}) {
+  const d = { canvas, draw, ctx: canvas.getContext('2d'), w: 0, h: 0, t: 0, visible: true, state: opts.state || {} };
+  demos.push(d);
+  new IntersectionObserver(([e]) => { d.visible = e.isIntersecting; }).observe(canvas);
+  return d;
+}
+function fit(d) {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = d.canvas.clientWidth, h = d.canvas.clientHeight;
+  if (w !== d.w || h !== d.h) { d.w = w; d.h = h; d.canvas.width = w * dpr; d.canvas.height = h * dpr; d.ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+}
+function card(parent, { title, vars, meta, note, tall, html }) {
+  const el = document.createElement('div'); el.className = 'card';
+  el.innerHTML = (html || `<canvas${tall ? ' class="tall"' : ''}></canvas>`) +
+    `<h3>${title}</h3>` + (vars ? `<div class="var">${vars}</div>` : '') +
+    (meta ? `<div class="meta">${meta}</div>` : '') + (note ? `<div class="note">${note}</div>` : '');
+  parent.appendChild(el);
+  return el.querySelector('canvas');
+}
+function clear(d) { const { ctx, w, h } = d; ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = BG; ctx.fillRect(0, 0, w, h); }
+let last = performance.now();
+function loop(now) {
+  requestAnimationFrame(loop);
+  const raw = Math.min(0.05, (now - last) / 1000); last = now;
+  const dt = paused ? 0 : raw * speed;
+  for (const d of demos) {
+    if (!d.visible) continue;
+    fit(d); d.t += dt; clear(d);
+    d.draw(d.ctx, d.w, d.h, d.t, dt, d.state);
+  }
+}
+
+// ---------- Palette ----------
+const ROLES = {
+  bg: 'Page background, void below the track',
+  you: 'Your swarm, army count glow, falling units',
+  enemy: 'Enemy diamonds, squad count labels, enemy sparks',
+  add: '+ gates (value ≥ 0)',
+  sub: '− gates, and ÷ gates once added',
+  mult: '× gates and their charge',
+  grid: 'Track and void grid lines',
+  rail: 'Track rails; edge walls at ×0.12',
+  horizon: 'Horizon line',
+  bullet: 'Bullet streaks',
+  white: 'Highlights',
+};
+for (const [name, value] of Object.entries(COLORS)) {
+  const c = typeof value === 'number' ? [((value >> 16) & 255) / 255, ((value >> 8) & 255) / 255, (value & 255) / 255].map((v) => Math.pow(v, 2.2)) : value;
+  const hot = Math.max(...c);
+  const cv = card($('palette'), {
+    title: name, vars: `COLORS.${name}`,
+    meta: (typeof value === 'number' ? `0x${value.toString(16).padStart(6, '0')}` : `[${value.join(', ')}]`) + ` · display ${hex(c)}` + (hot > 1 ? ` · glows (peak ${hot})` : ''),
+    note: ROLES[name] || '',
+  });
+  demo(cv, (ctx, w, h, t) => {
+    if (name === 'bg') { ctx.fillStyle = css(c); ctx.fillRect(0, 0, w, h); ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.strokeRect(8.5, 8.5, w - 17, h - 17); return; }
+    ctx.globalCompositeOperation = 'lighter';
+    vline(ctx, 16, h * 0.78, w - 16, h * 0.78, c, 2);
+    dot(ctx, w / 2, h * 0.42, 70 + Math.sin(t * 2) * 4, c);
+  });
+}
+
+// ---------- CSS variables (parsed from the real stylesheet) ----------
+fetch('styles.css').then((r) => r.text()).then((text) => {
+  const root = text.match(/:root\s*{([^}]*)}/);
+  if (!root) return;
+  for (const m of root[1].matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) {
+    const el = document.createElement('div'); el.className = 'card';
+    el.innerHTML = `<div class="swatch" style="background:${m[2]}"></div><h3 style="color:${m[2]};text-shadow:0 0 8px ${m[2]}">${m[1]}</h3><div class="var">var(${m[1]})</div><div class="meta">${m[2].trim()}</div>`;
+    $('cssvars').appendChild(el);
+  }
+});
+
+// ---------- Texture labels ----------
+demo($('type-labels'), (ctx, w, h) => {
+  const gw = Math.min(110, w * 0.3), gh = gw * CFG.GATE_H / (CFG.TW - 0.1);
+  gate(ctx, w * 0.06, h / 2 - gh / 2, gw, gh, { op: '+', v: 24, f: 0 });
+  gate(ctx, w * 0.06 + gw + 8, h / 2 - gh / 2, gw, gh, { op: 'x', m: 2, ch: 0.4, f: 0 });
+  ctx.fillStyle = css(COLORS.enemy); ctx.font = `28px ${FONT}`; ctx.textAlign = 'center'; ctx.shadowColor = css(COLORS.enemy); ctx.shadowBlur = 10;
+  ctx.fillText('186', w * 0.86, h / 2); ctx.shadowBlur = 0;
+});
+
+// ---------- Game elements ----------
+const PX = 60; // pixels per world unit in close-up element cards
+function elementCard(opts, draw) { demo(card($('elements'), opts), draw); }
+
+elementCard({ title: 'Player unit', vars: 'COLORS.you · pointMaterial shape 0', meta: `soft glow dot · size UNIT_SPACING × 1.3 = ${(UNIT_SPACING * 1.3).toFixed(3)}`, note: 'Shown much larger than in game. Dense crowds overlap into white-hot cores.' }, (ctx, w, h, t) => {
+  ctx.globalCompositeOperation = 'lighter';
+  dot(ctx, w * 0.3, h / 2, 90, COLORS.you);
+  for (let i = 0; i < 19; i++) { const r = Math.sqrt(i + 0.5) * 9, a = i * 2.39996; dot(ctx, w * 0.72 + r * Math.cos(a), h / 2 + r * Math.sin(a) * 0.85, 16, COLORS.you); }
+});
+elementCard({ title: 'Enemy unit', vars: 'COLORS.enemy · pointMaterial shape 1', meta: 'outlined diamond, never filled · size 0.24', note: 'Geometry Wars style. Enemies are always outlines; you are always dots.' }, (ctx, w, h, t) => {
+  ctx.globalCompositeOperation = 'lighter';
+  diamond(ctx, w * 0.3, h / 2, 70, COLORS.enemy);
+  for (let i = 0; i < 16; i++) { const r = Math.sqrt(i + 0.5) * 10, a = i * 2.39996; diamond(ctx, w * 0.72 + r * Math.cos(a), h / 2 + r * Math.sin(a) * 0.85, 16, COLORS.enemy); }
+});
+for (const [title, s, v] of [
+  ['Add gate', { op: '+', v: 12 }, 'COLORS.add · v ≥ 0'],
+  ['Subtract gate', { op: '+', v: -18 }, 'COLORS.sub · v < 0'],
+  ['Multiply gate', { op: 'x', m: 2, ch: 0.55 }, 'COLORS.mult · charge bar = ch'],
+]) {
+  elementCard({ title, vars: v, meta: `panel ${(CFG.TW - 0.1).toFixed(2)} × ${CFG.GATE_H} · border, faint fill, value text`, note: s.op === 'x' ? `Shooting fills the bar; at full it steps up, capped at ×${CFG.MULT_MAX}.` : 'Each bullet hit adds +1. Color flips when the value crosses zero.' }, (ctx, w, h) => {
+    const gw = Math.min(w * 0.6, 170), gh = gw * CFG.GATE_H / (CFG.TW - 0.1);
+    gate(ctx, (w - gw) / 2, (h - gh) / 2, gw, gh, { f: 0, ...s });
+  });
+}
+elementCard({ title: 'Bullet', vars: 'COLORS.bullet · Bullets (LineSegments)', meta: `0.5 units long · speed ${CFG.BULLET_SPEED} · range ${CFG.BULLET_RANGE}`, note: 'Batch B replaces random spread with front-rank volleys.' }, (ctx, w, h, t) => {
+  ctx.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 7; i++) { const x = w * 0.2 + i * w * 0.1, y = ((t * 220 + i * 37) % (h + 40)) - 20; vline(ctx, x, h - y, x, h - y + 26, COLORS.bullet, 2); }
+});
+elementCard({ title: 'Spark', vars: 'Sparks · COLORS.enemy / you / mult', meta: `size 0.16 · life ${ANIM.sparkLifeMin}–${ANIM.sparkLifeMax}s`, note: 'Hits, kills, gate passes and deaths. Colored by what made them.' }, (ctx, w, h, t) => {
+  ctx.globalCompositeOperation = 'lighter';
+  const cols = [COLORS.enemy, COLORS.you, COLORS.mult];
+  for (let i = 0; i < 24; i++) { const a = i * 2.39996, r = 20 + (i % 5) * 9; dot(ctx, w / 2 + Math.cos(a) * r * 1.4, h / 2 + Math.sin(a) * r * 0.8, 12, cols[i % 3], 0.5 + 0.5 * Math.sin(t * 4 + i)); }
+});
+elementCard({ title: 'Track', vars: 'COLORS.grid · rail · horizon', meta: `half-width CFG.TW = ${CFG.TW} · grid 0.4 × 1.0 · void grid 4 units below`, note: 'The raised strip makes falling off read clearly.' }, (ctx, w, h, t) => {
+  ctx.globalCompositeOperation = 'lighter';
+  const hy = h * 0.22, vx = w / 2;
+  vline(ctx, 0, hy, w, hy, COLORS.horizon, 1.5);
+  ctx.strokeStyle = css(COLORS.grid, 0.35); ctx.lineWidth = 1;
+  for (let k = -6; k <= 6; k++) { ctx.beginPath(); ctx.moveTo(vx + k * 3, hy); ctx.lineTo(vx + k * 60, h + 20); ctx.stroke(); }
+  ctx.strokeStyle = css(COLORS.grid, 0.9);
+  for (let k = -2; k <= 2; k++) { ctx.beginPath(); ctx.moveTo(vx + k * 2, hy); ctx.lineTo(vx + k * 24, h); ctx.stroke(); }
+  for (let i = 0; i < 9; i++) { const f = ((i + t * 1.2) % 9) / 9, y = hy + (h - hy) * f * f; const hw = 6 + (60 - 6) * f * f; ctx.beginPath(); ctx.moveTo(vx - hw, y); ctx.lineTo(vx + hw, y); ctx.stroke(); }
+  vline(ctx, vx - 6, hy, vx - 60, h, COLORS.rail, 2); vline(ctx, vx + 6, hy, vx + 60, h, COLORS.rail, 2);
+});
+
+// ---------- Formations (live from formations.js) ----------
+$('cap-label').textContent = `CFG.CAPACITY = ${CFG.CAPACITY}`;
+$('fill-label').textContent = `CFG.FORMATION_FILL = ${Math.round(CFG.FORMATION_FILL * 100)}%`;
+const SHOW_N = 300;
+function topDown(w) { return Math.min(w, 340) / (2 * CFG.TW * 1.12); }
+function rails(ctx, w, h, s) { for (const sx of [-1, 1]) vline(ctx, w / 2 + sx * CFG.TW * s, 8, w / 2 + sx * CFG.TW * s, h - 8, COLORS.rail, 1.5); }
+function slotXY(f, i, clock) { const a = f.A[i] + f.D[i] * f.spin * clock; return [f.R[i] * Math.cos(a), f.R[i] * Math.sin(a) * CFG.FORMATION_DEPTH]; }
+FORMATIONS.forEach((f, idx) => {
+  const cv = card($('formations'), {
+    title: `${idx + 1}. ${f.name}`, vars: `FORMATIONS[${idx}]`,
+    meta: f.spin ? `swirl ${f.spin} rad/s${f.name === 'rings' ? ', rings alternate direction' : ''}` : 'no swirl',
+  });
+  demo(cv, (ctx, w, h, t) => {
+    const s = topDown(w);
+    ctx.globalCompositeOperation = 'lighter';
+    rails(ctx, w, h, s);
+    for (let i = 0; i < SHOW_N; i++) { const [x, z] = slotXY(f, i, t); dot(ctx, w / 2 + x * s, h / 2 + z * s, UNIT_SPACING * 1.3 * s * 0.9, COLORS.you); }
+  });
+});
+
+// ---------- Animations ----------
+function animCard(opts, draw, state) { const cv = card($('anims'), opts); if (cv && draw) demo(cv, draw, { state }); }
+
+animCard({ title: 'Formation morph and swirl burst', vars: 'ANIM.morphRipple · swirlBurst · swirlBurstDecay', meta: `ripple ${ANIM.morphRipple}s center→rim · swirl ×(1 + ${ANIM.swirlBurst}·e^(−${ANIM.swirlBurstDecay}t)) · springs 6–12/s`, note: 'Fires on every good gate. Cycles through all six patterns here.', tall: true },
+  (ctx, w, h, t, dt, st) => {
+    if (!st.x) { st.x = new Float32Array(SHOW_N); st.z = new Float32Array(SHOW_N); st.pat = 0; st.prev = 0; st.t0 = -9; st.clock = 0; st.next = 0.5; }
+    if (t > st.next) { st.prev = st.pat; st.pat = (st.pat + 1) % FORMATIONS.length; st.t0 = t; st.next = t + 2.6; }
+    const since = t - st.t0, cur = FORMATIONS[st.pat];
+    st.clock += dt * (1 + ANIM.swirlBurst * Math.exp(-since * ANIM.swirlBurstDecay));
+    const s = topDown(w);
+    ctx.globalCompositeOperation = 'lighter';
+    rails(ctx, w, h, s);
+    for (let i = 0; i < SHOW_N; i++) {
+      const [tx, tz] = slotXY(since >= cur.delay[i] ? cur : FORMATIONS[st.prev], i, st.clock);
+      const k = Math.min(1, dt * (6 + (i % 5) * 1.5));
+      st.x[i] += (tx - st.x[i]) * k; st.z[i] += (tz - st.z[i]) * k;
+      dot(ctx, w / 2 + st.x[i] * s, h / 2 + st.z[i] * s, UNIT_SPACING * 1.3 * s * 0.9, COLORS.you);
+    }
+    ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = css(COLORS.white); ctx.font = `13px ${FONT}`; ctx.textAlign = 'left'; ctx.fillText(cur.name, 10, 20);
+  });
+
+animCard({ title: 'Formation shake (bad gate)', vars: 'ANIM.shakeNegGate · shakeDecay', meta: `amplitude ${ANIM.shakeNegGate} → 0 at ${ANIM.shakeDecay}/s · per-unit noise`, note: 'Fires on gates that cost units.', tall: true },
+  (ctx, w, h, t, dt, st) => {
+    if (st.amt === undefined) { st.amt = 0; st.next = 0.6; }
+    if (t > st.next) { st.amt = ANIM.shakeNegGate; st.next = t + 1.8; }
+    st.amt = Math.max(0, st.amt - dt * ANIM.shakeDecay);
+    const f = FORMATIONS[5], s = topDown(w);
+    ctx.globalCompositeOperation = 'lighter'; rails(ctx, w, h, s);
+    for (let i = 0; i < 200; i++) {
+      const [x, z] = slotXY(f, i, 0);
+      dot(ctx, w / 2 + (x + Math.sin(i * 12.9898 + t * 31) * st.amt) * s, h / 2 + (z + Math.sin(i * 78.233 + t * 27) * st.amt) * s, UNIT_SPACING * 1.3 * s * 0.9, COLORS.you);
+    }
+  }, {});
+
+animCard({ title: 'March bob', vars: 'ANIM.bobFreq · bobHeight', meta: `|sin(${ANIM.bobFreq}t + 1.7i)| × ${ANIM.bobHeight} units`, note: 'Side view, height exaggerated ×8 so it is visible.' },
+  (ctx, w, h, t) => {
+    ctx.globalCompositeOperation = 'lighter';
+    const base = h * 0.7; vline(ctx, 10, base + 10, w - 10, base + 10, COLORS.grid, 1);
+    for (let i = 0; i < 14; i++) { const y = base - Math.abs(Math.sin(t * ANIM.bobFreq + i * 1.7)) * ANIM.bobHeight * PX * 8; dot(ctx, 20 + i * (w - 40) / 13, y, 22, COLORS.you); }
+  });
+
+animCard({ title: 'Gate hit flash and charge', vars: 'ANIM.gateFlashDecay · CFG.MULT_CHARGE_PER_HIT · MULT_MAX', meta: `flash 1 → 0 at ${ANIM.gateFlashDecay}/s · +1 per hit · charge ${CFG.MULT_CHARGE_PER_HIT}/(m−1) per hit, cap ×${CFG.MULT_MAX}`, note: 'Bullets raise the − gate until it flips to +.', tall: true },
+  (ctx, w, h, t, dt, st) => {
+    if (!st.a) { st.a = { op: '+', v: -8, f: 0 }; st.b = { op: 'x', m: 2, ch: 0, f: 0 }; st.acc = 0; st.hold = 0; }
+    st.acc += dt;
+    while (st.acc > 0.12) {
+      st.acc -= 0.12;
+      st.a.v++; st.a.f = 1; if (st.a.v > 14) st.a.v = -8;
+      if (st.b.m < CFG.MULT_MAX) { st.b.ch += CFG.MULT_CHARGE_PER_HIT / (st.b.m - 1); st.b.f = 1; if (st.b.ch >= 1) { st.b.ch = 0; st.b.m++; } }
+      else if ((st.hold += 0.12) > 1.5) { st.b.m = 2; st.b.ch = 0; st.hold = 0; }
+    }
+    for (const g of [st.a, st.b]) g.f = Math.max(0, g.f - dt * ANIM.gateFlashDecay);
+    const gw = Math.min(w * 0.4, 150), gh = gw * CFG.GATE_H / (CFG.TW - 0.1), gy = 18;
+    gate(ctx, w / 2 - gw - 4, gy, gw, gh, st.a); gate(ctx, w / 2 + 4, gy, gw, gh, st.b);
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 10; i++) { const x = w / 2 + (i < 5 ? -gw / 2 - 4 : gw / 2 + 4) + ((i % 5) - 2) * 10, y = gy + gh + ((t * 300 + i * 23) % (h - gy - gh)); vline(ctx, x, y, x, y + 14, COLORS.bullet, 1.5); }
+  }, {});
+
+animCard({ title: 'Grid ripple', vars: 'ANIM.rippleSpeed · rippleDecay · rippleLife · rippleDepth', meta: `ring ${ANIM.rippleSpeed} units/s · fade e^(−${ANIM.rippleDecay}t) · ${ANIM.rippleLife}s life · dips grid ${ANIM.rippleDepth}`, note: 'Gate passes, squad wipes and death. Top-down; the real one also bends the floor down.', tall: true },
+  (ctx, w, h, t) => {
+    const s = topDown(w), age = t % 2.2, cx = w / 2, cy = h * 0.6;
+    const r = age * ANIM.rippleSpeed * s, fade = Math.exp(-age * ANIM.rippleDecay);
+    ctx.globalCompositeOperation = 'lighter'; ctx.lineWidth = 1;
+    for (let gx = -CFG.TW; gx <= CFG.TW + 1e-6; gx += 0.4) { ctx.strokeStyle = css(COLORS.grid, 0.5); ctx.beginPath(); ctx.moveTo(cx + gx * s, 0); ctx.lineTo(cx + gx * s, h); ctx.stroke(); }
+    for (let gz = -10; gz <= 10; gz++) { ctx.strokeStyle = css(COLORS.grid, 0.5); ctx.beginPath(); ctx.moveTo(cx - CFG.TW * s, cy + gz * s); ctx.lineTo(cx + CFG.TW * s, cy + gz * s); ctx.stroke(); }
+    ctx.save(); ctx.beginPath(); ctx.rect(cx - CFG.TW * s, 0, 2 * CFG.TW * s, h); ctx.clip();
+    for (const [lw, a] of [[18, 0.12], [6, 0.35], [2, 0.9]]) { ctx.strokeStyle = `rgba(150,110,255,${a * fade})`; ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.restore(); rails(ctx, w, h, s);
+  });
+
+animCard({ title: 'Spark burst', vars: 'Sparks · ANIM.sparkGravity · sparkLifeMin/Max', meta: `gravity ${ANIM.sparkGravity} · drag 0.05^dt · life ${ANIM.sparkLifeMin}–${ANIM.sparkLifeMax}s`, note: 'Side view.' },
+  (ctx, w, h, t, dt, st) => {
+    if (!st.p) { st.p = []; st.next = 0; }
+    if (t > st.next) {
+      st.next = t + 1.1;
+      for (let k = 0; k < 40; k++) { const a = Math.random() * Math.PI * 2, sp = 3 * (0.3 + Math.random()); const life = ANIM.sparkLifeMin + Math.random() * (ANIM.sparkLifeMax - ANIM.sparkLifeMin); st.p.push({ x: 0, y: 0.3, vx: Math.cos(a) * sp, vy: 1 + Math.random() * 3, life, span: life, c: k % 2 ? COLORS.enemy : COLORS.you }); }
+    }
+    const drag = Math.pow(0.05, dt), base = h * 0.8;
+    ctx.globalCompositeOperation = 'lighter'; vline(ctx, 10, base, w - 10, base, COLORS.grid, 1);
+    st.p = st.p.filter((p) => (p.life -= dt) > 0);
+    for (const p of st.p) { p.vy -= ANIM.sparkGravity * dt; p.vx *= drag; p.x += p.vx * dt; p.y = Math.max(0.02, p.y + p.vy * dt); dot(ctx, w / 2 + p.x * PX * 0.8, base - p.y * PX * 0.8, 14 * (0.4 + 0.6 * p.life / p.span), p.c, p.life / p.span); }
+  }, {});
+
+animCard({ title: 'Falling off the track', vars: 'Fallers · ANIM.fallGravity · fallRunMin/Max', meta: `run ${ANIM.fallRunMin}–${ANIM.fallRunMax} units/s → past the rail, gravity ${ANIM.fallGravity} · flickers and fades over 5 units`, note: 'Side view. Overflow from multipliers and units pushed past a rail.' },
+  (ctx, w, h, t, dt, st) => {
+    if (!st.p) { st.p = []; st.acc = 0; }
+    const s = PX * 0.7, edge = w * 0.55, top = h * 0.35;
+    st.acc += dt;
+    while (st.acc > 0.18) { st.acc -= 0.18; st.p.push({ x: -edge / s + Math.random(), y: 0, vx: ANIM.fallRunMin + Math.random() * (ANIM.fallRunMax - ANIM.fallRunMin), vy: 0, life: 1, i: Math.random() * 9 }); }
+    ctx.globalCompositeOperation = 'lighter';
+    vline(ctx, 0, top, edge, top, COLORS.grid, 2); vline(ctx, edge, top, edge, top + 18, COLORS.rail, 2);
+    ctx.strokeStyle = css(COLORS.grid, 0.3); ctx.beginPath(); ctx.moveTo(0, top + 4 * s); ctx.lineTo(w, top + 4 * s); ctx.stroke();
+    st.p = st.p.filter((p) => p.life > 0);
+    for (const p of st.p) {
+      p.x += p.vx * dt;
+      if (p.x * s > 0) { p.vy -= ANIM.fallGravity * dt; p.y += p.vy * dt; p.vx *= Math.pow(0.5, dt); p.life = Math.max(0, 1 + p.y / 5); }
+      const flick = p.y < 0 ? 0.6 + 0.4 * Math.sin(p.i + p.y * 9) : 1;
+      dot(ctx, edge + p.x * s, top - 6 - p.y * s, 18, COLORS.you, p.life * flick);
+    }
+  }, {});
+
+animCard({ title: 'Blink prompt', html: '<div class="stage" style="height:150px;display:flex;align-items:center;justify-content:center"><p class="blink" style="margin:0">Touch to start</p></div>', vars: '.blink · @keyframes blink', meta: '1.2s steps(2, start) infinite · CSS, so speed buttons do not apply' });
+
+// Count pop uses the real #count.pop class.
+const countEl = document.querySelector('.pop-stage #count');
+let countVal = 300;
+setInterval(() => {
+  if (paused) return;
+  countVal = countVal >= 1200 ? 300 : Math.min(1200, countVal * 2);
+  countEl.textContent = countVal;
+  countEl.classList.remove('pop'); void countEl.offsetWidth; countEl.classList.add('pop');
+}, 1400);
+
+// ---------- Tables ----------
+function table(el, obj, prefix) { el.innerHTML = Object.entries(obj).map(([k, v]) => `<tr><td>${prefix}.${k}</td><td>${fmtN(v)}</td></tr>`).join(''); }
+table($('cfg'), CFG, 'CFG');
+table($('anim'), ANIM, 'ANIM');
+table($('bloom'), BLOOM, 'BLOOM');
+
+// ---------- Controls ----------
+$('pause').addEventListener('click', (e) => { paused = !paused; e.target.setAttribute('aria-pressed', paused); e.target.textContent = paused ? 'Resume animations' : 'Pause animations'; });
+for (const b of document.querySelectorAll('.spd')) b.addEventListener('click', () => {
+  speed = +b.dataset.s;
+  for (const o of document.querySelectorAll('.spd')) o.setAttribute('aria-pressed', o === b);
+});
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) $('pause').click();
+
+document.fonts.ready.then(() => requestAnimationFrame(loop));
+</script>
+</body>
+</html>
