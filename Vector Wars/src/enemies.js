@@ -215,10 +215,11 @@ export class EnemyForce {
         const ri = r0 * TYPE_LIST[this.type[i]].size;
         if (Math.abs(this.x[i] - x) < ri && this.w[i] >= oldW - ri && this.w[i] <= newW + ri) {
           this.flash[i] = 1;
-          if (--this.hp[i] > 0) return { s, killed: false };
+          const t = TYPE_LIST[this.type[i]];
+          if (--this.hp[i] > 0) return { s, t, killed: false };
           this.kill(i, s);
           this.bounds(s);
-          return { s, killed: true };
+          return { s, t, killed: true };
         }
       }
     }

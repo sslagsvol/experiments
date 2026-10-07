@@ -165,6 +165,9 @@ export function createWorld(canvas) {
     let fov = 2 * Math.atan(Math.tan(hHalf) / camera.aspect) * 180 / Math.PI;
     fov = Math.min(80, Math.max(45, fov));
     camera.fov = fov;
+    // Lens shift: render a window offset downward, so the whole scene (army
+    // included) moves up the screen without tilting the camera.
+    camera.setViewOffset(w, h, 0, h * CFG.CAMERA_LIFT, w, h);
     camera.updateProjectionMatrix();
     pointScale.value = h * pixelRatio / (2 * Math.tan(fov * Math.PI / 360));
   }

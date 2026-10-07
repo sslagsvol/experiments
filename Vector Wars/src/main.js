@@ -1,12 +1,11 @@
 // Game loop and rules. URL params: ?units=800 (start size), ?seed=42,
 // ?debug (FPS / unit counts overlay).
 
-import * as THREE from 'three';
 import { CFG, COLORS, ANIM, mulberry32, multHitsForStep } from './config.js';
 import { createWorld } from './world.js';
 import { Army } from './crowd.js';
 import { EnemyForce } from './enemies.js';
-import { squadMix, mixEst } from './enemyFormations.js';
+import { squadMix, mixEst, TYPE_LIST } from './enemyFormations.js';
 import { GatePool, FONT, gateColor } from './gates.js';
 import { Bullets, Sparks, Fallers, Fizzles } from './fx.js';
 import { UNIT_SPACING } from './formations.js';
@@ -31,7 +30,8 @@ const input = new DragInput(window);
 const hud = new Hud();
 
 let best = 0;
-try { best = parseInt(localStorage.getItem('vector-wars-best'), 10) || 0; } catch { /* storage unavailable */ }
+// Score-based best (distance + enemies defeated); the old distance-only key is ignored.
+try { best = parseInt(localStorage.getItem('vector-wars-best-score'), 10) || 0; } catch { /* storage unavailable */ }
 hud.setBest(best);
 
 let G;
@@ -62,7 +62,9 @@ function newRun() {
     danger: 0,       // incoming enemy strength ÷ army size, smoothed
     timeScale: 1,    // slow motion when the danger is high
     overAt: 0,
-    stats: { peak: START_UNITS, lostEnemy: 0, leaked: 0, lostGate: 0, fell: 0, gateHits: 0 },
+    stats: { peak: START_UNITS, lostEnemy: 0, leaked: 0, lostGate: 0, fell: 0, gateHits: 0, kills: [0, 0, 0, 0] },
+    ui: 0,                       // real-time clock for HUD fades
+    loss: { n: 0, t: -9 },       // running loss total shown next to the count
     leakFlash: 0,
   };
   hud.showOver(null);
@@ -154,6 +156,13 @@ function feedback(color, amp, count) {
 // Every lost unit fizzles out where it stood: cyan → red → black.
 const unitLost = (x, z) => fizzles.add(x, 0.12, G.dist - z);
 
+// Battle and fall losses add up into one running "−N" next to the count.
+function noteLoss(n) {
+  if (n <= 0) return;
+  G.loss.n += n;
+  G.loss.t = G.ui;
+}
+
 // Units that don't fit on the track run off the nearest edge.
 function spill(n) {
   if (n <= 0) return;
@@ -189,6 +198,8 @@ function crossGate(g) {
   }
   shatterSparks(g);
   const d = army.N - before;
+  G.loss.n = 0;
+  hud.flashDelta(d);
   if (gained && d >= 0) {
     feedback(gateColor(g.primary === 'L' ? g.L : g.R), 1, 40);
     army.nextFormation(time);
@@ -238,6 +249,7 @@ function bulletTest(x, oldW, newW) {
   const hit = enemies.hitTest(x, oldW, newW);
   if (hit) {
     sparks.emit(x, 0.2, newW, COLORS.enemy, hit.killed ? 3 : 1, 2);
+    if (hit.killed) G.stats.kills[hit.t.id]++;
     if (hit.killed && hit.s.n === 0) squadWiped(hit.s);
     return true;
   }
@@ -262,8 +274,9 @@ function onHit(t, x, z, leaked) {
     killed = army.killNear(x, z, k, unitLost);
     sparks.emit(x, 0.2, G.dist - z, COLORS[t.color], t.size > 2 ? 12 : 4, 3);
   }
+  noteLoss(killed);
   if (leaked) { G.stats.leaked += killed; G.leakFlash = 1; }
-  else G.stats.lostEnemy += killed;
+  else { G.stats.lostEnemy += killed; G.stats.kills[t.id]++; }   // it died on the army: defeated
   G.lastContact = time;
   G.shake = Math.min(0.16, Math.max(G.shake, 0.05) + 0.008);
   if (time - G.lastRipple > 0.2) {
@@ -275,17 +288,20 @@ function onHit(t, x, z, leaked) {
 function endRun() {
   G.state = 'over';
   G.overAt = time;
-  const score = Math.floor(G.dist * 10);
+  // Score = distance + enemies defeated, each worth its hit points.
+  const distPts = Math.floor(G.dist * CFG.SCORE_PER_DIST);
+  const killPts = TYPE_LIST.map((t, i) => G.stats.kills[i] * t.hp * CFG.SCORE_PER_HP);
+  const score = distPts + killPts.reduce((a, b) => a + b, 0);
   const newBest = score > best;
   if (newBest) {
     best = score;
-    try { localStorage.setItem('vector-wars-best', String(best)); } catch { /* storage unavailable */ }
+    try { localStorage.setItem('vector-wars-best-score', String(best)); } catch { /* storage unavailable */ }
     hud.setBest(best);
   }
   army.kill(army.N, unitLost);
   world.addRipple(G.ax, G.dist, 1.4, time);
   sparks.emit(G.ax, 0.3, G.dist, COLORS.you, 80, 5);
-  hud.showOver({ ...G.stats, score, newBest });
+  hud.showOver({ ...G.stats, dist: distPts / CFG.SCORE_PER_DIST, distPts, killPts, score, newBest });
 }
 
 // dt is simulation time (slowed during slow motion); realDt drives anything
@@ -374,6 +390,7 @@ function update(dt, realDt) {
 
   army.update(dt, G.ax, time, (x, z) => {
     G.stats.fell++;
+    noteLoss(1);
     fallers.drop(x, G.dist - z, Math.sign(x), CFG.SPEED);
   });
   fallers.update(dt, G.dist);
@@ -382,22 +399,16 @@ function update(dt, realDt) {
   G.shake = Math.max(0, G.shake - dt * 0.6);
 }
 
-// ---------- Rendering helpers ----------
+// ---------- HUD ----------
 
-const tmp = new THREE.Vector3();
-function toScreen(x, y, z) {
-  tmp.set(x, y, z).project(world.camera);
-  return [(tmp.x * 0.5 + 0.5) * window.innerWidth, (-tmp.y * 0.5 + 0.5) * window.innerHeight];
-}
-
-function syncLabels() {
+function syncHud(realDt) {
   hud.setDanger(Math.min(1, Math.max((G.danger - 0.4) / (ANIM.slowMoThreshold - 0.4), G.leakFlash * 0.7, 0)));
-  // The count floats ahead of the army, and drops behind it during battles
-  // so it doesn't sit where the enemies hit.
-  const cz = (army.front - 0.45) * (1 - G.battle) + (army.back + 0.7) * G.battle;
-  const [cx, cy] = toScreen(army.cx, 0.55, cz);
-  hud.setCount(army.N, cx, cy, G.state !== 'over' && army.N > 0);
-  hud.setDist(Math.floor(G.dist * 10));
+  hud.setCount(army.N, G.state !== 'over' && army.N > 0);
+  hud.setDist(Math.floor(G.dist * CFG.SCORE_PER_DIST));
+  // The running loss total stays up while losses keep coming, then fades.
+  G.ui += realDt;
+  if (G.loss.n > 0 && G.ui - G.loss.t > 1.2) G.loss.n = 0;
+  hud.liveLoss(G.loss.n);
 }
 
 // ---------- Loop ----------
@@ -411,7 +422,7 @@ function step(realDt) {
   time += dt;
   update(dt, realDt);
   world.update(time, G.dist, G.ax, G.shake, G.battle);
-  syncLabels();
+  syncHud(realDt);
   world.renderer.info.reset();
   world.render();
 }

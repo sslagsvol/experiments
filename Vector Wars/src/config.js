@@ -52,6 +52,10 @@ export const CFG = {
   MULT_HITS_BASE: 2,       // bullets per step at ×1.0, +1 more every ×0.5 (≈70 hits for ×1→×3)
 
   SEED: 1337,
+
+  CAMERA_LIFT: 0.12,       // shifts the view so the army sits higher, leaving thumb room
+  SCORE_PER_DIST: 10,      // points per unit of distance
+  SCORE_PER_HP: 5,         // points per hit point of each enemy defeated (grunt 5, brute 40)
 };
 
 // Animation timings. The style guide (style-guide.html) renders these live,

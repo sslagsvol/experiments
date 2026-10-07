@@ -213,6 +213,16 @@ Notes: squads are still sized against the gates' current values when they come o
 
 Also fixed: the style guide's enemy-charge card still referenced `ENEMY_STRENGTH`, a setting removed in round 2, so it showed "undefined" and its demo enemies did no damage.
 
+## Round 6: HUD and score (2026-10-07)
+| Feedback | Change |
+|---|---|
+| Show "+371" next to the army number at gates, and losses in battles | `#delta` beside the count. Gates flash the net change ("+21" green / "−45" red, 1.4s rise and fade). Battle, leak and fall losses build a running "−N" that stays while losses keep coming and fades 1.2s after the last. |
+| Move the army number to the bottom | The count is fixed at the bottom center (`#army-hud`), 34px, and no longer floats over the army. |
+| Shift the army up for thumb room | Lens shift via `camera.setViewOffset` (`CFG.CAMERA_LIFT` = 0.12): the whole view moves up about 12% without tilting the camera, so the forward view is kept. |
+| Score with enemies defeated, sprites with idle animation | Score = distance × 10 + each enemy defeated × its hp × 5 (`CFG.SCORE_PER_DIST`, `SCORE_PER_HP`: grunt/drone 5, bomber 10, brute 40). "Defeated" = shot down or died hitting the army; enemies that slip past don't count. The recap shows a big score, then each type's sprite idling (grunts bob, drones sway, bombers pulse, brutes turn) with a count that ticks up and its points. Best is now stored as a score (`vector-wars-best-score`), so the old distance-only best is reset. |
+
+Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style guide. The style guide renders the real recap through `renderRecap()`.
+
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
 - *(none)*

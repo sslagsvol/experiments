@@ -47,13 +47,13 @@
   .stage { position: relative; background: var(--bg); border-radius: 6px; overflow: hidden; }
   .stage .overlay { position: relative; inset: auto; min-height: 250px; }
   .stage #hud { position: absolute; }
-  .stage.hud-stage { height: 120px; }
-  .stage #count { position: absolute; left: 50%; top: 70px; transform: translate(-50%, -50%); visibility: visible; }
+  .stage.hud-stage { height: 140px; }
+  .stage #army-hud { visibility: visible; }
+  .stage > #count, .stage #hud > #count { position: absolute; left: 50%; top: 75px; transform: translate(-50%, -50%); }
   .pop-stage { height: 150px; }
-  .pop-stage #count { top: 75px; }
   .stage #danger { position: absolute; }
   .danger-stage { height: 150px; }
-  .danger-stage #count { top: 75px; }
+  .stage #recap { margin: 0 auto; }
   code { font-family: 'Share Tech Mono', monospace; color: #cfe8ff; }
   a { color: var(--you); }
 </style>
@@ -89,7 +89,7 @@
   <div class="grid" id="cssvars"></div>
 
   <h2 class="sg-h">Typography and HUD <span class="badge live">live · styles.css</span></h2>
-  <p class="sg-sub">Titles use <code>Audiowide</code>; everything else uses <code>Share Tech Mono</code>, including the gate and squad labels drawn into textures (<code>FONT</code> in <code>src/gates.js</code>). These use the real game classes.</p>
+  <p class="sg-sub">Titles use <code>Audiowide</code>; everything else uses <code>Share Tech Mono</code>, including the gate labels drawn into textures (<code>FONT</code> in <code>src/gates.js</code>). These use the real game classes.</p>
   <div class="grid wide">
     <div class="card">
       <div class="stage"><div class="overlay"><h1>Vector Wars</h1><p class="sub">Drag to steer · Shoot gates to raise them</p><p class="blink">Touch to start</p></div></div>
@@ -98,20 +98,20 @@
     </div>
     <div class="card">
       <div class="stage"><div class="overlay"><h2>Swarm lost</h2>
-        <div id="recap"><div class="row"><span>Distance</span><span>2059</span></div><div class="row"><span>Peak swarm</span><span>1200</span></div><div class="row"><span>Lost to squads</span><span>81</span></div><div class="row"><span>Fell off</span><span>416</span></div><div class="new-best">New best</div></div>
+        <div id="recap"></div>
         <p class="blink">Tap to retry</p></div></div>
-      <h3>Game-over recap</h3><div class="var">.overlay h2 · #recap .row · .new-best</div>
-      <div class="meta">Audiowide clamp(28px, 9vw, 44px), --enemy glow</div>
+      <h3>Game-over recap</h3><div class="var">renderRecap() · #recap .score · .kills · .row</div>
+      <div class="meta">The real recap from src/hud.js with sample stats. Score = distance × CFG.SCORE_PER_DIST + each enemy defeated × its hp × CFG.SCORE_PER_HP · numbers count up over 0.9s · sprites idle (grunts bob, drones sway, bombers pulse, brutes turn)</div>
     </div>
     <div class="card">
-      <div class="stage hud-stage"><div id="hud"><div id="dist">2059</div><div id="best">Best 8320</div><div id="count">640</div></div></div>
-      <h3>In-game HUD</h3><div class="var">#dist · #best · #count</div>
-      <div class="meta">Share Tech Mono · distance 22px --hud · best 14px · army count 26px white with --you glow, floats above the army</div>
+      <div class="stage hud-stage"><div id="hud"><div id="dist">2059</div><div id="best">Best 24,869</div><div id="army-hud"><div id="count">640</div><div id="delta" class="gain live">+371</div></div></div></div>
+      <h3>In-game HUD</h3><div class="var">#dist · #best · #army-hud #count · #delta</div>
+      <div class="meta">Share Tech Mono · distance 22px --hud (it's also the distance score) · best score 14px · army count 34px white with --you glow, fixed at the bottom center · delta 20px to its right</div>
     </div>
     <div class="card">
-      <div class="stage danger-stage"><div id="danger" style="opacity:1"></div><div id="hud"><div id="count" class="danger">68</div></div></div>
+      <div class="stage danger-stage"><div id="danger" style="opacity:1"></div><div id="hud"><div id="army-hud"><div id="count" class="danger">68</div><div id="delta" class="loss live">−214</div></div></div></div>
       <h3>Danger state</h3><div class="var">#danger · #count.danger · @keyframes heartbeat</div>
-      <div class="meta">Vignette opacity follows danger from 0.4 up to ANIM.slowMoThreshold, and pulses when enemies slip past to the rear · count turns pink and beats every 0.9s · count drops behind the army during battles</div>
+      <div class="meta">Vignette opacity follows danger from 0.4 up to ANIM.slowMoThreshold, and pulses when enemies slip past to the rear · count turns pink and beats every 0.9s</div>
     </div>
     <div class="card">
       <canvas id="type-labels"></canvas>
@@ -140,9 +140,9 @@
   <p class="sg-sub">Each demo runs on the real values in <code>ANIM</code>. Use 0.25× to study fast ones like the grid ripple.</p>
   <div class="grid wide" id="anims">
     <div class="card">
-      <div class="stage pop-stage"><div id="hud"><div id="count">300</div></div></div>
-      <h3>Army count pop</h3><div class="var">#count.pop · @keyframes pop</div>
-      <div class="meta">0.25s ease-out, 36px → 26px · fires when the count goes up</div>
+      <div class="stage pop-stage"><div id="hud"><div id="army-hud" class="demo-army"><div id="count">300</div><div id="delta"></div></div></div></div>
+      <h3>Army count, gate delta and battle losses</h3><div class="var">#count.pop · #delta.flash · #delta.live → .fade</div>
+      <div class="meta">Gate: count pops (scale 1.3 → 1, 0.25s) and "+N"/"−N" flashes beside it (1.4s rise and fade) · battles and falls: a running "−N" stays up while losses keep coming, then fades 1.2s after the last one (0.6s)</div>
     </div>
   </div>
 
@@ -161,7 +161,9 @@
 <script type="module">
 import { CFG, COLORS, ANIM, BLOOM, multHitsForStep } from './src/config.js';
 import { FORMATIONS, UNIT_SPACING } from './src/formations.js';
-import { enemyFormation, ENEMY_KINDS, ENEMY_TYPES } from './src/enemyFormations.js';
+import { enemyFormation, ENEMY_KINDS, ENEMY_TYPES, TYPE_LIST } from './src/enemyFormations.js';
+import { drawEnemy } from './src/sprites.js';
+import { renderRecap } from './src/hud.js';
 
 const FONT = '"Share Tech Mono", ui-monospace, monospace';
 const $ = (id) => document.getElementById(id);
@@ -387,21 +389,8 @@ for (const [kind, info] of Object.entries(ENEMY_KINDS)) {
 }
 
 // ---------- Enemy types ----------
-function enemyShape(ctx, x, y, size, t, time, flash = 0) {
-  const c = COLORS[t.color].map((v) => v * 0.55 * (1 + flash * 2.5)), r = size / 2;
-  ctx.save(); ctx.translate(x, y); ctx.strokeStyle = css(c); ctx.lineWidth = Math.max(1.2, size * 0.09); ctx.shadowColor = css(c); ctx.shadowBlur = size * 0.4;
-  ctx.beginPath();
-  if (t.shape === 0) { ctx.moveTo(0, -r * 0.7); ctx.lineTo(r * 0.7, 0); ctx.lineTo(0, r * 0.7); ctx.lineTo(-r * 0.7, 0); ctx.closePath(); }
-  else if (t.shape === 1) { ctx.moveTo(-r * 0.6, -r * 0.4); ctx.lineTo(r * 0.6, -r * 0.4); ctx.lineTo(0, r * 0.6); ctx.closePath(); }
-  else if (t.shape === 2) { ctx.arc(0, 0, r * 0.68, 0, Math.PI * 2); }
-  else {
-    for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3 + Math.PI / 6; ctx[k ? 'lineTo' : 'moveTo'](Math.cos(a) * r * 0.78, Math.sin(a) * r * 0.78); } ctx.closePath();
-    for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3 + Math.PI / 6; ctx[k ? 'lineTo' : 'moveTo'](Math.cos(a) * r * 0.45, Math.sin(a) * r * 0.45); } ctx.closePath();
-  }
-  ctx.stroke();
-  if (t.shape === 2) { ctx.globalCompositeOperation = 'lighter'; dot(ctx, 0, 0, size * 0.7, c, 0.5 + 0.5 * Math.sin(time * 9)); }
-  ctx.restore();
-}
+// Shapes come from src/sprites.js (shared with the end-of-run recap).
+const enemyShape = (ctx, x, y, size, t, time, flash = 0) => drawEnemy(ctx, t, x, y, size, time, { flash });
 for (const [key, t] of Object.entries(ENEMY_TYPES)) {
   const stats = `hp ${t.hp} · ` + (t.blast ? `blast radius ${t.blast} (max ${t.blastMax} units)` : `kills ${t.damage} on contact`) + ` · speed ×${t.speed} · homing ×${t.homing}` + (t.strafe ? ` · strafe ${t.strafe}` : '') + (t.converge ? ' · homes on center' : '');
   const cv = card($('enemy-types'), { title: t.label, vars: `ENEMY_TYPES.${key} · COLORS.${t.color} · size ×${t.size}`, meta: stats, note: t.note });
@@ -651,15 +640,32 @@ animCard({ title: 'Unit loss fizzle', vars: 'Fizzles · COLORS.dying · ANIM.fiz
 
 animCard({ title: 'Blink prompt', html: '<div class="stage" style="height:150px;display:flex;align-items:center;justify-content:center"><p class="blink" style="margin:0">Touch to start</p></div>', vars: '.blink · @keyframes blink', meta: '1.2s steps(2, start) infinite · CSS, so speed buttons do not apply' });
 
-// Count pop uses the real #count.pop class.
-const countEl = document.querySelector('.pop-stage #count');
-let countVal = 300;
+// Count + delta use the real classes: a gate gain, then a battle's running losses.
+const countEl = document.querySelector('.demo-army #count'), deltaEl = document.querySelector('.demo-army #delta');
+const restartCls = (el, c) => { el.classList.remove(c); void el.offsetWidth; el.classList.add(c); };
+let countVal = 300, demoStep = 0, lossRun = 0;
 setInterval(() => {
   if (paused) return;
-  countVal = countVal >= 1200 ? 300 : Math.min(1200, countVal * 2);
-  countEl.textContent = countVal;
-  countEl.classList.remove('pop'); void countEl.offsetWidth; countEl.classList.add('pop');
-}, 1400);
+  demoStep = (demoStep + 1) % 12;
+  if (demoStep === 1) {
+    const gain = Math.round(countVal * 0.6);
+    countVal += gain; countEl.textContent = countVal; restartCls(countEl, 'pop');
+    deltaEl.textContent = '+' + gain; deltaEl.className = 'gain'; restartCls(deltaEl, 'flash');
+  } else if (demoStep >= 4 && demoStep <= 8) {
+    const loss = 20 + Math.round(Math.random() * 30);
+    lossRun += loss; countVal -= loss; countEl.textContent = countVal;
+    deltaEl.textContent = '−' + lossRun; deltaEl.className = 'loss live';
+  } else if (demoStep === 10) {
+    deltaEl.className = 'loss fade'; lossRun = 0;
+  } else if (demoStep === 11 && countVal > 600) countVal = 300;
+}, 350);
+
+// Recap: the real renderer with sample stats.
+renderRecap(document.getElementById('recap'), {
+  score: 24869, distPts: 8164, kills: [2388, 137, 72, 84],
+  killPts: TYPE_LIST.map((t, i) => [2388, 137, 72, 84][i] * t.hp * CFG.SCORE_PER_HP),
+  peak: 813, lostEnemy: 2159, leaked: 0, lostGate: 42, fell: 0, newBest: true,
+});
 
 // ---------- Tables ----------
 function table(el, obj, prefix) { el.innerHTML = Object.entries(obj).map(([k, v]) => `<tr><td>${prefix}.${k}</td><td>${fmtN(v)}</td></tr>`).join(''); }
