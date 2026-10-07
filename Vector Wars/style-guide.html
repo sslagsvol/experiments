@@ -53,7 +53,8 @@
   .pop-stage { height: 150px; }
   .stage #danger { position: absolute; }
   .danger-stage { height: 150px; }
-  .stage #recap { margin: 0 auto; }
+  .stage .recap { margin: 0 auto; }
+  .stage #pause { position: relative; inset: auto; padding: 20px 8px; overflow: visible; }
   code { font-family: 'Share Tech Mono', monospace; color: #cfe8ff; }
   a { color: var(--you); }
 </style>
@@ -98,7 +99,7 @@
     </div>
     <div class="card">
       <div class="stage"><div class="overlay"><h2>Swarm lost</h2>
-        <div id="recap"></div>
+        <div id="recap" class="recap"></div>
         <p class="blink">Tap to retry</p></div></div>
       <h3>Game-over recap</h3><div class="var">renderRecap() · #recap .score · .kills · .row</div>
       <div class="meta">The real recap from src/hud.js with sample stats. Score = distance × CFG.SCORE_PER_DIST + each enemy defeated × its hp × CFG.SCORE_PER_HP · numbers count up over 0.9s · sprites idle (grunts bob, drones sway, bombers pulse, brutes turn)</div>
@@ -114,9 +115,23 @@
       <div class="meta">3 slots · ▲▼ cycle A–Z, 0–9 and ! ? . - * # @ &amp; $ % + = &lt; &gt; / _ space (hold to repeat) · tap a slot to select · keyboard typing, arrows, Backspace, Enter · "New high score" flashes gold/pink</div>
     </div>
     <div class="card">
-      <div class="stage hud-stage"><div id="hud"><div id="dist">2059</div><div id="best">Hi 24,869</div><button id="mute" type="button" aria-label="Mute sound (demo)"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="on" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/><path class="x" d="M16 9l5 6M21 9l-5 6"/></svg></button><div id="army-hud"><div id="gain" class="delta live">+371</div><div id="count">640</div><div id="loss" class="delta live">−24</div></div></div></div>
-      <h3>In-game HUD</h3><div class="var">#dist · #best · #mute (.off) · #army-hud #gain · #count · #loss</div>
-      <div class="meta">Share Tech Mono · distance 22px --hud (it's also the distance score) · "Hi" = top of the high score board, 14px · army count 34px white with --you glow, fixed at the bottom center · gains 20px --gain on its left, losses 20px --loss on its right; both can show at once</div>
+      <div class="stage hud-stage"><div id="hud"><div id="dist"><span id="score">24,869</span><span id="rank-badge"></span></div><button id="pause-btn" class="show" type="button" aria-label="Pause (demo)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button><div id="best">Hi 24,869</div><button id="mute" type="button" aria-label="Mute sound (demo)"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="on" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/><path class="x" d="M16 9l5 6M21 9l-5 6"/></svg></button><div id="army-hud"><div id="gain" class="delta live">+371</div><div id="count">640</div><div id="loss" class="delta live">−24</div></div></div></div>
+      <h3>In-game HUD</h3><div class="var">#dist #score · #best · #pause-btn · #mute (.off) · #army-hud #gain · #count · #loss</div>
+      <div class="meta">Share Tech Mono · live score 22px --hud (distance + enemies defeated) · pause left of mute, shown only during a run · "Hi" = top of the high score board, 14px · army count 34px white with --you glow, fixed at the bottom center · gains 20px --gain on its left, losses 20px --loss on its right; both can show at once</div>
+    </div>
+    <div class="card">
+      <div class="stage hud-stage"><div id="hud"><div id="dist" class="top m0"><span id="score">21,340</span><span id="rank-badge">1st</span></div></div></div>
+      <div class="controls"><button type="button" data-medal="0">1st</button><button type="button" data-medal="1">2nd</button><button type="button" data-medal="2">3rd</button><button type="button" data-medal="-1">Off board</button></div>
+      <h3>Top-3 score badge</h3><div class="var">#dist.top · .m0–.m2 · #rank-badge · .rank-up · @keyframes badge-glow</div>
+      <div class="meta">While the run's score is on pace for 1st–3rd on the board: the score doubles to 44px (springy 0.35s), glows in that rank's board color (gold, pink, lime) and an Audiowide medal badge pulses beside it · moving up a place pops it (rank-up 0.6s) and plays the maxMult chord</div>
+    </div>
+    <div class="card">
+      <div class="stage"><div id="pause" class="overlay"><h1 class="paused">Paused</h1>
+        <div class="pause-tabs"><button type="button" data-tab="run" class="on">This run</button><button type="button" data-tab="board">High scores</button></div>
+        <div class="pause-body"><div id="sg-pause-recap" class="recap"></div><div class="pause-board"><div id="sg-pause-board"></div><div id="pause-pace">On pace for 6th place</div></div></div>
+        <div class="pause-actions"><button type="button" class="btn primary">Continue</button><button type="button" class="btn">Restart</button></div></div></div>
+      <h3>Pause menu</h3><div class="var">#pause · h1.paused · .pause-tabs · .pause-body(.show-board) · #pause-pace · .btn(.primary)</div>
+      <div class="meta">Opened by the pause button, Esc / P, or leaving the tab mid-run · the recap so far ("Score so far") and the board, with where this score would place · phones switch between them with tabs; 680px+ shows both side by side · "Paused" breathes over 2.4s · Continue is the big lime CTA, Restart starts a fresh run at once</div>
     </div>
     <div class="card">
       <div class="stage danger-stage"><div id="danger" style="opacity:1"></div><div id="hud"><div id="army-hud"><div id="count" class="danger">68</div><div id="loss" class="delta live">−214</div></div></div></div>
@@ -739,6 +754,28 @@ const startEntry = () => {
   const e = new InitialsEntry(sgEntry, 5, (ini) => { e.close(); sgEntry.innerHTML = `<div class="entry-title">Saved "${ini}"</div><p class="note">(Demo only; nothing stored.)</p>`; setTimeout(startEntry, 2000); });
 };
 startEntry();
+
+// Pause menu: the real recap and board, tabs live.
+renderRecap(document.getElementById('sg-pause-recap'), {
+  score: 9120, distPts: 4280, kills: [820, 40, 22, 12],
+  killPts: TYPE_LIST.map((t, i) => [820, 40, 22, 12][i] * t.hp * CFG.SCORE_PER_HP),
+  peak: 640, lostEnemy: 790, leaked: 12, lostGate: 30, fell: 4, newBest: false,
+}, 'Score so far');
+renderBoard(document.getElementById('sg-pause-board'), cachedScores());
+const sgPause = document.getElementById('pause');
+sgPause.querySelectorAll('.pause-tabs button').forEach((b) => b.addEventListener('click', () => {
+  sgPause.querySelector('.pause-body').classList.toggle('show-board', b.dataset.tab === 'board');
+  sgPause.querySelectorAll('.pause-tabs button').forEach((o) => o.classList.toggle('on', o === b));
+}));
+
+// Top-3 badge demo.
+document.querySelectorAll('[data-medal]').forEach((b) => b.addEventListener('click', () => {
+  const r = +b.dataset.medal, d = b.closest('.card').querySelector('#dist');
+  d.className = r >= 0 ? `top m${r}` : '';
+  d.querySelector('#rank-badge').textContent = r >= 0 ? ['1st', '2nd', '3rd'][r] : '';
+  d.querySelector('#score').textContent = ['21,340', '17,980', '15,210', '4,120'][r < 0 ? 3 : r];
+  if (r >= 0) { d.classList.remove('rank-up'); void d.offsetWidth; d.classList.add('rank-up'); }
+}));
 
 // Recap: the real renderer with sample stats.
 renderRecap(document.getElementById('recap'), {

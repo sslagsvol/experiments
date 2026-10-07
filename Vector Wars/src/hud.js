@@ -5,13 +5,15 @@
 import { fmt } from './config.js';
 import { TYPE_LIST } from './enemyFormations.js';
 import { drawEnemy } from './sprites.js';
-import { CHARSET, INITIALS, ordinal } from './scores.js';
+import { CHARSET, INITIALS, ordinal, rankFor } from './scores.js';
 
 const commas = (n) => Math.round(n).toLocaleString('en-US');
 
 export class Hud {
   constructor() {
     this.dist = document.getElementById('dist');
+    this.score = document.getElementById('score');
+    this.badge = document.getElementById('rank-badge');
     this.best = document.getElementById('best');
     this.armyHud = document.getElementById('army-hud');
     this.count = document.getElementById('count');
@@ -26,7 +28,16 @@ export class Hud {
     this.titleBoard = document.getElementById('title-board');
     this.entryEl = document.getElementById('entry');
     this.retry = document.getElementById('retry');
-    this.last = { dist: -1, count: -1, danger: -1, live: null };
+    this.pauseBtn = document.getElementById('pause-btn');
+    this.pauseEl = document.getElementById('pause');
+    this.pauseRecap = document.getElementById('pause-recap');
+    this.pauseBoard = document.getElementById('pause-board');
+    this.pacEl = document.getElementById('pause-pace');
+    this.pauseBody = this.pauseEl.querySelector('.pause-body');
+    this.pauseTabs = [...this.pauseEl.querySelectorAll('.pause-tabs button')];
+    for (const b of this.pauseTabs) b.addEventListener('click', () => this.pauseTab(b.dataset.tab));
+    this.stopPauseRecap = null;
+    this.last = { score: -1, rank: -1, count: -1, danger: -1, live: null };
     this.stopRecap = null;
     this.entry = null;        // the initials entry while it's open
     this.attract = 0;         // title-screen timer alternating logo / high scores
@@ -34,10 +45,19 @@ export class Hud {
 
   get entering() { return !!this.entry; }
 
-  setDist(d) {
-    if (d === this.last.dist) return;
-    this.last.dist = d;
-    this.dist.textContent = d;
+  // Live score, top left. rank = 0–2 while it's on pace for the top 3 of
+  // the board: a medal badge shows and the score doubles in size.
+  // Returns true when the rank just improved (for a sound).
+  setScore(score, rank) {
+    if (score !== this.last.score) { this.last.score = score; this.score.textContent = commas(score); }
+    if (rank === this.last.rank) return false;
+    const up = rank >= 0 && (this.last.rank < 0 || rank < this.last.rank);
+    this.last.rank = rank;
+    this.dist.classList.toggle('top', rank >= 0);
+    for (let i = 0; i < 3; i++) this.dist.classList.toggle('m' + i, rank === i);
+    this.badge.textContent = rank >= 0 ? ordinal(rank) : '';
+    if (up) restart(this.dist, 'rank-up');
+    return up;
   }
 
   setBest(b) { this.best.textContent = 'Hi ' + commas(b); }
@@ -117,6 +137,32 @@ export class Hud {
     this.allowRetry();
   }
 
+  setPauseButton(on) { this.pauseBtn.classList.toggle('show', on); }
+
+  // Pause menu: the run so far (same recap as game over) and the board, with
+  // where this score would place. stats = null closes it.
+  showPause(stats, scores) {
+    this.pauseEl.classList.toggle('hidden', !stats);
+    if (this.stopPauseRecap) { this.stopPauseRecap(); this.stopPauseRecap = null; }
+    if (!stats) return;
+    this.pauseTab('run');
+    this.pauseScore = stats.score;
+    this.stopPauseRecap = renderRecap(this.pauseRecap, stats, 'Score so far');
+    this.pauseScores(scores);
+  }
+
+  pauseScores(scores) {
+    const rank = rankFor(this.pauseScore, scores);
+    renderBoard(this.pauseBoard, scores);
+    this.pacEl.textContent = rank >= 0 ? `On pace for ${ordinal(rank)} place`
+      : `${commas(scores[scores.length - 1].score - this.pauseScore + 1)} more to make the board`;
+  }
+
+  pauseTab(tab) {
+    this.pauseBody.classList.toggle('show-board', tab === 'board');
+    for (const b of this.pauseTabs) b.classList.toggle('on', b.dataset.tab === tab);
+  }
+
   debug(text) {
     this.debugEl.style.display = 'block';
     this.debugEl.textContent = text;
@@ -152,7 +198,7 @@ function restart(el, cls) {
 // a count that ticks up), then the run's other stats. Returns a stop function
 // for the sprite animation. stats: { score, distPts, kills[], killPts[],
 // peak, lostEnemy, leaked, lostGate, fell, newBest }
-export function renderRecap(el, stats) {
+export function renderRecap(el, stats, label = 'Score') {
   const rows = TYPE_LIST.map((t, i) => `
     <div class="kill${stats.kills[i] ? '' : ' none'}">
       <canvas data-type="${i}"></canvas>
@@ -162,7 +208,7 @@ export function renderRecap(el, stats) {
   const lost = [['squads', stats.lostEnemy], ['slipped past', stats.leaked], ['gates', stats.lostGate], ['fell', stats.fell]]
     .filter(([, v]) => v > 0).map(([k, v]) => `${fmt(v)} ${k}`).join(' · ') || 'none';
   el.innerHTML = `
-    <div class="score"><span class="label">Score</span><span class="big" data-to="${stats.score}">0</span>
+    <div class="score"><span class="label">${label}</span><span class="big" data-to="${stats.score}">0</span>
       ${stats.newBest ? '<span class="new-best">New best</span>' : ''}</div>
     <div class="section">Enemies defeated</div>
     <div class="kills">${rows}</div>

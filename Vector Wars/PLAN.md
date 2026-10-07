@@ -61,9 +61,10 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 
 ### Pacing, HUD and score
 - Track spacing: 18 units after a gate, 28 after a squad.
-- **HUD:** distance (top left), "Hi" score and mute (top right), army count at the bottom center with gains (green, left) and losses (red, right) as running totals. The camera is lens-shifted up for thumb room.
+- **HUD:** live score (top left; while it's on pace for 1st–3rd on the board it doubles in size with a gold / pink / lime medal badge, and moving up a place plays the max-multiplier chord), "Hi" score, pause and mute (top right), army count at the bottom center with gains (green, left) and losses (red, right) as running totals. The camera is lens-shifted up for thumb room.
 - **Score** = distance × 10 + each enemy defeated × its hp × 5.
 - **Recap:** a big count-up score, each enemy type's idle sprite with kills and points, then distance, peak army and losses.
+- **Pause:** the pause button, Esc / P, or leaving the tab mid-run. A big "Paused" over the recap so far ("Score so far") and the board with where this run would place (tabs on phones, side by side on wide screens). Continue is the main button; Restart starts a fresh run at once.
 - **High scores:** an 80s top-10 board with initials entry (▲▼ or typing, specials allowed), and a title attract mode. Global via Supabase (project `uxwcslorwepzrmpbqmjd`), cached locally with an offline queue.
 
 ### Feel
