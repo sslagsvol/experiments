@@ -1,4 +1,14 @@
-# Vector Wars: edit plan (round 1)
+# Vector Wars: change log
+
+Round-by-round history of playtest feedback and what changed. Forward-looking plans and the roadmap live in `PLAN.md`.
+
+## Style guide debt
+Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
+- *(none)*
+
+---
+
+## Round 1 (2026-10-07): first playtest
 
 Feedback from the first playtests (2026-10-07). It plays smoothly on desktop **and mobile**, and the animation and pacing feel great.
 
@@ -6,7 +16,7 @@ Feedback from the first playtests (2026-10-07). It plays smoothly on desktop **a
 
 ---
 
-## The feedback, diagnosed
+### The feedback, diagnosed
 
 ### 1. Bullets feel weak and sporadic, so aiming is hard
 **What's happening now:** fire rate is `min(50, 3 + 2·√N)` shots/s, and each bullet spawns at a *random* x somewhere inside the crowd (`main.js`, fire loop). A 30-unit army fires about 14 shots/s scattered across its width, so it reads as noise, not a stream you're pointing at something.
@@ -82,45 +92,7 @@ Feedback from the first playtests (2026-10-07). It plays smoothly on desktop **a
 
 ---
 
-## Build order
-
-Grouped so each batch is playable on its own and later work doesn't redo earlier work.
-
-| # | Batch | Items | Size | Why this order |
-|---|---|---|---|---|
-| **A** | **Formation system** | Tight fixed spacing, pattern library, morph on power-up, swirl, units falling off the track, per-unit count (no stand-in dots) | Medium | Fall-off and patterns both depend on how slots are generated. Build it once. |
-| **B** | **Firepower** | Volleys, per-unit lanes, linear DPS, damage-per-bullet aggregation, bullet visual scaling, gate toughness | Small–medium | Needs the new formation to know where the front rank is |
-| **C** | **Battles** | Track stops on contact, front-based trading, enemy strength, wall/blob/column formations, breakthrough surge | Medium | Needs linear DPS in place to balance against |
-| **D** | **Mini-boss** | Boss entity, HP bar, slam telegraph and shockwave, shatter death, reward | Medium–large | Reuses the battle-stop flow from C |
-| **E** | **Balance pass** | Par curve for enemy counts, ÷ gates and an adaptive gate mix, ×3 charge cap, gate toughness, track capacity, boss HP | Small (iterative) | Only meaningful once A–D exist |
-| — | **Mobile check** | Retest on a phone after A and after C | — | Phase 0 runs well on mobile; recheck as entity counts change |
-
-### Checklist
-- [x] A1 Slot generator per pattern with fixed spacing
-- [x] A2 Pattern library (sunflower, hex, rings, wedge, diamond, phalanx)
-- [x] A3 Morph to the next pattern on positive gates, with a staggered ripple
-- [x] A4 Slow swirl, with a speed burst after power-ups
-- [x] A5 Units outside the rails fall and die; "fell off" added to the recap
-- [x] A6 Remove the stand-in-dot compromise; dot count equals unit count
-- [ ] B1 Volley fire from front-rank positions
-- [ ] B2 Linear DPS with a visible-bullet cap and damage aggregation
-- [ ] B3 Bullet brightness/thickness scales with damage per bullet
-- [ ] B4 Gate toughness (value gained per damage)
-- [x] C1 Track stops fully during battle; breakthrough surge after
-- [x] C2 Front-width-based trade rate; enemy strength multiplier
-- [x] C3 Enemy formations: wall, blob, column
-- [ ] D1 Mini-boss entity and look, with an HP bar
-- [ ] D2 Slam telegraph and radius kill with a grid shockwave
-- [ ] D3 Shatter death and reward
-- [~] E1 Par-curve enemy counts (first pass: projected army + par, in batch C)
-- [ ] E1b ÷2/÷3 gates, more − gates, a gate mix weighted by army size, no ÷/÷ pairs
-- [x] E1c Cap multiplier charging at ×3, with each step costing more hits
-- [ ] E2 Tune capacity, gate toughness, boss HP
-- [ ] Mobile test after C
-
----
-
-## Progress notes
+### What was built
 - **Batch A (branch `vw/formations`):** six formations normalized to the same width, so capacity is identical whichever is active (full army = 80% of track width, `CFG.FORMATION_FILL`). Track capacity is 1,200 (`CFG.CAPACITY`). The track is now a raised strip over a void grid, so falling reads visually. A negative gate shakes the formation. 1,200 units cost about 1.5ms/frame on desktop.
 - **Batch B deferred** (2026-10-07): with formations and the cap in place, projectiles feel OK for now. The focus moved to enemies.
 - **Batch C (branch `vw/battles`):**
@@ -131,10 +103,6 @@ Grouped so each batch is playable on its own and later work doesn't redo earlier
   - Squads are sized when they come out of the fog, against the army you'd have from the *best* side of each gate before them, minus what earlier squads will cost. Taking the weak gate makes the next fight harder.
   - Strength/threat values in `CFG.ENEMY_*`, pacing in `ANIM`.
 - **E1c was pulled forward:** testing showed a 1,000-unit army charging a ×2 gate to ×6 in about two seconds.
-
-## Decisions
-- **Agreed:** the formation plan (tight spacing, patterns that morph on good gates, swirl) and falling off the track (both overflow and steering spill, with the crowd's center kept inside the rails).
-- **Defaults unless changed:** track capacity of about 1,200; formations are cosmetic this round; a mini-boss every 8 segments starting on the second loop.
 
 ## Round 2 (2026-10-07, after playing batch C)
 
@@ -155,39 +123,6 @@ Grouped so each batch is playable on its own and later work doesn't redo earlier
 
 ### Fixed along the way
 - Recycled enemy slots could be claimed by two squads, leaving a squad "alive" with no units and the track stuck. Each slot now records its owning squad.
-
-### New feature plan: bomb ("Overload")
-The army detonates: **half the army is lost, and every enemy in sight is destroyed.**
-
-**What "in sight" means in code vs. how it feels:**
-- Squads are only created when they come out of the fog (`CFG.ENEMY_SPAWN_AHEAD` = 38 units, roughly the visible horizon). So "every enemy that exists" is already "every enemy the player can see". The bomb clears the whole screen and nothing beyond it, with no special culling.
-- Squads still in the queue past the fog are untouched, so the player can't bomb something they haven't seen.
-- Gates are untouched. A mini-boss (batch D) takes heavy damage but survives.
-
-**Earning and triggering** (decided 2026-10-07):
-- **Earned by beating a mini-boss** (batch D). A bomb icon in the top-right lights up.
-- **Tap to detonate.** The icon must be excluded from the drag input so tapping it doesn't nudge the army.
-- **Last stand:** holding a charge and dropping below **100** during a battle auto-detonates it. This is the comeback moment.
-- **One charge at a time.** A future inventory may hold more items.
-
-**Feel:**
-- A brief freeze-frame, then a white flash.
-- A fast shockwave ring (about 30 units/s, so about 1.3s to the horizon) races out across the grid. Enemies shatter as the ring reaches them, staggered by distance, so it reads as a wave rather than a blink.
-- The army's outer half flashes white and pops.
-- Short slow-motion (0.3× for 0.5s), camera shake, and a big grid ripple.
-
-**Performance:** up to 4,000 enemies die within about a second, so sparks are sampled (about 1 per 8 kills) and kills are processed per frame as the ring passes, not all at once.
-
-**Decisions:** re-earned only by beating another mini-boss. The last-stand auto-trigger also costs half the army. One charge at a time.
-
-### Checklist
-- [x] R2.1 Capacity 5,000 with progressive packing
-- [x] R2.2 Leaks damage the rear; "Slipped past" recap line
-- [x] R2.3 Remove enemy count labels
-- [x] R2.4 Enemy types: grunt, drone, bomber, brute (hp, damage, movement, shapes)
-- [x] R2.5 3 hits per +1 on + / − gates, with charge bar
-- [x] R2.6 Split gate crossing with primary shatter
-- [ ] R2.7 Bomb: charge, button, auto last stand, shockwave clear (build with batch D: the mini-boss is what awards it)
 
 ## Round 3 (2026-10-07)
 | Feedback | Change |
@@ -269,12 +204,6 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 ## Round 14 (2026-10-07)
 - **Gains left, losses right:** `#gain` (green, left of the count) and `#loss` (red, right) are separate running totals. Each bumps on every change and fades 1.2s after its last change, so a split gate shows both (e.g. "+29 625 −4") and a battle right after keeps adding to the red side.
 
-## Style guide debt
-Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
-- **Round 14:** the HUD cards and the "Army count, gate delta and battle losses" demo still use the old single `#delta` element. Update them to the `#gain` / `#loss` pair (`.delta.live`, `.bump`, `.fade`).
-
-## Version history workflow
-- One commit per checklist batch (A, B, C…), with messages starting `Vector Wars:`.
-- A **tag** at each playable milestone (`vector-wars-v0.1` = Phase 0 as shipped).
-- Bigger or riskier batches go on a branch (`vw/battles`), merged once they've been playtested.
-- To undo: use GitHub Desktop's History tab → right-click a commit → **Revert changes in commit**, or ask Claude to "revert batch C" (one git command).
+## Round 15: tidy-up (2026-10-07)
+- Style guide: HUD cards and the count demo now use the `#gain` / `#loss` pair (clears the round 14 debt); restored the high score board / initials demo.
+- Docs restructured: `PLAN.md` is now the design *as built* plus a single roadmap (leaderboard hookup, mini-boss + bomb, firepower rework, balance pass, parked ideas); this file (formerly `EDITS.md`) is history only.

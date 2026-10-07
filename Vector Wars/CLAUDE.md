@@ -1,6 +1,6 @@
 # Vector Wars
 
-Neon crowd-runner prototype. No build step: plain ES modules + Three.js from a CDN import map. See `PLAN.md` (design) and `EDITS.md` (current work).
+Neon crowd-runner prototype. No build step: plain ES modules + Three.js from a CDN import map. See `PLAN.md` (design as built + roadmap), `CHANGELOG.md` (round-by-round history), `style-guide.html`, and `LEADERBOARD.md`.
 
 ## Style guide rule
 
@@ -15,7 +15,7 @@ How to update:
 - Sections badged **live** read values from the code. Reload the page and check they still render correctly; add a card or label for any new value.
 - Sections badged **manual** are hand-drawn approximations of shaders and effects. Edit their drawing code to match.
 - Put new animation timings in `ANIM` in `config.js` (not inline literals) so the guide picks them up.
-- If the guide can't be updated in the same change, add an item under **Style guide debt** in `EDITS.md` and mention it to the user.
+- If the guide can't be updated in the same change, add an item under **Style guide debt** in `CHANGELOG.md` and mention it to the user.
 
 ## Testing
 
@@ -24,5 +24,5 @@ How to update:
 
 ## Version history
 
-- One commit per `EDITS.md` batch, with messages prefixed `Vector Wars:`.
+- One commit per round of changes, with messages prefixed `Vector Wars:`; log each round in `CHANGELOG.md` and keep the roadmap in `PLAN.md` current.
 - Risky batches go on `vw/*` branches; milestones are tagged `vector-wars-vX.Y`.
