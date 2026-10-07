@@ -217,3 +217,16 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Live score, top left:** the real score (distance + enemies defeated), not distance. While it's on pace for the top 3 of the board, it doubles in size with a medal badge in that rank's color; moving up a place pops it and plays the `maxMult` chord.
 - Recap styles are now the `.recap` class (shared by game over and pause); `renderRecap()` takes a label.
 - Style guide: HUD card (score, pause button), new top-3 badge and pause menu cards.
+
+## Round 18: ideas added to the plan (2026-10-07)
+- Planning only, no code changes. New `PLAN.md` roadmap items: 4. levels (level gates, short build-up levels first, an end-of-level menu with "Go to Level #", the army snapshot in the pause and level menus), 5. the fire enemy (burn radius plus burn over time), 6. stronger road / background parallax.
+
+## Round 19: new gate sounds (2026-10-07)
+- Auditioned six candidates (`concepts/gate-sounds.html`). The good gate (`gateUp`) is now E, "whoomp and sparkle", replacing the chiptune arpeggio; the ×3 max-out (`maxMult`) is now F, "data stream", replacing the chord. `Sfx.echo()` added. Style guide sound notes updated.
+
+## Round 20: slow motion for breaking the high score (2026-10-07)
+- When the score gets within about 0.8s of distance points of 1st place, time eases to ×0.3, holds 0.9s after passing it, then returns to full speed (3.5s cap; once per run). Settings `ANIM.record*`. Style guide slow-motion card notes it.
+
+## Round 21: top-3 slow motion, micro-battle levels planned (2026-10-07)
+- The breaking-the-record slow motion now fires for 3rd, 2nd and 1st place, once each per run (`G.recordNext` counts down from 2).
+- `PLAN.md` item 4 (levels): added micro-battle levels, with sparse gates and small, evenly matched squads where target choice matters.
