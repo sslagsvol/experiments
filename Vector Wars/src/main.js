@@ -1,17 +1,18 @@
-// Game loop and rules. URL params: ?units=3000 (start size), ?seed=42,
+// Game loop and rules. URL params: ?units=800 (start size), ?seed=42,
 // ?debug (FPS / unit counts overlay).
 
 import * as THREE from 'three';
-import { CFG, COLORS, mulberry32 } from './config.js';
+import { CFG, COLORS, ANIM, mulberry32 } from './config.js';
 import { createWorld } from './world.js';
 import { Army, EnemyView, squadGeometry } from './crowd.js';
 import { GatePool, LabelPool, FONT } from './gates.js';
-import { Bullets, Sparks } from './fx.js';
+import { Bullets, Sparks, Fallers } from './fx.js';
+import { UNIT_SPACING } from './formations.js';
 import { DragInput } from './input.js';
 import { Hud } from './hud.js';
 
 const params = new URLSearchParams(location.search);
-const START_UNITS = Math.max(1, parseInt(params.get('units'), 10) || CFG.START_UNITS);
+const START_UNITS = Math.min(CFG.CAPACITY, Math.max(1, parseInt(params.get('units'), 10) || CFG.START_UNITS));
 const SEED = parseInt(params.get('seed'), 10) || CFG.SEED;
 const DEBUG = params.has('debug');
 
@@ -23,6 +24,7 @@ const gates = new GatePool(world.scene);
 const labels = new LabelPool(world.scene, COLORS.enemy);
 const bullets = new Bullets(world.scene);
 const sparks = new Sparks(world.scene, world.pointScale);
+const fallers = new Fallers(world.scene, world.pointScale, UNIT_SPACING * 1.3);
 const input = new DragInput(window);
 const hud = new Hud();
 
@@ -36,9 +38,11 @@ function newRun() {
   if (G) for (const sq of G.squads) labels.release(sq.label);
   bullets.clear();
   sparks.clear();
+  fallers.clear();
+  army.reset();
+  army.spawn(START_UNITS, 0);
   G = {
     state: 'title',
-    N: START_UNITS,
     ax: 0, tx: 0,
     dist: 0, nextW: 0,
     seg: 0, gateIdx: 0, enemyIdx: 0,
@@ -47,7 +51,7 @@ function newRun() {
     fireAcc: 0,
     shake: 0,
     overAt: 0,
-    stats: { peak: START_UNITS, lostEnemy: 0, lostGate: 0, gateHits: 0 },
+    stats: { peak: START_UNITS, lostEnemy: 0, lostGate: 0, fell: 0, gateHits: 0 },
   };
   hud.showOver(null);
   hud.showTitle(true);
@@ -97,20 +101,37 @@ function spawnNext() {
 
 function feedback(color, amp, count) {
   world.addRipple(G.ax, G.dist, amp, time);
-  sparks.emit(G.ax, 0.3, G.dist + army.radius, color, count, 4);
+  sparks.emit(G.ax, 0.3, G.dist - army.front, color, count, 4);
+}
+
+const sparkLost = (x, z) => sparks.emit(x, 0.15, G.dist - z, COLORS.you, 1, 2);
+
+// Units that don't fit on the track run off the nearest edge.
+function spill(n) {
+  if (n <= 0) return;
+  G.stats.fell += n;
+  const depth = army.back - army.front;
+  for (let k = 0, shown = Math.min(n, 250); k < shown; k++) {
+    const dir = Math.random() < 0.5 ? -1 : 1;
+    const x = army.cx + dir * army.halfW * (0.6 + Math.random() * 0.4);
+    fallers.drop(x, G.dist - (army.front + Math.random() * depth), dir, CFG.SPEED);
+  }
 }
 
 function applyGate(s) {
-  const before = G.N;
-  if (s.op === 'x') G.N = Math.min(CFG.UNIT_CAP, G.N * s.m);
-  else G.N = Math.max(0, Math.min(CFG.UNIT_CAP, G.N + s.v));
-  const d = G.N - before;
-  if (d >= 0) {
+  const before = army.N;
+  if (s.op === 'x') spill(army.spawn(before * (s.m - 1)));
+  else if (s.v >= 0) spill(army.spawn(s.v));
+  else army.kill(-s.v, sparkLost);
+  const d = army.N - before;
+  if (s.op === 'x' || s.v > 0) {
     feedback(s.op === 'x' ? COLORS.mult : COLORS.add, 1, 40);
+    army.nextFormation(time);
     if (navigator.vibrate) navigator.vibrate(12);
-  } else {
+  } else if (d < 0) {
     G.stats.lostGate -= d;
     feedback(COLORS.sub, 0.8, 30);
+    army.shake(ANIM.shakeNegGate);
     G.shake = 0.12;
   }
 }
@@ -118,8 +139,11 @@ function applyGate(s) {
 function hitGate(s) {
   G.stats.gateHits++;
   if (s.op === 'x') {
-    s.ch += CFG.MULT_CHARGE_PER_HIT;
-    if (s.ch >= 1) { s.ch = 0; s.m++; }
+    if (s.m < CFG.MULT_MAX) {
+      // Each step costs more hits than the last.
+      s.ch += CFG.MULT_CHARGE_PER_HIT / (s.m - 1);
+      if (s.ch >= 1) { s.ch = 0; s.m++; }
+    }
   } else {
     s.v += 1;
   }
@@ -160,6 +184,7 @@ function endRun() {
     try { localStorage.setItem('vector-wars-best', String(best)); } catch { /* storage unavailable */ }
     hud.setBest(best);
   }
+  army.kill(army.N, sparkLost);
   world.addRipple(G.ax, G.dist, 1.4, time);
   sparks.emit(G.ax, 0.3, G.dist, COLORS.you, 80, 5);
   hud.showOver({ ...G.stats, score, newBest });
@@ -182,24 +207,26 @@ function update(dt) {
 
   if (G.state === 'play') {
     G.tx += dx / window.innerWidth * (2 * CFG.TW) / CFG.DRAG_SPAN;
-    const lim = Math.max(0.1, CFG.TW - army.radius * 0.6);
+    // Only the army's center is kept on the track: a wide crowd hugging an
+    // edge loses its outer units over the rail.
+    const lim = CFG.TW - CFG.EDGE_MARGIN;
     G.tx = Math.max(-lim, Math.min(lim, G.tx));
     G.ax += (G.tx - G.ax) * Math.min(1, dt * CFG.STEER_RESPONSE);
 
     // Squad contact: trade units 1:1 along the contact line.
     let speedMul = 1;
-    const ar = army.radius;
+    const ahead = -army.front, behind = army.back;
     for (const sq of G.squads) {
-      if (sq.n <= 0) continue;
+      if (sq.n <= 0 || army.N <= 0) continue;
       const ez = sq.wz - G.dist;
-      if (ez - sq.r * 0.8 <= ar * 0.8 && ez + sq.r > -ar && Math.abs(sq.x - G.ax) < sq.r + ar * 0.9) {
+      if (ez - sq.r * 0.8 <= ahead && ez + sq.r > -behind && Math.abs(sq.x - army.cx) < sq.r + army.halfW * 0.9) {
         speedMul = CFG.CONTACT_SLOW;
-        const k = Math.min(sq.n, G.N, Math.max(1, Math.round(dt * 90 + G.N * dt * 0.6)));
+        const k = Math.min(sq.n, army.N, Math.max(1, Math.round(dt * 90 + army.N * dt * 0.6)));
         sq.n -= k;
-        G.N -= k;
+        army.kill(k);
         G.stats.lostEnemy += k;
         squadGeometry(sq);
-        const mx = (sq.x + G.ax) / 2, mw = (sq.wz + G.dist + ar) / 2;
+        const mx = (sq.x + army.cx) / 2, mw = (sq.wz + G.dist + ahead) / 2;
         sparks.emit(mx, 0.2, mw, COLORS.enemy, Math.min(14, k * 2), 3);
         sparks.emit(mx, 0.2, mw, COLORS.you, Math.min(8, k), 3);
         G.shake = Math.max(G.shake, 0.05);
@@ -217,21 +244,21 @@ function update(dt) {
       }
     }
 
-    G.fireAcc += dt * Math.min(CFG.FIRE_MAX, CFG.FIRE_BASE + CFG.FIRE_K * Math.sqrt(G.N));
+    G.fireAcc += dt * Math.min(CFG.FIRE_MAX, CFG.FIRE_BASE + CFG.FIRE_K * Math.sqrt(army.N));
     while (G.fireAcc >= 1) {
       G.fireAcc -= 1;
-      bullets.fire(G.ax + (Math.random() * 2 - 1) * army.radius * 0.8, G.dist + army.radius * 0.6);
+      bullets.fire(army.cx + (Math.random() * 2 - 1) * army.halfW * 0.8, G.dist - army.front);
     }
 
-    G.stats.peak = Math.max(G.stats.peak, G.N);
-    if (G.N <= 0) endRun();
+    G.stats.peak = Math.max(G.stats.peak, army.N);
+    if (army.N <= 0) endRun();
   }
 
   // Housekeeping (runs in every state so the scene settles after a loss).
   bullets.update(dt, G.dist, G.state === 'play' ? bulletTest : () => false);
   for (const g of [...gates.active]) {
-    g.L.f = Math.max(0, g.L.f - dt * 4);
-    g.R.f = Math.max(0, g.R.f - dt * 4);
+    g.L.f = Math.max(0, g.L.f - dt * ANIM.gateFlashDecay);
+    g.R.f = Math.max(0, g.R.f - dt * ANIM.gateFlashDecay);
     if (g.wz - G.dist < -0.7) { gates.release(g); continue; }
     g.sync(G.dist);
   }
@@ -241,9 +268,11 @@ function update(dt) {
     return keep;
   });
 
-  army.update(dt, G.state === 'over' ? 0 : G.N, G.ax, time, (x, z) => {
-    sparks.emit(x, 0.15, G.dist - z, COLORS.you, 1, 2);
+  army.update(dt, G.ax, time, (x, z) => {
+    G.stats.fell++;
+    fallers.drop(x, G.dist - z, Math.sign(x), CFG.SPEED);
   });
+  fallers.update(dt, G.dist);
   enemyView.update(G.squads, G.dist, time);
   sparks.update(dt, G.dist);
   G.shake = Math.max(0, G.shake - dt * 0.6);
@@ -264,8 +293,8 @@ function syncLabels() {
     l.mesh.position.set(sq.x, 0.55, -(sq.wz - G.dist) - sq.r - 0.35);
     l.mesh.quaternion.copy(world.camera.quaternion);
   }
-  const [cx, cy] = toScreen(G.ax, 0.55, -army.radius * 0.75 - 0.45);
-  hud.setCount(G.N, cx, cy, G.state !== 'over' && G.N > 0);
+  const [cx, cy] = toScreen(army.cx, 0.55, army.front - 0.45);
+  hud.setCount(army.N, cx, cy, G.state !== 'over' && army.N > 0);
   hud.setDist(Math.floor(G.dist * 10));
 }
 
@@ -304,7 +333,7 @@ function frame(now) {
   }
   if (DEBUG) {
     const info = world.renderer.info.render;
-    hud.debug(`${fps} fps · pr ${world.pixelRatio.toFixed(2)} · units ${G.N} (${army.V} drawn) · enemies ${enemyView.count} · bullets ${bullets.n} · calls ${info.calls}`);
+    hud.debug(`${fps} fps · pr ${world.pixelRatio.toFixed(2)} · units ${army.N}/${CFG.CAPACITY} · ${army.formation} · fell ${G.stats.fell} · enemies ${enemyView.count} · bullets ${bullets.n} · calls ${info.calls}`);
   }
 }
 
@@ -312,10 +341,12 @@ function frame(now) {
 if (DEBUG) {
   window.vectorWars = {
     get state() { return G; },
+    army,
     steer(x) { G.tx = x; },
+    morph() { army.nextFormation(time); return army.formation; },
     step(frames = 1, dt = 1 / 60) {
       for (let i = 0; i < frames; i++) { time += dt; step(dt); }
-      return { state: G.state, N: G.N, dist: Math.round(G.dist), drawn: army.V, enemies: enemyView.count };
+      return { state: G.state, N: army.N, formation: army.formation, fell: G.stats.fell, dist: Math.round(G.dist), enemies: enemyView.count };
     },
   };
 }
