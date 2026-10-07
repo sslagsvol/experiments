@@ -172,7 +172,7 @@
   </div>
 
   <h2 class="sg-h">Sound effects <span class="badge live">live · src/audio.js · SFX</span></h2>
-  <p class="sg-sub">Synthesized with WebAudio, so there are no audio files. Tap to play each sound. Volumes and rate limits come from <code>SFX</code> in <code>src/config.js</code>; rate limits keep big battles from turning into a wall of noise. In slow motion every sound plays lower and longer. The mute choice is saved per device.</p>
+  <p class="sg-sub">Synthesized with WebAudio, so there are no audio files. Tap to play each sound. Volumes and rate limits come from <code>SFX</code> in <code>src/config.js</code>; rate limits keep big battles from turning into a wall of noise. In slow motion every sound plays lower and longer. The mute choice is saved per device. <code>SFX.tune</code> (semitones) and <code>SFX.stretch</code> apply to every sound (<span id="sfx-global"></span>), and each sound can add its own; try values in <a href="sound-lab.html">the sound lab</a>.</p>
   <div class="grid" id="sounds"></div>
 
   <h2 class="sg-h">Glow and post-processing <span class="badge live">live · BLOOM</span></h2>
@@ -799,12 +799,13 @@ const SOUND_NOTES = {
   lose: 'Army wiped out: long dive and rumble.',
 };
 const guideSfx = new Sfx();
+document.getElementById('sfx-global').textContent = `now tune ${SFX.tune || 0} st, stretch ×${SFX.stretch || 1}`;
 for (const name of SOUND_NAMES) {
   const cfg = SFX[name], el = document.createElement('div');
   el.className = 'card';
   el.innerHTML = `<div class="controls" style="margin:0"><button type="button">Play ${name}</button><button type="button">×5 burst</button><button type="button">Slow-mo</button></div>
     <h3>${name}</h3><div class="var">SFX.${name}</div>
-    <div class="meta">volume ${cfg.volume}${cfg.maxRate ? ` · max ${cfg.maxRate}/s` : ''}</div><div class="note">${SOUND_NOTES[name] || ''}</div>`;
+    <div class="meta">volume ${cfg.volume}${cfg.maxRate ? ` · max ${cfg.maxRate}/s` : ''}${cfg.tune ? ` · tune ${cfg.tune > 0 ? '+' : ''}${cfg.tune} st` : ''}${cfg.stretch && cfg.stretch !== 1 ? ` · stretch ×${cfg.stretch}` : ''}</div><div class="note">${SOUND_NOTES[name] || ''}</div>`;
   const [one, burst, slow] = el.querySelectorAll('button');
   one.onclick = () => { guideSfx.unlock(); guideSfx.rate = 1; guideSfx.play(name); };
   burst.onclick = () => { guideSfx.unlock(); guideSfx.rate = 1; for (let i = 0; i < 5; i++) setTimeout(() => guideSfx.play(name), i * 60); };

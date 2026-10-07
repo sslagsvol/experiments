@@ -3,7 +3,8 @@
 A crowd-runner in the style of the "army through gates" mobile ads, redesigned around what those games get wrong: fake choices, hidden numbers, no skill expression, and art that buries the numbers. One thumb, thousands of units, 60fps on a mid-range phone.
 
 - **Play:** `index.html`. URL options: `?debug` (overlay plus the `window.vectorWars` test hook), `?units=N` (starting army), `?seed=N` (a different track).
-- **Style guide:** `style-guide.html`, every color, sprite, formation, animation and sound. Visual or animation changes must update it (rule in `CLAUDE.md`).
+- **Style guide:** `style-guide.html`, every color, sprite, formation, animation and sound.
+- **Sound lab:** `sound-lab.html`, every sound with detune (lower, same speed) and stretch (longer, same pitch), globally or per sound (`SFX.tune` / `SFX.stretch`). Visual or animation changes must update it (rule in `CLAUDE.md`).
 - **History:** `CHANGELOG.md`, the round-by-round log of playtest feedback and what changed.
 - **Leaderboard setup:** `LEADERBOARD.md`.
 
@@ -101,6 +102,12 @@ These come from the user; the order among them and against D / B / E is still to
 6. **Stronger parallax** between the road and the background.
    - Today the void grid sits at y = −4 below the track. Options: drop it much deeper, scroll it slower than the track, and/or add a far layer (stars or a horizon skyline) moving slower still. Keep the background dimmer than anything interactive.
    - Check on a phone that it reads as depth, not motion sickness.
+
+7. **Keyboard controls** (desktop play).
+   - **Steer:** ← → or A / D. Holding moves the army across the track at a steady speed with a short ramp-up, so a tap nudges and a hold sweeps; Shift for a faster sweep. It feeds the same target position as the drag (`G.tx`), so the edge spill and steering response stay the same.
+   - **Everything else:** Space or Enter starts a run, continues from pause and retries after game over; R restarts from the pause menu; M toggles mute. Esc / P already pause, and the initials entry already takes typing and arrows.
+   - **Hints:** show the keys on the title screen only when a keyboard is used (first key press), never on touch devices.
+   - The style guide gets a card for any new on-screen hint.
 
 ### Ideas parked for later
 - **Track hazards:** saws, rollers, spike strips; narrow bridges and gaps; rail breaks.

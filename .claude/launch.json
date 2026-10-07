@@ -16,6 +16,14 @@
         "/private/tmp/claude-501/-Users-scottslagsvol-Documents-GitHub-experiments/85c0fded-7919-4cb5-be2a-bdc17b68c25c/scratchpad/serve.py"
       ],
       "port": 8750
+    },
+    {
+      "name": "synthlab",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "/private/tmp/claude-501/-Users-scottslagsvol-Documents-GitHub-experiments/644abe0e-6d35-419e-8665-281c5647f2b1/scratchpad/serve.py"
+      ],
+      "port": 8752
     }
   ]
 }

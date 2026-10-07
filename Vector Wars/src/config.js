@@ -75,8 +75,13 @@ export const CFG = {
 
 // Sound effects (src/audio.js), synthesized with WebAudio. Volumes 0–1;
 // maxRate = most plays per second (big battles would otherwise be a wall of noise).
+// tune = detune in semitones (negative = deeper) at the same speed; stretch =
+// longer at the same pitch. Both work globally (here) and per sound. Try
+// values in sound-lab.html.
 export const SFX = {
   master: 0.55,
+  tune: 0,
+  stretch: 1,
   death:   { volume: 0.22, maxRate: 18 },  // a unit fizzling out
   hit:     { volume: 0.12, maxRate: 24 },  // bullet chipping an enemy or a gate
   pop:     { volume: 0.2,  maxRate: 16 },  // enemy destroyed

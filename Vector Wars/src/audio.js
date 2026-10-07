@@ -24,10 +24,17 @@ export class Sfx {
     if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
-    const ctx = this.ctx = new AC();
+    this.attach(new AC());
+  }
+
+  // Builds the master chain (compressor, master gain, shared noise) on a
+  // context. unlock() uses a live one; the synth lab (../synthlab) hands in an
+  // OfflineAudioContext to render a sound into a buffer.
+  attach(ctx, dest = ctx.destination) {
+    this.ctx = ctx;
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -14; comp.ratio.value = 6;
-    comp.connect(ctx.destination);
+    comp.connect(dest);
     this.master = ctx.createGain();
     this.master.gain.value = this.muted ? 0 : SFX.master;
     this.master.connect(comp);
@@ -44,6 +51,9 @@ export class Sfx {
   }
 
   // name: a key of SFX. opts.pitch scales frequency (e.g. gate ticks rise).
+  // SFX.tune / SFX[name].tune detune in semitones without changing speed;
+  // SFX.stretch / SFX[name].stretch lengthen without changing pitch.
+  // Slow motion does both (rate 0.3 = about −21 semitones and ×3.3 longer).
   play(name, opts = {}) {
     const ctx = this.ctx, cfg = SFX[name];
     if (!ctx || this.muted || !cfg || !RECIPES[name]) return;
@@ -53,8 +63,11 @@ export class Sfx {
     const out = ctx.createGain();
     out.gain.value = cfg.volume;
     out.connect(this.master);
-    RECIPES[name](this, out, now, Math.max(0.3, this.rate) * (opts.pitch || 1), 1 / Math.max(0.3, this.rate));
-    setTimeout(() => out.disconnect(), 3000);
+    const rate = Math.max(0.3, this.rate);
+    const p = rate * (opts.pitch || 1) * 2 ** (((SFX.tune || 0) + (cfg.tune || 0)) / 12);
+    const s = (SFX.stretch || 1) * (cfg.stretch || 1) / rate;
+    RECIPES[name](this, out, now, p, s);
+    setTimeout(() => out.disconnect(), 3000 * Math.max(1, s));
   }
 
   // ---- building blocks ----
