@@ -164,11 +164,11 @@ The army detonates: **half the army is lost, and every enemy in sight is destroy
 - Squads still in the queue past the fog are untouched, so the player can't bomb something they haven't seen.
 - Gates are untouched. A mini-boss (batch D) takes heavy damage but survives.
 
-**Earning and triggering:**
-- Earn a charge the first time the army reaches **1,000**. A bomb icon in the top-right lights up.
+**Earning and triggering** (decided 2026-10-07):
+- **Earned by beating a mini-boss** (batch D). A bomb icon in the top-right lights up.
 - **Tap to detonate.** The icon must be excluded from the drag input so tapping it doesn't nudge the army.
 - **Last stand:** holding a charge and dropping below **100** during a battle auto-detonates it. This is the comeback moment.
-- Hold one charge at most.
+- **One charge at a time.** A future inventory may hold more items.
 
 **Feel:**
 - A brief freeze-frame, then a white flash.
@@ -178,10 +178,7 @@ The army detonates: **half the army is lost, and every enemy in sight is destroy
 
 **Performance:** up to 4,000 enemies die within about a second, so sparks are sampled (about 1 per 8 kills) and kills are processed per frame as the ring passes, not all at once.
 
-**Open questions:**
-1. After using it, how do you re-earn it: reaching 1,000 again, or every N squads beaten?
-2. Should the last-stand auto-trigger also cost half the army? (Proposed: yes, keeps it simple; half of <100 is the price of surviving.)
-3. One charge, or allow stacking up to 2?
+**Decisions:** re-earned only by beating another mini-boss. The last-stand auto-trigger also costs half the army. One charge at a time.
 
 ### Checklist
 - [x] R2.1 Capacity 5,000 with progressive packing
@@ -190,7 +187,14 @@ The army detonates: **half the army is lost, and every enemy in sight is destroy
 - [x] R2.4 Enemy types: grunt, drone, bomber, brute (hp, damage, movement, shapes)
 - [x] R2.5 3 hits per +1 on + / − gates, with charge bar
 - [x] R2.6 Split gate crossing with primary shatter
-- [ ] R2.7 Bomb: charge, button, auto last stand, shockwave clear (needs answers to the open questions)
+- [ ] R2.7 Bomb: charge, button, auto last stand, shockwave clear (build with batch D: the mini-boss is what awards it)
+
+## Round 3 (2026-10-07)
+| Feedback | Change |
+|---|---|
+| No downtime between gates and enemies | Track elements spaced by type: 18 units after a gate (`CFG.SEG_GATE`), 28 after a squad (`CFG.SEG_ENEMY`), first element at 22. A sweeping bot now gets 4–10s of calm between battles. |
+| Enemies clumped too tight | `ENEMY_SPACING` 0.17 → 0.27, looser rows, wave gaps 3.2 → 4.5, skirmishers spread up to 9 deep. Formations deeper than `ENEMY_MAX_DEPTH` (9) compress, so a huge squad reads as a dense mob instead of stretching down the track. |
+| Drones stray far off the track | Bug: waiting drones swayed around the squad's live centroid, which included their own sway, so the squad drifted. They now sway around a fixed anchor and are clamped to the rails. Max enemy offset in a full test run: 1.95 (track half-width 2.0). |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.

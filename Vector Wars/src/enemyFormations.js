@@ -67,7 +67,7 @@ export function enemyFormation(kind, n, rng = Math.random) {
     case 'wall':
       for (let i = 0; i < n; i++) {
         const r = Math.floor(i / perRow), c = i % perRow;
-        pts.push([-W + c * S + (r % 2) * S / 2, r * S * 1.2]);
+        pts.push([-W + c * S + (r % 2) * S / 2, r * S * 1.3]);
       }
       break;
     case 'waves': {
@@ -75,7 +75,7 @@ export function enemyFormation(kind, n, rng = Math.random) {
       for (let i = 0; i < n; i++) {
         const wave = Math.floor(i / perWave), k = i % perWave;
         const r = Math.floor(k / perRow), c = k % perRow;
-        pts.push([-W + c * S + (r % 2) * S / 2, wave * CFG.ENEMY_WAVE_GAP + r * S * 1.2]);
+        pts.push([-W + c * S + (r % 2) * S / 2, wave * CFG.ENEMY_WAVE_GAP + r * S * 1.3]);
       }
       break;
     }
@@ -86,7 +86,7 @@ export function enemyFormation(kind, n, rng = Math.random) {
       break;
     case 'skirmish': {
       // Loose spacing: about 2.5× the normal gap between units.
-      const depth = Math.min(6, Math.max(2, n * (S * 2.5) ** 2 / (2 * W)));
+      const depth = Math.min(CFG.ENEMY_MAX_DEPTH, Math.max(3, n * (S * 1.8) ** 2 / (2 * W)));
       for (let i = 0; i < n; i++) pts.push([(rng() * 2 - 1) * W, rng() * depth]);
       break;
     }
@@ -95,14 +95,16 @@ export function enemyFormation(kind, n, rng = Math.random) {
       break;
     default: // blob
       for (let i = 0; i < n; i++) {
-        const r = Math.sqrt(i + 0.5) * S * 0.6, a = i * 2.39996;
+        const r = Math.sqrt(i + 0.5) * S * 0.62, a = i * 2.39996;
         pts.push([r * Math.cos(a), r * Math.sin(a)]);
       }
   }
-  // Squeeze anything wider than the track, and put the front row at z = 0.
-  let maxX = 0, minZ = Infinity;
-  for (const p of pts) { maxX = Math.max(maxX, Math.abs(p[0])); minZ = Math.min(minZ, p[1]); }
-  const sx = maxX > W ? W / maxX : 1;
-  for (const p of pts) { p[0] *= sx; p[1] -= minZ; }
+  // Squeeze anything wider than the track or deeper than ENEMY_MAX_DEPTH
+  // (waves get room for their gaps), and put the front row at z = 0.
+  let maxX = 0, minZ = Infinity, maxZ = -Infinity;
+  for (const p of pts) { maxX = Math.max(maxX, Math.abs(p[0])); minZ = Math.min(minZ, p[1]); maxZ = Math.max(maxZ, p[1]); }
+  const maxDepth = CFG.ENEMY_MAX_DEPTH + (kind === 'waves' ? (CFG.ENEMY_WAVES - 1) * CFG.ENEMY_WAVE_GAP : 0);
+  const sx = maxX > W ? W / maxX : 1, sz = maxZ - minZ > maxDepth ? maxDepth / (maxZ - minZ) : 1;
+  for (const p of pts) { p[0] *= sx; p[1] = (p[1] - minZ) * sz; }
   return { pts, halfW: Math.min(maxX, W) };
 }

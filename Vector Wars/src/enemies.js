@@ -105,7 +105,7 @@ export class EnemyForce {
     const mix = squadMix(kind, squadIndex);
     const lim = Math.max(0, CFG.TW * 0.95 - halfW);
     anchorX = Math.max(-lim, Math.min(lim, anchorX));
-    const s = { id: this.nextId++, kind, spread: ENEMY_KINDS[kind].spread, units: [], n: 0, charging: false,
+    const s = { id: this.nextId++, kind, ax: anchorX, spread: ENEMY_KINDS[kind].spread, units: [], n: 0, charging: false,
       minX: 0, maxX: 0, minW: anchorW, maxW: anchorW, cx: anchorX, cw: anchorW };
     pts.forEach(([px, pz], k) => {
       if (!this.free.length) return;
@@ -154,7 +154,9 @@ export class EnemyForce {
         const t = TYPE_LIST[this.type[i]];
         if (!s.charging) {
           // Drones hover side to side even while waiting.
-          if (t.strafe) this.x[i] = s.cx + this.ox[i] + Math.sin(time * 2 + i) * 0.15;
+          // (Around the squad's fixed anchor; using the live centroid fed back
+          // into itself and let drones drift off the track.)
+          if (t.strafe) this.x[i] = Math.max(-CFG.TW + 0.05, Math.min(CFG.TW - 0.05, s.ax + this.ox[i] + Math.sin(time * 2 + i) * 0.15));
           continue;
         }
         // Stragglers far from the fight run faster so battles don't drag.

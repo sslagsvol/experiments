@@ -9,8 +9,9 @@
 export const CFG = {
   TW: 2.0,                 // track half-width (world units)
   SPEED: 6.5,              // forward speed (units/s)
-  FIRST: 16,               // distance to the first track element
-  SEG: 12,                 // spacing between track elements
+  FIRST: 22,               // distance to the first track element
+  SEG_GATE: 18,            // gap after a gate before the next element
+  SEG_ENEMY: 28,           // gap after a squad (room to breathe after a battle)
   VIEW_AHEAD: 70,          // how far ahead elements are spawned
 
   START_UNITS: 30,
@@ -21,7 +22,8 @@ export const CFG = {
   EDGE_MARGIN: 0.2,        // how close the army's center may get to a rail
   MAX_PER_SQUAD: 1500,
   MAX_ENEMIES: 4000,
-  ENEMY_SPACING: 0.17,
+  ENEMY_SPACING: 0.27,
+  ENEMY_MAX_DEPTH: 9,      // squads deeper than this compress (big squads become dense mobs)
   ENEMY_LEAK_MARGIN: 0.8,  // enemies this far behind the army have slipped past and hit the rear
   ENEMY_TRIGGER: 9,        // squads charge when this close to the army's front
   ENEMY_SPAWN_AHEAD: 38,   // squads are sized and placed when this far ahead (out of the fog)
@@ -30,7 +32,7 @@ export const CFG = {
   ENEMY_CHARGE_SPEED: 3.5, // units/s toward the army
   ENEMY_HOMING: 1.5,       // sideways steering toward the army (units/s)
   ENEMY_WAVES: 3,
-  ENEMY_WAVE_GAP: 3.2,     // distance between waves
+  ENEMY_WAVE_GAP: 4.5,     // distance between waves
 
   BULLET_SPEED: 26,
   BULLET_RANGE: 34,

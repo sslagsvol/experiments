@@ -100,7 +100,7 @@ function spawnNext() {
     G.pending.push(wz);   // sized later, when it comes out of the fog
   }
   G.seg++;
-  G.nextW += CFG.SEG;
+  G.nextW += kind === 'g' ? CFG.SEG_GATE : CFG.SEG_ENEMY;
 }
 
 const KIND_WEIGHTS = [['blob', 2], ['wall', 2], ['wedge', 2], ['skirmish', 1.5], ['column', 1], ['waves', 1.5]];
