@@ -91,9 +91,9 @@ function newRun() {
   G = {
     state: 'title',
     paused: false,
-    record: -1,      // s into the breaking-the-high-score slow motion (-1 = not running)
+    record: -1,      // s into the breaking-a-top-3-score slow motion (-1 = not running)
     recordPass: -1,  // when in that moment the score passed it
-    recordDone: false,
+    recordNext: 2,   // board place whose score is next to break: 3rd, then 2nd, then 1st (-1 = all done)
     ax: 0, tx: 0,
     dist: 0, nextW: 0,
     seg: 0, gateIdx: 0, enemyIdx: 0,
@@ -558,11 +558,12 @@ function update(dt, realDt) {
   G.shake = Math.max(0, G.shake - dt * 0.6);
 }
 
-// Breaking the high score: slow motion starts as the score closes in on 1st
-// place and ends shortly after it passes (once per run). True while running.
+// Breaking a top-3 score: slow motion starts as the score closes in on 3rd,
+// 2nd, then 1st place and ends shortly after it passes (once each per run).
+// True while running.
 function recordSlowMo(realDt) {
-  if (G.recordDone || !board.length) return false;
-  const top = board[0].score, score = runStats().score;
+  if (G.recordNext < 0 || board.length <= G.recordNext) return false;
+  const top = board[G.recordNext].score, score = runStats().score;
   if (G.record < 0) {
     if (top - score > ANIM.recordLead * CFG.SPEED * CFG.SCORE_PER_DIST) return false;
     G.record = 0;
@@ -570,8 +571,8 @@ function recordSlowMo(realDt) {
   G.record += realDt;
   if (G.recordPass < 0 && score > top) G.recordPass = G.record;
   if ((G.recordPass >= 0 && G.record - G.recordPass > ANIM.recordHold) || G.record > ANIM.recordMax) {
-    G.recordDone = true;
-    G.record = -1;
+    G.recordNext--;
+    G.record = G.recordPass = -1;
     return false;
   }
   return true;

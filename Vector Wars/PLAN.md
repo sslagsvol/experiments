@@ -56,7 +56,7 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 | Brute | Big hexagon | 8 hp, at the *back* of walls and wedges; **area stomp** r 1.2, 50% at center, max 60; from the 5th squad |
 
 - **Battles:** squads charge from 18 units out at 2.2 u/s. The track rolls in at half speed, stops dead for the clash, then surges forward with a big grid ripple and the battle-won sound. Enemies level with the army turn in on its flanks; ones that slip past hit the rear.
-- **Slow motion:** when incoming strength ≥ 0.8× the army, time eases to 0.3× (steering stays real-time), with a danger vignette and a heartbeat on the count. Also, once per run, for a few seconds as the score closes in on and passes 1st place on the board (no vignette; the 1st badge and data-stream sound land inside it).
+- **Slow motion:** when incoming strength ≥ 0.8× the army, time eases to 0.3× (steering stays real-time), with a danger vignette and a heartbeat on the count. Also for a few seconds as the score closes in on and passes each of 3rd, 2nd and 1st place on the board, once each per run (no vignette; the medal badge and data-stream sound land inside it). Getting all three in one run is rare by design.
 - **Sizing:** squads are sized as they emerge from the fog, against the army you'd have from the *best* side of every gate before them, minus what earlier squads will cost, at 0.35–0.85× that strength, by expected damage (not headcount).
 
 ### Pacing, HUD and score
@@ -91,6 +91,7 @@ These come from the user; the order among them and against D / B / E is still to
    - **Level gates:** a full-width gate across the track ("LEVEL 2", "LEVEL 3"…) that ends a level. It can't be shot or dodged; it's a finish line with a big ripple and a sound.
    - **Shape:** the first levels are short (about 45–60s) and about building the army: generous gates, few, small squads. Levels lengthen and harden after that (the sawtooth idea under *Structure* below). Score and army carry over between levels.
    - **End-of-level menu:** a version of the pause menu. "Level 1 complete" in place of "Paused", the level's recap and the board. The main button is **"Go to Level 2"**; Restart stays secondary. Ties into level progress in the score and possibly a per-level best.
+   - **Micro-battle levels:** it's most fun when both armies are close in size and both small, because each fight becomes a mini-game of which enemies to take out first. A few levels should have sparse gates (so the army stays small) and focus on these close fights: small, evenly matched squads with a readable mix of types (pick off the bomber before it reaches you, focus the brute, let the grunts come). Squad sizing would target about 0.8–1.0× the army instead of 0.35–0.85×, and slow motion will kick in often, which suits it.
    - **Army snapshot** (pause menu and end-of-level menu): the army as it is at that moment, in its current formation and size, shown at the top of the menu. Idle animation for interest: slow rotation, a gentle breathing scale, a twinkle on the dots.
      - Suggested build: copy the army's dot positions and colors into a small 2D canvas when the menu opens (5,000 dots is cheap) and animate that, rather than a second WebGL view. It then also works in the style guide.
 5. **Fire enemy (new type).**

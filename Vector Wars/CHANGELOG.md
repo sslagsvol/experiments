@@ -226,3 +226,7 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 
 ## Round 20: slow motion for breaking the high score (2026-10-07)
 - When the score gets within about 0.8s of distance points of 1st place, time eases to ×0.3, holds 0.9s after passing it, then returns to full speed (3.5s cap; once per run). Settings `ANIM.record*`. Style guide slow-motion card notes it.
+
+## Round 21: top-3 slow motion, micro-battle levels planned (2026-10-07)
+- The breaking-the-record slow motion now fires for 3rd, 2nd and 1st place, once each per run (`G.recordNext` counts down from 2).
+- `PLAN.md` item 4 (levels): added micro-battle levels, with sparse gates and small, evenly matched squads where target choice matters.
