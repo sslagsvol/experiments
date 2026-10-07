@@ -144,6 +144,7 @@ export class EnemyForce {
   // army (leaked = it got past and hit the rear).
   update(dt, dist, army, time, onHit) {
     this.mat.uniforms.uTime.value = time;
+    this.armyFront = army.front;
     for (const s of this.squads) {
       if (s.n <= 0) continue;
       // Distance from the army's front row to the squad's nearest unit.
@@ -189,7 +190,14 @@ export class EnemyForce {
     for (const s of this.squads) {
       for (const i of s.units) {
         if (!this.alive[i] || this.owner[i] !== s.id) continue;
-        const t = TYPE_LIST[this.type[i]], k = TYPE_COLORS[t.id], f = 1 + this.flash[i] * 2.5;
+        const t = TYPE_LIST[this.type[i]], k = TYPE_COLORS[t.id];
+        let f = 1 + this.flash[i] * 2.5;
+        // Area attackers telegraph: they throb brighter as they close in.
+        if (t.aoe && s.charging) {
+          const gap = this.w[i] - dist + this.armyFront;   // distance ahead of the army's front row
+          const close = Math.min(1, Math.max(0, 1 - gap / 4));
+          f += close * (0.8 + 0.8 * Math.sin(time * 14 + i));
+        }
         p[c * 3] = this.x[i];
         p[c * 3 + 1] = 0.14 * t.size + (s.charging ? Math.abs(Math.sin(time * 13 + i)) * 0.05 : 0);
         p[c * 3 + 2] = -(this.w[i] - dist);

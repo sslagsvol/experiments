@@ -270,8 +270,8 @@ const ROLES = {
   bg: 'Page background, void below the track',
   you: 'Your swarm, army count glow, falling units',
   enemy: 'Grunts and drones, enemy sparks, danger vignette',
-  enemyHot: 'Bombers and their blasts',
-  enemyHeavy: 'Brutes',
+  enemyHot: 'Bombers and their blast rings',
+  enemyHeavy: 'Brutes and their stomp rings',
   add: '+ gates (value ≥ 0)',
   sub: '− gates, and ÷ gates once added',
   mult: '× gates and their charge',
@@ -400,7 +400,7 @@ for (const [kind, info] of Object.entries(ENEMY_KINDS)) {
 // Shapes come from src/sprites.js (shared with the end-of-run recap).
 const enemyShape = (ctx, x, y, size, t, time, flash = 0) => drawEnemy(ctx, t, x, y, size, time, { flash });
 for (const [key, t] of Object.entries(ENEMY_TYPES)) {
-  const stats = `hp ${t.hp} · ` + (t.blast ? `blast radius ${t.blast} (max ${t.blastMax} units)` : `kills ${t.damage} on contact`) + ` · speed ×${t.speed} · homing ×${t.homing}` + (t.strafe ? ` · strafe ${t.strafe}` : '') + (t.converge ? ' · homes on center' : '');
+  const stats = `hp ${t.hp} · ` + (t.aoe ? `area: radius ${t.aoe.radius}, ${Math.round(t.aoe.peak * 100)}% kill chance at center → 0 at edge, max ${t.aoe.max}` : `kills ${t.damage} on contact`) + ` · speed ×${t.speed} · homing ×${t.homing}` + (t.strafe ? ` · strafe ${t.strafe}` : '') + (t.converge ? ' · homes on center' : '');
   const cv = card($('enemy-types'), { title: t.label, vars: `ENEMY_TYPES.${key} · COLORS.${t.color} · size ×${t.size}`, meta: stats, note: t.note });
   demo(cv, (ctx, w, h, time) => {
     ctx.globalCompositeOperation = 'lighter';
@@ -490,7 +490,7 @@ animCard({ title: 'Gate hit flash and charge', vars: 'ANIM.gateFlashDecay · CFG
     for (let i = 0; i < 10; i++) { const x = w / 2 + (i < 5 ? -gw / 2 - 4 : gw / 2 + 4) + ((i % 5) - 2) * 10, y = gy + gh + ((t * 300 + i * 23) % (h - gy - gh)); vline(ctx, x, y, x, y + 14, COLORS.bullet, 1.5); }
   }, {});
 
-animCard({ title: 'Grid ripple', vars: 'ANIM.rippleSpeed · rippleDecay · rippleLife · rippleDepth · rippleWidth · ripple*', meta: `ring ${ANIM.rippleSpeed} units/s, ${ANIM.rippleWidth} wide · fade e^(−${ANIM.rippleDecay}t) · ${ANIM.rippleLife}s life · dips the floor ${ANIM.rippleDepth} × strength (capped at 2.5) · strengths: battle won ${ANIM.rippleWin}, gate ${ANIM.rippleGate}, squad wiped ${ANIM.rippleWipe}, blast ${ANIM.rippleBlast}, enemy hit ${ANIM.rippleHit}, army lost ${ANIM.rippleDeath}`, note: 'Top-down sketch; in game the floor visibly bends down into a rolling wave. Shown at gate strength.', tall: true },
+animCard({ title: 'Grid ripple', vars: 'ANIM.rippleSpeed · rippleDecay · rippleLife · rippleDepth · rippleWidth · ripple*', meta: `ring ${ANIM.rippleSpeed} units/s, ${ANIM.rippleWidth} wide · fade e^(−${ANIM.rippleDecay}t) · ${ANIM.rippleLife}s life · dips the floor ${ANIM.rippleDepth} × strength (capped at 2.5) · strengths: battle won ${ANIM.rippleWin}, gate ${ANIM.rippleGate}, squad wiped ${ANIM.rippleWipe}, bomber blast ${ANIM.rippleBlast}, brute stomp ${ANIM.rippleStomp}, enemy hit ${ANIM.rippleHit}, army lost ${ANIM.rippleDeath}`, note: 'Top-down sketch; in game the floor visibly bends down into a rolling wave. Shown at gate strength.', tall: true },
   (ctx, w, h, t) => {
     const s = topDown(w), age = t % 2.2, cx = w / 2, cy = h * 0.6;
     const r = age * ANIM.rippleSpeed * s, fade = Math.exp(-age * ANIM.rippleDecay);
@@ -646,6 +646,39 @@ animCard({ title: 'Unit loss fizzle', vars: 'Fizzles · COLORS.dying · ANIM.fiz
     }
   });
 
+// Area attack: chance to die falls off from the center; the ring shows reach.
+animCard({ title: 'Area attacks (bomber and brute)', vars: 'ENEMY_TYPES.*.aoe · army.killArea() · sparks.ring()', meta: `bomber: radius ${ENEMY_TYPES.bomber.aoe.radius}, ${Math.round(ENEMY_TYPES.bomber.aoe.peak * 100)}% at center · brute: radius ${ENEMY_TYPES.brute.aoe.radius}, ${Math.round(ENEMY_TYPES.brute.aoe.peak * 100)}% at center · chance = peak × (1 − d²/r²) · both throb brighter in their last 4 units · shake, ripple and sound on impact`, note: 'Left: bomber (tight and deadly). Right: brute (wide, fewer per unit). Lost units fizzle red, leaving a crater.', tall: true },
+  (ctx, w, h, t, dt, st) => {
+    const period = 2.6, ph = t % period, s = Math.min(topDown(w), w / 9);
+    if (!st.u || ph < st.lastPh) {
+      st.u = [];
+      for (const [cx, type] of [[-1, ENEMY_TYPES.bomber], [1, ENEMY_TYPES.brute]]) {
+        for (let i = 0; i < 260; i++) {
+          const r = Math.sqrt(i + 0.5) * 0.085, a = i * 2.39996, x = cx * 1.9 + r * Math.cos(a), z = r * Math.sin(a) * 0.85;
+          const d2 = (x - cx * 1.9) ** 2 + (z + 0.35) ** 2, R2 = type.aoe.radius ** 2;
+          st.u.push({ x, z, die: d2 < R2 && Math.random() < type.aoe.peak * (1 - d2 / R2) });
+        }
+      }
+    }
+    st.lastPh = ph;
+    const hit = 0.9, cy = h * 0.55, X = (x) => w / 2 + x * s, Y = (z) => cy + z * s;
+    ctx.globalCompositeOperation = 'lighter';
+    for (const [cx, type] of [[-1, ENEMY_TYPES.bomber], [1, ENEMY_TYPES.brute]]) {
+      const ex = cx * 1.9, ez = -0.35 - Math.max(0, hit - ph) * 2.2;
+      if (ph < hit) { const glow = Math.max(0, 1 - (hit - ph) * 2); drawEnemy(ctx, type, X(ex), Y(ez) - 12, 22 * Math.sqrt(type.size), t, { flash: glow * (0.5 + 0.5 * Math.sin(t * 14)) }); }
+      else if (ph < hit + 0.6) {
+        const k = (ph - hit) / 0.6, c = COLORS[type.color];
+        ctx.strokeStyle = css(c, 1 - k); ctx.lineWidth = 3; ctx.shadowColor = css(c); ctx.shadowBlur = 12;
+        ctx.beginPath(); ctx.ellipse(X(ex), Y(-0.35), type.aoe.radius * s * (0.9 + k * 0.3), type.aoe.radius * s * 0.85 * (0.9 + k * 0.3), 0, 0, Math.PI * 2); ctx.stroke(); ctx.shadowBlur = 0;
+      }
+    }
+    for (const u of st.u) {
+      if (!u.die || ph < hit) { dot(ctx, X(u.x), Y(u.z), 9, COLORS.you); continue; }
+      const k = Math.min(1, (ph - hit) / ANIM.fizzleTime);
+      if (k < 1) dot(ctx, X(u.x), Y(u.z), 9 * (1 - 0.35 * k), fizzleColor(k), 0.75 + 0.25 * Math.sin(u.x * 50 + k * 40));
+    }
+  }, {});
+
 animCard({ title: 'Blink prompt', html: '<div class="stage" style="height:150px;display:flex;align-items:center;justify-content:center"><p class="blink" style="margin:0">Touch to start</p></div>', vars: '.blink · @keyframes blink', meta: '1.2s steps(2, start) infinite · CSS, so speed buttons do not apply' });
 
 // Count + delta use the real classes: a gate gain, then a battle's running losses.
@@ -684,6 +717,7 @@ const SOUND_NOTES = {
   gateDown: 'Passing a bad gate: falling buzz and low thud.',
   gateTick: 'A gate value ticking up from fire; pitch rises with the value.',
   blast: 'Bomber explosion: low boom and noise burst.',
+  stomp: 'Brute stomp: heavy sub thud, crunch and ground rumble.',
   win: 'Battle won: the blast sound plus a crackly fizzle that echoes away (feedback delay, darkening each repeat).',
   lose: 'Army wiped out: long dive and rumble.',
 };

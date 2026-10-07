@@ -239,6 +239,13 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - Battle won sound = the bomber blast + a crackly fizzle through a feedback delay (0.16s, darkening each repeat).
 - ÷ gates shot down to ÷1.0 flip into ×1.0 gates and keep climbing, so a bad gate can be turned into a good one with enough fire.
 
+## Round 10 (2026-10-07)
+- **Area damage for bombers and brutes** (`aoe` in `ENEMY_TYPES`, `army.killArea()`). Each unit inside the radius dies with chance `peak × (1 − d²/r²)`, up to `max`. Bigger area, lower peak:
+  - Bomber: radius 0.7, 95% at center, max 45. Tight and deadly.
+  - Brute: radius 1.2, 50% at center, max 60. Wide, fewer kills per unit.
+- **They feel dangerous:** both throb brighter over their last 4 units of approach. On impact: a shockwave ring of sparks at the blast radius, a big grid ripple (blast 1.6, stomp 2.0), heavy screen shake, and a new brute **stomp** sound. Lost units fizzle red into a visible crater.
+- Measured in a test run: bomber hits averaged 44 kills, brute stomps 41. Squad-sizing estimates raised to match (bomber 35, brute 38).
+
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
 - *(none)*

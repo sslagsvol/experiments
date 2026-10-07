@@ -72,7 +72,8 @@ export const SFX = {
   gateUp:   { volume: 0.5 },               // passing a good gate
   gateDown: { volume: 0.5 },               // passing a bad gate
   gateTick: { volume: 0.18, maxRate: 10 }, // a gate's value ticking up from shooting
-  blast:   { volume: 0.5,  maxRate: 4 },   // bomber explosion
+  blast:   { volume: 0.55, maxRate: 5 },   // bomber explosion
+  stomp:   { volume: 0.65, maxRate: 4 },   // brute stomp
   win:     { volume: 0.55 },               // battle won: the blast plus an echoing crackle
   lose:    { volume: 0.6 },                // army wiped out
 };
@@ -98,7 +99,8 @@ export const ANIM = {
   rippleWipe: 1.5,         // … wiping out a squad
   rippleWin: 2.2,          // … winning a battle (track starts moving again)
   rippleHit: 0.5,          // … enemy contact (rate-limited)
-  rippleBlast: 1.2,        // … bomber blast
+  rippleBlast: 1.6,        // … bomber blast
+  rippleStomp: 2.0,        // … brute stomp
   rippleDeath: 2.4,        // … losing the whole army
   fallGravity: 14,         // units falling off the track (units/s²)
   fallRunMin: 1.5,         // sideways run speed of spilled units (units/s)

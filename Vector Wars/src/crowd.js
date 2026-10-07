@@ -185,14 +185,15 @@ export class Army {
     return k;
   }
 
-  // Removes every unit within radius r of (x, z), up to max (bomber blasts).
-  killRadius(x, z, r, max, onLost) {
+  // Area damage around (x, z): each unit within r dies with a chance that
+  // falls from `peak` at the center to 0 at the edge, up to `max` units.
+  killArea(x, z, r, peak, max, onLost) {
     const p = this.pos, r2 = r * r;
     let k = 0;
     for (let i = 0; i < this.L && k < max; i++) {
       if (!this.alive[i]) continue;
-      const dx = p[i * 3] - x, dz = p[i * 3 + 2] - z;
-      if (dx * dx + dz * dz > r2) continue;
+      const dx = p[i * 3] - x, dz = p[i * 3 + 2] - z, d2 = dx * dx + dz * dz;
+      if (d2 > r2 || Math.random() > peak * (1 - d2 / r2)) continue;
       this.alive[i] = 0;
       if (onLost) onLost(p[i * 3], p[i * 3 + 2]);
       p[i * 3 + 1] = HIDDEN;

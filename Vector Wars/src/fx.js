@@ -116,6 +116,21 @@ export class Sparks {
     this.colAttr.needsUpdate = true;
   }
 
+  // A ring of sparks on a circle of radius r, drifting outward: shows an
+  // area attack's reach.
+  ring(x, y, w, r, color, count) {
+    for (let k = 0; k < count; k++) {
+      const i = this.i;
+      this.i = (this.i + 1) % this.max;
+      const a = (k / count) * Math.PI * 2 + Math.random() * 0.1;
+      this.x[i] = x + Math.cos(a) * r; this.y[i] = y; this.w[i] = w + Math.sin(a) * r;
+      this.vx[i] = Math.cos(a) * 2.2; this.vw[i] = Math.sin(a) * 2.2; this.vy[i] = 0.6 + Math.random();
+      this.span[i] = this.life[i] = 0.5 + Math.random() * 0.2;
+      this.col[i * 3] = color[0]; this.col[i * 3 + 1] = color[1]; this.col[i * 3 + 2] = color[2];
+    }
+    this.colAttr.needsUpdate = true;
+  }
+
   update(dt, dist) {
     const L = this.lifeAttr.array, p = this.pos;
     const drag = Math.pow(0.05, dt);

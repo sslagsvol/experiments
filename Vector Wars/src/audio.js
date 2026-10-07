@@ -119,6 +119,13 @@ const RECIPES = {
     a.tone(out, t, { type: 'sine', f0: 110 * p, f1: 35 * p, dur: 0.5 * s, vol: 1 });
     a.hiss(out, t, { type: 'lowpass', f0: 2500 * p, f1: 150 * p, dur: 0.45 * s, vol: 0.8 });
   },
+  // Brute stomp: a heavy sub thud, a crunch, and a short ground rumble.
+  stomp(a, out, t, p, s) {
+    a.tone(out, t, { type: 'sine', f0: 75 * p, f1: 30 * p, dur: 0.6 * s, vol: 1, attack: 0.005 });
+    a.tone(out, t, { type: 'square', f0: 140 * p, f1: 50 * p, dur: 0.18 * s, vol: 0.35 });
+    a.hiss(out, t, { type: 'lowpass', f0: 600 * p, f1: 80 * p, q: 1.2, dur: 0.7 * s, vol: 0.9 });
+    a.hiss(out, t, { type: 'bandpass', f0: 1800 * p, f1: 700 * p, q: 1.5, dur: 0.12 * s, vol: 0.5 });
+  },
   // Battle won: the bomber blast, plus a crackly fizzle that echoes away.
   win(a, out, t, p, s) {
     RECIPES.blast(a, out, t, p, s);

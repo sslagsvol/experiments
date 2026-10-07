@@ -290,14 +290,19 @@ function squadWiped(s) {
 }
 
 // An enemy reached the army (or slipped past and hit the rear): it dies and
-// takes out the units nearest it. Bombers blow up everything around them.
+// takes out the units nearest it. Bombers and brutes deal area damage, with
+// a shockwave ring showing its reach.
 function onHit(t, x, z, leaked) {
   let killed;
-  if (t.blast) {
-    killed = army.killRadius(x, z, t.blast * Math.max(0.6, army.pack), t.blastMax, unitLost);
-    sfx.play('blast');
-    sparks.emit(x, 0.3, G.dist - z, COLORS.enemyHot, 24, 5);
-    world.addRipple(x, G.dist - z, ANIM.rippleBlast, time);
+  if (t.aoe) {
+    // Dense (packed) armies get a slightly smaller radius so kills stay in range.
+    const r = t.aoe.radius * Math.max(0.6, army.pack), w = G.dist - z, c = COLORS[t.color];
+    killed = army.killArea(x, z, r, t.aoe.peak, t.aoe.max, unitLost);
+    sparks.ring(x, 0.2, w, r, c, 40);
+    sparks.emit(x, 0.3, w, c, 30, 5);
+    world.addRipple(x, w, t.shape === 3 ? ANIM.rippleStomp : ANIM.rippleBlast, time);
+    sfx.play(t.shape === 3 ? 'stomp' : 'blast');
+    G.shake = Math.max(G.shake, t.shape === 3 ? 0.3 : 0.22);
   } else {
     const k = Math.floor(t.damage) + (Math.random() < t.damage % 1 ? 1 : 0);
     killed = army.killNear(x, z, k, unitLost);
