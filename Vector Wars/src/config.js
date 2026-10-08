@@ -8,7 +8,7 @@
 
 // The game's version: 0.MINOR.PATCH while in beta. Bump it on the release
 // branch (vw/vX.Y.Z) and add a matching heading in CHANGELOG.md. See PLAN.md.
-export const VERSION = '0.7.0';
+export const VERSION = '0.8.0';
 
 export const CFG = {
   TW: 2.0,                 // track half-width (world units)
@@ -81,6 +81,10 @@ export const CFG = {
   // Grid pattern on the track and background (GRID_PATTERNS). Try others with
   // ?grid=hex, the G key, or the pause menu; later, one per level.
   GRID_PATTERN: 'grid',
+  // After the authored levels the track goes back to random, ramping up
+  // linearly per gate: gate values ×(1 + RAMP_GATE·k), squad "par" ×(1 + RAMP_PAR·k).
+  RAMP_GATE: 0.12,
+  RAMP_PAR: 0.15,
   // Keyboard steering: units/s across the track at full hold (after a short
   // ramp from KEY_STEER_START of that), ×KEY_STEER_FAST with Shift.
   KEY_STEER_SPEED: 5,
@@ -119,6 +123,13 @@ export const SFX = {
 // Animation timings. The style guide (style-guide.html) renders these live,
 // so change them here rather than inline in the code.
 export const ANIM = {
+  // Authored levels: the track slows on the approach to a "slow" gate so its
+  // value visibly climbs, and a level gate gets the biggest ripple.
+  gateSlowSpeed: 0.35,     // track speed while approaching (×)
+  gateSlowFrom: 20,        // starts slowing this far before the gate (units)
+  gateSlowTo: 4,           // back to full speed this close to it
+  rippleLevel: 2.8,
+  toastLife: 2.4,          // s a "LEVEL 1" / "LEVEL 1 COMPLETE" banner stays up
   bobFreq: 11,             // unit march bob speed (rad/s)
   bobHeight: 0.04,         // unit march bob height (world units)
   morphRipple: 0.35,       // s for a formation morph to ripple from center to rim

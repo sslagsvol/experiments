@@ -36,10 +36,12 @@ void main() {
 }`;
 
 export function gateColor(s) {
+  if (s.op === 'level') return COLORS.white;
   return s.op === 'x' ? COLORS.mult : s.op === '/' ? COLORS.div : s.v >= 0 ? COLORS.add : COLORS.sub;
 }
 
 export function gateLabel(s) {
+  if (s.op === 'level') return 'LEVEL ' + s.n;
   if (s.op === 'x') return '×' + s.m.toFixed(1);
   if (s.op === '/') return '÷' + s.d.toFixed(1);
   return (s.v >= 0 ? '+' : '−') + fmt(Math.abs(s.v));
@@ -103,7 +105,8 @@ class Panel {
 }
 
 // A gate is either a pair (L / R panels splitting the track) or a single
-// moving panel (S) that sways side to side; sx is its current center.
+// panel (S): moving (sways side to side) or fixed (authored levels). sx is
+// its current center, sw its width.
 class Gate {
   constructor(scene) {
     this.group = new THREE.Group();
@@ -111,15 +114,21 @@ class Gate {
     const w = CFG.TW - 0.1, h = CFG.GATE_H;
     this.left = new Panel(this.group, -(0.05 + w / 2), w, h);
     this.right = new Panel(this.group, 0.05 + w / 2, w, h);
-    this.single = new Panel(this.group, 0, CFG.MOVING_GATE_WIDTH, h);
+    this.singles = new Map();   // one panel per single-gate width, made on first use
     scene.add(this.group);
   }
 
   get panels() { return this.S ? [this.S] : [this.L, this.R]; }
 
+  get single() {
+    let p = this.singles.get(this.sw);
+    if (!p) { p = new Panel(this.group, 0, this.sw, CFG.GATE_H); this.singles.set(this.sw, p); }
+    return p;
+  }
+
   // Current center of a moving gate (it keeps swaying until crossed).
   moveTo(time) {
-    if (!this.S || this.done) return;
+    if (!this.S || this.done || this.fixed) return;
     const amp = CFG.TW - CFG.MOVING_GATE_WIDTH / 2 - 0.05;
     this.sx = amp * Math.sin(time * CFG.MOVING_GATE_SPEED + this.phase);
   }
@@ -130,8 +139,9 @@ class Gate {
     const fade = this.done ? 0.3 : Math.min(1, (CFG.VIEW_AHEAD + z) / 14);
     const shatter = this.primary ? Math.min(1, (time - this.doneAt) / ANIM.gateShatter) : 0;
     this.left.mesh.visible = this.right.mesh.visible = !this.S;
-    this.single.mesh.visible = !!this.S;
+    for (const p of this.singles.values()) p.mesh.visible = false;
     if (this.S) {
+      this.single.mesh.visible = true;
       this.single.mesh.position.x = this.sx;
       this.single.sync(this.S, fade, this.primary === 'S' ? shatter : 0);
     } else {
@@ -148,10 +158,15 @@ export class GatePool {
     this.active = [];
   }
 
-  // A pair (L, R), or a moving single gate when S is given.
-  acquire(wz, L, R, S = null, phase = 0) {
+  // A pair (L, R), or a single gate when S is given: moving by default, or
+  // fixed at opts.x with opts.width (authored levels). opts.slow slows the
+  // track on its approach.
+  acquire(wz, L, R, S = null, phase = 0, opts = {}) {
     const g = this.free.pop() || new Gate(this.scene);
-    Object.assign(g, { wz, L, R, S, phase, sx: 0, done: false, primary: null, doneAt: 0 });
+    Object.assign(g, {
+      wz, L, R, S, phase, sx: opts.x || 0, sw: opts.width || CFG.MOVING_GATE_WIDTH,
+      fixed: opts.width !== undefined, slow: !!opts.slow, done: false, primary: null, doneAt: 0,
+    });
     g.group.visible = true;
     this.active.push(g);
     return g;
@@ -166,6 +181,6 @@ export class GatePool {
   clear() { while (this.active.length) this.release(this.active[0]); }
 
   invalidate() {
-    for (const g of [...this.active, ...this.free]) { g.left.label = ''; g.right.label = ''; g.single.label = ''; }
+    for (const g of [...this.active, ...this.free]) { g.left.label = ''; g.right.label = ''; for (const p of g.singles.values()) p.label = ''; }
   }
 }
