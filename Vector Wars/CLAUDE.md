@@ -1,6 +1,6 @@
 # Vector Wars
 
-Neon crowd-runner prototype. No build step: plain ES modules + Three.js from a CDN import map. See `PLAN.md` (design as built + roadmap), `CHANGELOG.md` (round-by-round history), `style-guide.html`, and `LEADERBOARD.md`.
+Neon crowd-runner prototype. No build step: plain ES modules + Three.js from a CDN import map. See `PLAN.md` (design as built + roadmap), `CHANGELOG.md` (round-by-round history), and `style-guide.html`.
 
 ## Style guide rule
 

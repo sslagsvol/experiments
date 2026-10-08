@@ -260,5 +260,5 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Stronger parallax:** background grid 9 below the track (was 4), scrolling at ×0.45 and following the camera ×0.6 (`CFG.VOID_*`). "Parallax: classic" on the pause menu restores the old look for comparison.
 - **Grid patterns (experiment):** grid, hex, oblique, triangles, dots, rings on the track and background (`GRID_PATTERNS`, `CFG.GRID_PATTERN`). Pick with the pause-menu Grid button, the G key or `?grid=`; remembered per device.
 - **Keyboard controls:** ← → / A D steering with a ramp and Shift for fast; Space / Enter, R, M, G; hints only after a key press (`CFG.KEY_STEER_*`, `KeyInput` in `input.js`).
-- Restored `LEADERBOARD.md`, which was deleted by accident in the sound-lab commit (`b43c9e4`).
+- `LEADERBOARD.md` stays removed (deleted on purpose in v0.6.1; setup is done). References to it updated.
 - Style guide: six grid-pattern cards, a parallax card, version and keyboard hints on the title and pause cards.

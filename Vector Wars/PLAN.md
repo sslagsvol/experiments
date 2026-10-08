@@ -7,7 +7,7 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 - **Style guide:** `style-guide.html`, every color, sprite, formation, animation and sound. Visual or animation changes must update it (rule in `CLAUDE.md`).
 - **Sound lab:** `sound-lab.html`, every sound with detune (lower, same speed) and stretch (longer, same pitch), globally or per sound (`SFX.tune` / `SFX.stretch`).
 - **History:** `CHANGELOG.md`, the round-by-round log of playtest feedback and what changed.
-- **Leaderboard setup:** `LEADERBOARD.md`.
+- **Leaderboard:** Supabase table `vector_wars_scores`, already set up. The setup notes and SQL were removed in v0.6.1; they're in git history (`git show d02685f:"Vector Wars/LEADERBOARD.md"`).
 
 ---
 
