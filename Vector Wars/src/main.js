@@ -312,6 +312,7 @@ function spawnLevelPiece() {
     if (def.kind === 'sprint') gap = CFG.LEVEL_SPACING_SPRINT;
   } else if (kind === 'e') {
     G.pending.push({ wz, bonus });
+    if (bonus) G.pending.push({ wz: wz + 3, bonus, cluster: def.boss });
     gap = def.kind === 'gauntlet' ? CFG.SEG_GATE + 4 : CFG.SEG_ENEMY;
   } else if (kind === 'boss') {
     G.pending.push({ wz, bonus, boss: def.boss });
@@ -390,11 +391,25 @@ function projectedArmy(wz) {
 
 // Squad size tracks the projected army plus a "par" curve from gates
 // passed, so battles stay a real threat. Tuned in batch E.
-function spawnSquad({ wz, spec, boss }) {
+// n units of one type: a share of the team's headcount (× difficulty).
+const typeCount = (share, lo, hi) => Math.max(lo, Math.min(hi, Math.round(army.N * share * CFG.DIFFICULTY)));
+const only = (key) => ({ back: [], mix: [[key, 1]] });
+
+function spawnSquad({ wz, spec, boss, cluster }) {
   if (boss) {
-    // A mini-boss: enough hp for about BOSS_HP_SECONDS of the strike team's fire.
+    // A mini-boss behind an escort of small units of its own type. It hangs
+    // back, shielded, until the escort is gone; then it advances slowly with
+    // the track stopped: a team in good shape shoots it down before it arrives.
     const shots = Math.min(CFG.FIRE_MAX, CFG.FIRE_BASE + CFG.FIRE_K * Math.sqrt(Math.max(1, army.N))) * fireMul();
-    enemies.spawnBoss(boss, Math.max(12, Math.round(shots * CFG.BOSS_HP_SECONDS * CFG.BOSS_HP_MUL[boss] * CFG.DIFFICULTY)), 0, wz);
+    const escort = enemies.spawnSquad('wall', typeCount(CFG.ESCORT_SHARE[boss], 3, 18), 0, wz - 4, G.rng, G.level, only(boss));
+    const s = enemies.spawnBoss(boss, Math.max(12, Math.round(shots * CFG.BOSS_HP_SECONDS * CFG.BOSS_HP_MUL[boss] * CFG.DIFFICULTY)), 0, wz + 2);
+    s.escort = escort;
+    return;
+  }
+  if (cluster) {
+    // A small cluster of the coming boss's type riding with a bonus squad,
+    // to show what it does before the boss arrives.
+    enemies.spawnSquad('blob', typeCount(CFG.CLUSTER_SHARE[cluster], 2, 9), (G.rng() < 0.5 ? -1 : 1) * CFG.TW * 0.5, wz, G.rng, G.level, only(cluster));
     return;
   }
   if (spec) {
@@ -647,7 +662,8 @@ function bulletTest(x, oldW, newW) {
   const hit = enemies.hitTest(x, oldW, newW);
   if (hit) {
     sparks.emit(x, 0.2, newW, COLORS.enemy, hit.killed ? 3 : 1, 2);
-    if (hit.killed) { G.stats.kills[hit.t.id]++; sfx.play('pop'); } else sfx.play('hit');
+    if (hit.killed) { G.stats.kills[hit.t.id]++; sfx.play('pop'); } else if (!hit.shielded) sfx.play('hit');
+    if (hit.shielded) sfx.play('hit', { pitch: 0.45 });   // dull tick: bounced off the shield
     if (hit.killed && hit.boss) bossDown(hit.s, x, newW);
     else if (hit.killed && hit.s.n === 0) squadWiped(hit.s);
     return true;
@@ -787,7 +803,9 @@ function update(dt, realDt) {
     }
     G.engaged = engaged;
     G.surge = Math.max(0, G.surge - dt * ANIM.surgeDecay);
-    let targetSpeed = close ? 0 : engaged ? ANIM.approachSpeed : 1 + ANIM.surgeBoost * G.surge;
+    // A mini-boss on the move stops the track: it comes to you, slowly.
+    const bossComing = enemies.boss && enemies.boss.charging && !(enemies.boss.escort && enemies.boss.escort.n > 0);
+    let targetSpeed = close || bossComing ? 0 : engaged ? ANIM.approachSpeed : 1 + ANIM.surgeBoost * G.surge;
     // Authored "slow" gates: crawl up to them so the value visibly climbs.
     for (const g of gates.active) {
       const ahead = g.wz - G.dist;

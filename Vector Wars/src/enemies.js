@@ -105,9 +105,10 @@ export class EnemyForce {
     this.geo.setDrawRange(0, 0);
   }
 
-  spawnSquad(kind, n, anchorX, anchorW, rng, squadIndex) {
+  // mixOverride: { back, mix } to force the types (e.g. a cluster of drones).
+  spawnSquad(kind, n, anchorX, anchorW, rng, squadIndex, mixOverride = null) {
     const { pts, halfW } = enemyFormation(kind, Math.min(n, CFG.MAX_PER_SQUAD), rng);
-    const mix = squadMix(kind, squadIndex);
+    const mix = mixOverride || squadMix(kind, squadIndex);
     const lim = Math.max(0, CFG.TW - CFG.ENEMY_EDGE_MARGIN - halfW);
     anchorX = Math.max(-lim, Math.min(lim, anchorX));
     const s = { id: this.nextId++, kind, ax: anchorX, spread: ENEMY_KINDS[kind].spread, units: [], n: 0, charging: false,
@@ -173,10 +174,19 @@ export class EnemyForce {
       if (s.n <= 0) continue;
       // Distance from the army's front row to the squad's nearest unit.
       if (!s.charging && army.N > 0 && s.minW - dist + army.front < CFG.ENEMY_TRIGGER) s.charging = true;
+      // A mini-boss hangs back, BOSS_HOLD ahead of the team, while its escort
+      // still has units; then it advances (slowly) like any charge.
+      const holding = s.boss && s.escort && s.escort.n > 0 && army.N > 0;
       for (const i of s.units) {
         if (!this.alive[i] || this.owner[i] !== s.id) continue;
         this.flash[i] = Math.max(0, this.flash[i] - dt * 6);
         const t = TYPE_LIST[this.type[i]];
+        if (holding) {
+          const hold = dist - army.front + CFG.BOSS_HOLD;
+          if (this.w[i] < hold) this.w[i] = hold;
+          if (t.strafe || t.converge) this.x[i] = clampX(this.x[i] + (army.cx + Math.sin(time * 1.2) * 0.4 - this.x[i]) * Math.min(1, dt * 1.5));
+          continue;
+        }
         if (!s.charging) {
           // Drones hover side to side even while waiting.
           // (Around the squad's fixed anchor; using the live centroid fed back
@@ -227,7 +237,9 @@ export class EnemyForce {
         }
         p[c * 3] = this.x[i];
         const size = t.size * this.big[i];
-        if (s.boss) f += 0.4 + 0.3 * Math.sin(time * 5);   // a mini-boss glows and pulses
+        // A mini-boss glows and pulses; shielded (escort alive) it sits dimmer
+        // and pulses slowly.
+        if (s.boss) f = s.escort && s.escort.n > 0 ? 0.55 + 0.25 * Math.sin(time * 2) + this.flash[i] : f + 0.4 + 0.3 * Math.sin(time * 5);
         p[c * 3 + 1] = 0.14 * size + (s.charging ? Math.abs(Math.sin(time * 13 + i)) * 0.05 * this.big[i] : 0);
         p[c * 3 + 2] = -(this.w[i] - dist);
         sh[c] = t.shape;
@@ -251,8 +263,11 @@ export class EnemyForce {
         if (!this.alive[i] || this.owner[i] !== s.id) continue;
         const ri = r0 * TYPE_LIST[this.type[i]].size * this.big[i] * (this.big[i] > 1 ? 1.3 : 1);   // bosses: a generous hitbox
         if (Math.abs(this.x[i] - x) < ri && this.w[i] >= oldW - ri && this.w[i] <= newW + ri) {
-          this.flash[i] = 1;
           const t = TYPE_LIST[this.type[i]];
+          // A mini-boss is shielded while its escort lives: the bullet is
+          // stopped, but does nothing.
+          if (s.boss && s.escort && s.escort.n > 0) { this.flash[i] = 0.3; return { s, t, killed: false, boss: true, shielded: true }; }
+          this.flash[i] = 1;
           if (--this.hp[i] > 0) return { s, t, killed: false, boss: !!s.boss };
           this.kill(i, s);
           this.bounds(s);

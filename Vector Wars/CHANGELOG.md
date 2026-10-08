@@ -313,3 +313,10 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Bonus reward floor:** survivors rejoin up to 25% of your army or 20 units, whichever is more (`CFG.BONUS_RETURN_MIN`), so a good bonus can rescue a small army.
 - Style guide: ripple strengths, `win` sound note, small-army note on the player unit card.
 
+## Round 31 — v0.9.0 (cont.): boss escorts and clusters (2026-10-08)
+- User: put little versions of the boss in front of the big one; the big one shouldn't reach the player unless they did something wrong; a few clusters of the new enemy through the level to raise the danger and show their powers.
+- **Escort:** the mini-boss arrives behind small units of its own type (`CFG.ESCORT_SHARE` of the team: drone 0.5, bomber 0.2, brute 0.12; 3–18 units). It hangs back `CFG.BOSS_HOLD` (12) ahead of the team, **shielded** (dim, slow pulse; shots stop with a dull tick) until the escort is gone.
+- **Then** the track stops and the boss advances slowly. Bot: careful and even no-aim teams of 30–35 kill it 7–10 units out; a team cut to 8 by the escort barely wins with 4 left.
+- **Clusters:** every bonus squad brings a small cluster of the boss's type (`CFG.CLUSTER_SHARE`; 2–9 units) on one side, so its power shows (the first blast or stomp gets the killcam).
+- `enemies.spawnSquad` takes a type override. Style guide mini-boss card and `LEVELS.md` updated.
+

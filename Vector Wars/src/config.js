@@ -106,6 +106,12 @@ export const CFG = {
   BOSS_SWAY: 0.45,         // × its type's side-to-side sway and turning
   BOSS_HP_MUL: { drone: 0.8, bomber: 1, brute: 1.3 },
   BOSS_HIT: { radius: 1.5, peak: 0.75, share: 0.5 },   // if it reaches the team: area hit, up to half of it
+  BOSS_HOLD: 12,           // the boss hangs back this far ahead of the team while its escort lives
+  // Escort of small boss-type units in front of the boss (it's shielded until
+  // they're gone), and clusters of that type riding with each bonus squad:
+  // this share of the team's headcount, by type.
+  ESCORT_SHARE: { drone: 0.5, bomber: 0.2, brute: 0.12 },
+  CLUSTER_SHARE: { drone: 0.25, bomber: 0.08, brute: 0.06 },
   BONUS_RETURN_CAP: 0.25,  // survivors rejoin your army, at most this share of it (only if the boss died)…
   BONUS_RETURN_MIN: 20,    // …or this many, whichever is more (a good bonus can rescue a small army)
   LEVEL_QUIET: 52,         // empty track after a level gate, so the banner shows with no enemies on screen
