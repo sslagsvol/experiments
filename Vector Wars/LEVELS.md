@@ -132,7 +132,8 @@ The order is fixed. The numbers are drafts, to be tuned by bot play (see section
 - **Bonus levels:** your army waits ("Army N waiting" above the count); a strike team plays small squads between kind + gates, then the mini-boss (health bar at the top, slow advance, sways; if it reaches the team, one big area hit), then a full-width bonus × gate, then the level gate. Kill the boss and the survivors rejoin your army (capped at 25% of it). Lose the whole team and the bonus ends at once: no reward, your army comes back, the run goes on.
 - **Fire rate** rises at every level gate (`CFG.FIRE_LEVELS`, 25% → full by level 10).
 - **World boss and bomb:** not built yet; level 10 is a long finale for now.
-- **Bot run (careful):** all 11 transitions; bosses killed at levels 3, 6 and 9 (hp 28, 68, 138); army 52 → 66 → 174 → 329 → 908 → 870 by level 10.
+- **Bot run (careful), before the difficulty raise:** all 11 transitions; bosses killed at levels 3, 6 and 9; army 52 → 66 → 174 → 329 → 908 → 870 by level 10.
+- **After `CFG.DIFFICULTY` 1.4 (round 30):** careful runs end level 1 at 30–36 and reach about 230 by level 7; one died in the level 5 gauntlet. Bonus reward: up to 25% of the army or 20 units, whichever is more.
 
 ## 8. How to build it
 

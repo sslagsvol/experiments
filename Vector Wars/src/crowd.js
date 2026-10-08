@@ -233,7 +233,7 @@ export class Army {
     // still shows its pattern instead of saturating to white.
     this.pack += (packing(this.N) - this.pack) * Math.min(1, dt * 3);
     this.mat.uniforms.uSize.value = UNIT_SPACING * 1.3 * this.pack;
-    this.mat.uniforms.uColor.value.set(...COLORS.you).multiplyScalar(Math.pow(this.pack, 0.8));
+    this.mat.uniforms.uColor.value.set(...COLORS.you).multiplyScalar(Math.pow(Math.min(1, this.pack), 0.8));   // dim only when packed tight
     const since = time - this.morphT0;
     this.clock += dt * (1 + ANIM.swirlBurst * Math.exp(-since * ANIM.swirlBurstDecay));
     this.shakeAmt = Math.max(0, this.shakeAmt - dt * ANIM.shakeDecay);

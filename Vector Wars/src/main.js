@@ -394,13 +394,13 @@ function spawnSquad({ wz, spec, boss }) {
   if (boss) {
     // A mini-boss: enough hp for about BOSS_HP_SECONDS of the strike team's fire.
     const shots = Math.min(CFG.FIRE_MAX, CFG.FIRE_BASE + CFG.FIRE_K * Math.sqrt(Math.max(1, army.N))) * fireMul();
-    enemies.spawnBoss(boss, Math.max(12, Math.round(shots * CFG.BOSS_HP_SECONDS * CFG.BOSS_HP_MUL[boss])), 0, wz);
+    enemies.spawnBoss(boss, Math.max(12, Math.round(shots * CFG.BOSS_HP_SECONDS * CFG.BOSS_HP_MUL[boss] * CFG.DIFFICULTY)), 0, wz);
     return;
   }
   if (spec) {
     // Authored: grunts only, at a set position; an exact size, or a share of
     // the best-case army (like the random track, by expected damage).
-    const n = spec.threat ? Math.max(8, Math.round(projectedArmy(wz) * spec.threat / mixEst(squadMix(spec.kind, 0)))) : spec.n;
+    const n = Math.round(CFG.DIFFICULTY * (spec.threat ? Math.max(8, projectedArmy(wz) * spec.threat / mixEst(squadMix(spec.kind, 0))) : spec.n));
     enemies.spawnSquad(spec.kind, n, spec.x || 0, wz, G.rng, 0);
     return;
   }
@@ -413,7 +413,7 @@ function spawnSquad({ wz, spec, boss }) {
     const ref = 0.8 * projectedArmy(wz) + 0.2 * par;
     const threat = CFG.ENEMY_THREAT_MIN + G.rng() * (CFG.ENEMY_THREAT_MAX - CFG.ENEMY_THREAT_MIN);
     // Size by strength, not headcount: a squad with brutes or bombers has fewer units.
-    n = Math.round(Math.max(8, ref * threat / mixEst(squadMix(kind, unlockIdx()))));
+    n = Math.round(Math.max(8, ref * threat / mixEst(squadMix(kind, unlockIdx()))) * (CLASSIC ? 1 : CFG.DIFFICULTY));
   }
   enemies.spawnSquad(kind, n, (G.rng() * 2 - 1) * CFG.TW, wz, G.rng, unlockIdx());
   G.enemyIdx++;
@@ -518,7 +518,8 @@ function levelUp(g) {
   shatterSparks(g);
   world.addRipple(army.cx, G.dist, ANIM.rippleLevel, time);
   sparks.ring(army.cx, 0.3, G.dist - army.front, 1.6, COLORS.white, 50);
-  sfx.play('levelUp', { gain: 0.6 + 0.4 * g.S.ch });
+  sfx.play('levelUp', { gain: 0.8 + 0.4 * g.S.ch });
+  setTimeout(() => sfx.play('win'), 380);   // the win blast lands on the crescendo's hit
   if (!G.rampArmy) G.rampArmy = Math.max(30, army.N);   // the ramp starts from the army at the end of level 1
   if (G.bonus) leaveBonus();
   const fireBefore = fireMul();
@@ -546,7 +547,7 @@ function levelUp(g) {
 // BONUS_RETURN_CAP of your army.
 function leaveBonus() {
   const { parked, killed, failed } = G.bonus;
-  const add = killed && !failed ? Math.min(army.N, Math.round(parked * CFG.BONUS_RETURN_CAP)) : 0;
+  const add = killed && !failed ? Math.min(army.N, Math.max(CFG.BONUS_RETURN_MIN, Math.round(parked * CFG.BONUS_RETURN_CAP))) : 0;
   G.bonus = null;
   army.reset();
   spill(army.spawn(parked + add, 0));
@@ -684,7 +685,7 @@ function onHit(t, x, z, leaked, boss = false) {
     G.killcamT = Math.max(G.killcamT, ANIM.killcamHold);
   } else if (t.aoe) {
     // Dense (packed) armies get a slightly smaller radius so kills stay in range.
-    const r = t.aoe.radius * Math.max(0.6, army.pack), w = G.dist - z, c = COLORS[t.color];
+    const r = t.aoe.radius * Math.max(0.6, Math.min(1, army.pack)), w = G.dist - z, c = COLORS[t.color];
     killed = army.killArea(x, z, r, t.aoe.peak, t.aoe.max, unitLost);
     sparks.ring(x, 0.2, w, r, c, 40);
     sparks.emit(x, 0.3, w, c, 30, 5);
@@ -779,10 +780,10 @@ function update(dt, realDt) {
     const close = enemies.threat(G.dist, army, 3) > 0 || time - G.lastContact < 0.4;
     const engaged = close || enemies.battling();
     if (G.engaged && !engaged && army.N > 0) {
-      // Battle won: big ripple from the army as the track lurches forward.
+      // Squad beaten: a small ripple as the track lurches forward. (The big
+      // win ripple and sound are kept for level gates and mini-bosses.)
       G.surge = 1;
-      world.addRipple(army.cx, G.dist, ANIM.rippleWin, time);
-      sfx.play('win');
+      world.addRipple(army.cx, G.dist, ANIM.rippleBattle, time);
     }
     G.engaged = engaged;
     G.surge = Math.max(0, G.surge - dt * ANIM.surgeDecay);

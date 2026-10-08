@@ -49,6 +49,13 @@ export const CFG = {
   // Fire rate grows with progression: level 1 fires at FIRE_LEVELS[0] of the
   // full rate, and each level gate moves one step up (?classic always 1).
   FIRE_LEVELS: [0.25, 0.33, 0.41, 0.5, 0.58, 0.66, 0.75, 0.83, 0.91, 1],
+  // Difficulty: squad sizes (random and authored) and mini-boss hp × this.
+  DIFFICULTY: 1.4,
+  // Small armies: below SMALL_ARMY_FROM units the dots (and their spacing)
+  // grow, reaching SMALL_ARMY_SCALE× at SMALL_ARMY_FULL units or fewer.
+  SMALL_ARMY_FROM: 80,
+  SMALL_ARMY_FULL: 20,
+  SMALL_ARMY_SCALE: 2.5,
   // Every gate takes this many times its listed hits to step (+ / − per +1,
   // × and ÷ per 0.1).
   GATE_DURABILITY: 1.25,
@@ -99,7 +106,8 @@ export const CFG = {
   BOSS_SWAY: 0.45,         // × its type's side-to-side sway and turning
   BOSS_HP_MUL: { drone: 0.8, bomber: 1, brute: 1.3 },
   BOSS_HIT: { radius: 1.5, peak: 0.75, share: 0.5 },   // if it reaches the team: area hit, up to half of it
-  BONUS_RETURN_CAP: 0.25,  // survivors rejoin your army, at most this share of it (only if the boss died)
+  BONUS_RETURN_CAP: 0.25,  // survivors rejoin your army, at most this share of it (only if the boss died)…
+  BONUS_RETURN_MIN: 20,    // …or this many, whichever is more (a good bonus can rescue a small army)
   LEVEL_QUIET: 52,         // empty track after a level gate, so the banner shows with no enemies on screen
   LEVEL_CHARGE_HITS: 60,   // bullets to fill a level gate's charge bar (it soaks them up; the crossing is the crescendo)
   // Keyboard steering: units/s across the track at full hold (after a short
@@ -132,7 +140,7 @@ export const SFX = {
   gateTick: { volume: 0.18, maxRate: 10 }, // a gate's value ticking up from shooting
   maxMult: { volume: 0.8 },                // a × gate reaching its ×3.0 cap
   levelCharge: { volume: 0.08, maxRate: 14 }, // a bullet soaked up by a level gate (louder and higher as it nears)
-  levelUp: { volume: 0.75 },               // crossing a level gate: the crescendo
+  levelUp: { volume: 1.0 },                // crossing a level gate: the crescendo
   blast:   { volume: 0.55, maxRate: 5 },   // bomber explosion
   stomp:   { volume: 0.65, maxRate: 4 },   // brute stomp
   win:     { volume: 0.55 },               // battle won: the blast plus an echoing crackle
@@ -148,6 +156,7 @@ export const ANIM = {
   gateSlowFrom: 20,        // starts slowing this far before the gate (units)
   gateSlowTo: 4,           // back to full speed this close to it
   rippleLevel: 2.8,
+  rippleBattle: 0.7,       // a squad beaten: a small ripple (the big win ripple and sound are kept for level gates and mini-bosses)
   // Killcam: in slow motion, and for a moment at the first bomber blast and
   // first brute stomp of a run, the camera moves in close on the army.
   killcamHold: 1.4,        // s (real time) of the first-blast / first-stomp killcam

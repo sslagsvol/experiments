@@ -304,3 +304,12 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - `LEVELS.md` section 7: the decisions, burn-enemy rendering notes (flame-outline shape, shader flicker, cheap smoke via a trailing ghost point, sampled embers), and World 1 as built. Bot: careful run through all 11 levels, every boss killed.
 - Style guide: mini-boss card, bonus-level HUD card.
 
+## Round 30 — v0.9.0 (cont.): harder, bigger small armies, louder gate (2026-10-08)
+- User playtest: levels too easy, make them 30–50% harder (struggle beats boredom); units 2–3× bigger below about 50; the level-gate sound is too quiet (but liked); the sound and ripple after beating a squad feel out of place, keep them for great moments like a level gate.
+- **Difficulty** (`CFG.DIFFICULTY` 1.4): squad sizes (authored and random) and mini-boss hp × 1.4. Bot (careful): level 1 ends at about 30–36 (was 52), the army reaches about 230 by level 7 (was 908); one careful run died in the level 5 gauntlet.
+- **Small armies grow:** below 80 units the dots and spacing scale up, to 2.5× at 20 or fewer (`CFG.SMALL_ARMY_*`, in `packing()`); area-attack radius and dimming ignore the boost.
+- **Level gate louder:** `levelUp` volume 1.0 (was 0.75), gain 0.8–1.2 with charge, and the `win` blast now lands on its crescendo.
+- **Squad beaten:** a small ripple (`ANIM.rippleBattle` 0.7), no sound; the big ripple and `win` are kept for level gates and mini-bosses.
+- **Bonus reward floor:** survivors rejoin up to 25% of your army or 20 units, whichever is more (`CFG.BONUS_RETURN_MIN`), so a good bonus can rescue a small army.
+- Style guide: ripple strengths, `win` sound note, small-army note on the player unit card.
+

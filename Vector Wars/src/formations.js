@@ -92,6 +92,11 @@ export const UNIT_SPACING = 2 * CFG.TW * CFG.FORMATION_FILL / Math.sqrt(REF);
 // above that the crowd still widens, but more slowly, so CAPACITY units just
 // span the track (98% of its width).
 const PACK_EXP = Math.log(0.98 / CFG.FORMATION_FILL) / Math.log(CAP / REF) - 0.5;
+// Small armies go the other way: below CFG.SMALL_ARMY_FROM units the dots
+// and their spacing grow (up to SMALL_ARMY_SCALE×) so a handful of units
+// still reads as an army.
 export function packing(n) {
-  return n <= REF ? 1 : Math.pow(n / REF, PACK_EXP);
+  if (n > REF) return Math.pow(n / REF, PACK_EXP);
+  const k = Math.min(1, Math.max(0, (CFG.SMALL_ARMY_FROM - n) / (CFG.SMALL_ARMY_FROM - CFG.SMALL_ARMY_FULL)));
+  return 1 + (CFG.SMALL_ARMY_SCALE - 1) * k;
 }
