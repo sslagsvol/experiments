@@ -338,3 +338,7 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Initials entry:** slots 30px apart (was 14), ▲ / letter / ▼ 10px apart, buttons at least 52×44px, ENTER 22px below and centered.
 - Style guide: area-attack card and initials card notes.
 
+## Round 35 — v0.9.0 (cont.): past World 1 gets much harder (2026-10-08)
+- User: once you pass World 1 there needs to be a major difficulty adjustment; it feels like you could go on forever.
+- **Endless (level 10+, story):** squads ×`CFG.ENDLESS_GROWTH` (1.3) bigger every level on top of the normal ramp, the track 5% faster per level (up to ×1.4), and every third level is a gauntlet. Bot: a 1,100-unit army at level 12 met a squad at the 1,500 cap and was wiped out within about 20 seconds.
+

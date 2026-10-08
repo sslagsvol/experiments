@@ -67,8 +67,11 @@ export const LEVELS = {
   9: { kind: 'normal', pieces: 12, div: true, moving: true, split: true },
 };
 export const WORLD_END = 10;   // reaching this level: "World 1 complete", then endless
+// Past World 1 the levels keep coming, and get much harder each time
+// (CFG.ENDLESS_*): every third one is a gauntlet.
 export const ENDLESS = { kind: 'normal', pieces: 8, div: true, moving: true, split: true };
-export const levelDef = (n) => LEVELS[n] || ENDLESS;
+export const ENDLESS_GAUNTLET = { kind: 'gauntlet', pieces: 7, div: true, moving: true, split: true };
+export const levelDef = (n) => LEVELS[n] || (n >= 10 && (n - 10) % 3 === 2 ? ENDLESS_GAUNTLET : ENDLESS);
 
 // Piece patterns: g = gate, e = enemy squad.
 export const PATTERNS = { normal: 'gegeggee', gauntlet: 'eeegee', sprint: 'g' };

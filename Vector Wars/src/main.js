@@ -265,6 +265,9 @@ function spawnBeat() {
 // unleashed by the bonus-level mini-boss before it.
 const unlockIdx = () => CLASSIC() ? (G.enemyIdx >= 1 ? 99 : 0) : G.level;   // Challenge: everything after the first squad
 
+// Past World 1, squads grow ENDLESS_GROWTH× per level.
+const endlessMul = () => G.level >= WORLD_END ? Math.pow(CFG.ENDLESS_GROWTH, G.level - WORLD_END + 1) : 1;
+
 // Fire rate for the current level (it grows at each level gate).
 const fireMul = () => CLASSIC() ? 1 : CFG.FIRE_LEVELS[Math.min(CFG.FIRE_LEVELS.length - 1, G.level - 1)];
 
@@ -449,7 +452,7 @@ function spawnSquad({ wz, spec, boss, cluster, bonus }) {
     const ref = 0.8 * projectedArmy(wz) + 0.2 * par;
     const threat = CFG.ENEMY_THREAT_MIN + G.rng() * (CFG.ENEMY_THREAT_MAX - CFG.ENEMY_THREAT_MIN);
     // Size by strength, not headcount: a squad with brutes or bombers has fewer units.
-    n = Math.round(Math.max(8, ref * threat / mixEst(squadMix(kind, unlockIdx()))) * (CLASSIC() ? 1 : CFG.DIFFICULTY) * (bonus ? CFG.BONUS_SQUAD_SCALE : 1));
+    n = Math.round(Math.max(8, ref * threat / mixEst(squadMix(kind, unlockIdx()))) * (CLASSIC() ? 1 : CFG.DIFFICULTY * endlessMul()) * (bonus ? CFG.BONUS_SQUAD_SCALE : 1));
   }
   enemies.spawnSquad(kind, n, (G.rng() * 2 - 1) * CFG.TW, wz, G.rng, unlockIdx());
   G.enemyIdx++;
@@ -562,6 +565,7 @@ function levelUp(g) {
   G.level = g.S.n;
   const def = levelDef(G.level);
   G.levelSpeed = def.speed || 1;
+  if (G.level >= WORLD_END) G.levelSpeed = Math.min(CFG.ENDLESS_SPEED_MAX, 1 + CFG.ENDLESS_SPEED * (G.level - WORLD_END + 1));
   const fireUp = fireMul() > fireBefore;
   if (def.kind === 'bonus') {
     // Bonus level: your army waits; a small strike team goes in. The banner

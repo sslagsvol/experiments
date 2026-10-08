@@ -126,7 +126,7 @@ The order is fixed. The numbers are drafts, to be tuned by bot play (see section
 | 7 | gauntlet (7) | **brutes** — massive battles |
 | 8 | sprint (8 gates, track ×1.5) | |
 | 9 | finale (12) | |
-| 10+ | endless | "World 1 complete" |
+| 10+ | endless, much harder | "World 1 complete"; squads ×1.3 bigger every level, track +5% faster per level (to ×1.4), every third level a gauntlet |
 
 - **Bonus levels:** your army waits ("Army N waiting" above the count); a strike team plays small squads between kind + gates, each squad joined by a small **cluster of the coming boss's type** (showing its power: drones weave, bombers blast, brutes stomp). Then the mini-boss arrives behind an **escort of small units of its own type**; it hangs back, **shielded**, until the escort is gone, then the track stops and it advances slowly (health bar at the top). A team in good shape kills it before it arrives; if it reaches the team, one big area hit. Then a full-width bonus × gate, then the level gate. Kill the boss and the survivors rejoin your army (capped at 25% of it). Lose the whole team and the bonus ends at once: no reward, your army comes back, the run goes on.
 - **Fire rate** rises at every level gate (`CFG.FIRE_LEVELS`, 25% → full by level 10).

@@ -50,6 +50,12 @@ export const CFG = {
   // full rate, and each level gate moves one step up (?classic always 1).
   FIRE_LEVELS: [0.25, 0.4, 0.55, 0.7, 0.85, 1],
   CHALLENGE_SPEED: 1.15,   // Challenge mode: track speed ×
+  // Past World 1 (story): each level's squads are ENDLESS_GROWTH× bigger than
+  // the last, and the track speeds up ENDLESS_SPEED per level (up to
+  // ENDLESS_SPEED_MAX). Nobody should be able to go on forever.
+  ENDLESS_GROWTH: 1.3,
+  ENDLESS_SPEED: 0.05,
+  ENDLESS_SPEED_MAX: 1.4,
   // Difficulty: squad sizes (random and authored) and mini-boss hp × this.
   DIFFICULTY: 1.4,
   // Small armies: below SMALL_ARMY_FROM units the dots (and their spacing)
