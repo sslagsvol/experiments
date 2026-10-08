@@ -262,3 +262,8 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Keyboard controls:** ← → / A D steering with a ramp and Shift for fast; Space / Enter, R, M, G; hints only after a key press (`CFG.KEY_STEER_*`, `KeyInput` in `input.js`).
 - `LEADERBOARD.md` stays removed (deleted on purpose in v0.6.1; setup is done). References to it updated.
 - Style guide: six grid-pattern cards, a parallax card, version and keyboard hints on the title and pause cards.
+
+## Round 25: level progression plan (2026-10-08)
+- Planning only. New `LEVELS.md`: lessons vs levels; level 1 packs the first four lessons in the user's order (a few grunts, a centered half-width +1 gate, an easy wave, −10 / −1 reds, harder waves); army carries over; **bonus levels** with a forced small strike team end in a mini-boss (a giant next-enemy-type) that unleashes that type, worth more points, with survivors rejoining through a capped bonus × gate; a world boss earns the bomb. World 1 laid out as 7 levels + 3 bonus levels. Open questions: merging units at level-up, failing a level or bonus, leaderboard, stars, unleashed scoring.
+- `PLAN.md` item 6 now points to it.
+
