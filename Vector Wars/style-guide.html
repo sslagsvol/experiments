@@ -93,9 +93,9 @@
   <p class="sg-sub">Titles use <code>Audiowide</code>; everything else uses <code>Share Tech Mono</code>, including the gate labels drawn into textures (<code>FONT</code> in <code>src/gates.js</code>). These use the real game classes.</p>
   <div class="grid wide">
     <div class="card">
-      <div class="stage"><div class="overlay"><h1>Vector Wars</h1><p class="sub">Drag to steer · Shoot gates to raise them</p><p class="blink">Touch to start</p><p class="kb-hint" style="display:block">← → or A D steer · Shift fast · P pause · M mute</p><div class="version"></div></div></div>
-      <h3>Title screen</h3><div class="var">.overlay h1 · .overlay .sub · .blink · .kb-hint · .version</div>
-      <div class="meta">Audiowide clamp(40px, 13vw, 76px), --you glow · blink 1.2s steps(2)</div>
+      <div class="stage"><div class="overlay"><h1>Vector Wars</h1><p class="sub">Drag to steer · Shoot gates to raise them</p><div id="title-modes"><button type="button" class="btn primary">Story mode</button><button type="button" class="btn">Challenge mode</button><p class="mode-note">Challenge: every enemy, fast, for high scores</p></div><p class="kb-hint" style="display:block">Space story · C challenge · ← → or A D steer · P pause · M mute</p><div class="version"></div></div></div>
+      <h3>Title screen</h3><div class="var">.overlay h1 · .overlay .sub · #title-modes .btn(.primary) · .mode-note · .kb-hint · .version</div>
+      <div class="meta">Audiowide clamp(40px, 13vw, 76px), --you glow · two mode buttons: Story (the lime primary .btn: levels) and Challenge (the classic fast random track, nearly every enemy from the 2nd squad, track ×${CFG.CHALLENGE_SPEED}, for high scores) · taps elsewhere don't start a run</div>
     </div>
     <div class="card">
       <div class="stage"><div class="overlay"><h2>Swarm lost</h2>
@@ -112,7 +112,7 @@
     <div class="card">
       <div class="stage" style="padding:16px 8px"><div id="sg-entry"></div></div>
       <h3>Initials entry (try it)</h3><div class="var">InitialsEntry · CHARSET · .slot.cur · .enter</div>
-      <div class="meta">3 slots · ▲▼ cycle A–Z, 0–9 and ! ? . - * # @ &amp; $ % + = &lt; &gt; / _ space (hold to repeat) · tap a slot to select · keyboard typing, arrows, Backspace, Enter · "New high score" flashes gold/pink</div>
+      <div class="meta">3 slots · ▲▼ cycle A–Z, 0–9 and ! ? . - * # @ &amp; $ % + = &lt; &gt; / _ space (hold to repeat) · tap a slot to select · keyboard typing, arrows, Backspace, Enter · "New high score" flashes gold/pink · spaced for thumbs: slots 30px apart, ▲ / letter / ▼ 10px apart, buttons at least 52×44px, ENTER 22px below</div>
     </div>
     <div class="card">
       <div class="stage hud-stage"><div id="hud"><div id="dist"><span id="score">24,869</span><span id="rank-badge"></span></div><button id="pause-btn" class="show" type="button" aria-label="Pause (demo)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button><div id="best">Hi 24,869</div><button id="mute" type="button" aria-label="Mute sound (demo)"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="on" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/><path class="x" d="M16 9l5 6M21 9l-5 6"/></svg></button><div id="army-hud"><div id="gain" class="delta live">+371</div><div id="count">640</div><div id="loss" class="delta live">−24</div></div></div></div>
@@ -129,18 +129,23 @@
       <div class="stage"><div id="pause" class="overlay"><h1 class="paused">Paused</h1>
         <div class="pause-tabs"><button type="button" data-tab="run" class="on">This run</button><button type="button" data-tab="board">High scores</button></div>
         <div class="pause-body"><div id="sg-pause-recap" class="recap"></div><div class="pause-board"><div id="sg-pause-board"></div><div id="pause-pace">On pace for 6th place</div></div></div>
-        <div class="pause-actions"><button type="button" class="btn primary">Continue</button><button type="button" class="btn">Restart</button></div>
-        <p class="kb-hint" style="display:block">Space continue · R restart · G grid</p>
+        <div class="pause-actions"><button type="button" class="btn primary">Continue</button><button type="button" class="btn">Quit</button></div>
+        <p class="kb-hint" style="display:block">Space continue · Q quit · G grid</p>
         <div class="pause-lab"><button type="button">Grid: grid</button><button type="button">Parallax: deep</button></div>
         <div class="version"></div></div></div>
       <h3>Pause menu</h3><div class="var">#pause · h1.paused · .pause-tabs · .pause-body(.show-board) · #pause-pace · .btn(.primary)</div>
-      <div class="meta">Opened by the pause button, Esc / P, or leaving the tab mid-run · the recap so far ("Score so far") and the board, with where this score would place · phones switch between them with tabs; 680px+ shows both side by side · "Paused" breathes over 2.4s · Continue is the big lime CTA, Restart starts a fresh run at once · keyboard hints (.kb-hint) appear only after a key press (body.kb) · beta experiments (.pause-lab, dashed): grid pattern and parallax · version along the bottom, 11px at 40%</div>
+      <div class="meta">Opened by the pause button, Esc / P, or leaving the tab mid-run · the recap so far ("Score so far") and the board, with where this score would place · phones switch between them with tabs; 680px+ shows both side by side · "Paused" breathes over 2.4s · Continue is the big lime CTA; Quit ends the run and goes back to the title screen · keyboard hints (.kb-hint) appear only after a key press (body.kb) · beta experiments (.pause-lab, dashed): grid pattern and parallax · version along the bottom, 11px at 40%</div>
     </div>
     <div class="card">
       <div class="stage hud-stage"><div id="hud"><div id="toast" class="sg-toast"><div class="t1">Level 1 complete</div><div class="t2">150 units · on to level 2</div></div></div></div>
       <div class="controls"><button type="button" id="sg-toast-replay">Replay</button></div>
-      <h3>Level banner</h3><div class="var">hud.toast() · #toast .t1 · .t2 · @keyframes toast</div>
-      <div class="meta">Audiowide clamp(30px, 10vw, 54px) white with --you glow, 24% down the screen · sub line 15px · sweeps in (letter-spacing .3em → 0) and fades over 2.4s (ANIM.toastLife) · "Level 1" at the start of a run, "Level 1 complete" at a level gate</div>
+      <h3>Level banner</h3><div class="var">hud.toast() · hud.levelBanner() · #toast .t1 · .t2 · .t3 · @keyframes toast, toast-foe</div>
+      <div class="meta">Audiowide clamp(30px, 10vw, 54px) white with --you glow, 24% down the screen · sub line 15px · sweeps in (letter-spacing .3em → 0) and fades over 2.4s (ANIM.toastLife) · "Level 1" at the start of a run · after a level gate, one short line ("Attack speed increased") and, when the level adds an enemy type, a single 64px idle sprite of it with no words, fading in at ~0.9s (banner 3.1s) · the track is empty for CFG.LEVEL_QUIET units after the gate so nothing else is on screen</div>
+    </div>
+    <div class="card">
+      <div class="stage hud-stage"><div id="hud"><div id="boss-bar" class="on" style="top:20px"><div class="fill" style="width:62%"></div></div><div id="parked" style="bottom:52px">Army 340 waiting</div><div id="army-hud" style="visibility:visible"><div id="count">25</div></div></div></div>
+      <h3>Bonus level HUD</h3><div class="var">#boss-bar (.on) .fill · #parked · hud.setBoss() · setParked()</div>
+      <div class="meta">Boss bar: min(260px, 60vw) × 8px, --enemy border and fill with glow, under the score; fades in while a mini-boss is alive and shrinks as it takes hits · waiting army: 13px uppercase --you at 70%, just above the strike team's count</div>
     </div>
     <div class="card">
       <div class="stage danger-stage"><div id="danger" style="opacity:1"></div><div id="hud"><div id="army-hud"><div id="count" class="danger">68</div><div id="loss" class="delta live">−214</div></div></div></div>
@@ -356,7 +361,7 @@ demo($('type-labels'), (ctx, w, h) => {
 const PX = 60; // pixels per world unit in close-up element cards
 function elementCard(opts, draw) { demo(card($('elements'), opts), draw); }
 
-elementCard({ title: 'Player unit', vars: 'COLORS.you · pointMaterial shape 0', meta: `soft glow dot · size UNIT_SPACING × 1.3 = ${(UNIT_SPACING * 1.3).toFixed(3)}`, note: 'Shown much larger than in game. Dense crowds overlap into white-hot cores.' }, (ctx, w, h, t) => {
+elementCard({ title: 'Player unit', vars: 'COLORS.you · pointMaterial shape 0', meta: `soft glow dot · size UNIT_SPACING × 1.3 = ${(UNIT_SPACING * 1.3).toFixed(3)}`, note: `Shown much larger than in game. Dense crowds overlap into white-hot cores. Small armies grow: below ${CFG.SMALL_ARMY_FROM} units the dots and their spacing scale up, to ${CFG.SMALL_ARMY_SCALE}× at ${CFG.SMALL_ARMY_FULL} or fewer (packing()).` }, (ctx, w, h, t) => {
   ctx.globalCompositeOperation = 'lighter';
   dot(ctx, w * 0.3, h / 2, 90, COLORS.you);
   for (let i = 0; i < 19; i++) { const r = Math.sqrt(i + 0.5) * 9, a = i * 2.39996; dot(ctx, w * 0.72 + r * Math.cos(a), h / 2 + r * Math.sin(a) * 0.85, 16, COLORS.you); }
@@ -372,7 +377,7 @@ for (const [title, s, v] of [
   ['Multiply gate', { op: 'x', m: 1.4, ch: 0.55 }, `COLORS.mult · rare (${Math.round(CFG.GATE_MIX.mult * 100)}% of gates)`],
   ['Divide gate', { op: '/', d: 2.5, ch: 0.3 }, `COLORS.div · ${Math.round(CFG.GATE_MIX.div * 100)}% of gates`],
 ]) {
-  elementCard({ title, vars: v, meta: `panel ${(CFG.TW - 0.1).toFixed(2)} × ${CFG.GATE_H} · border, faint fill, value text`, note: s.op === '/' ? `Starts at ÷2.0, ÷2.5 or ÷3.0. Shooting walks it down ${CFG.MULT_STEP} at a time; at ÷1.0 it flips into a ×1.0 gate and keeps climbing. Steps near ÷3 cost the most hits. A pair never has two bad gates.` : s.op === 'x' ? `Starts at ×${CFG.MULT_START.toFixed(1)} (does nothing). Shooting fills the bar; each fill adds ${CFG.MULT_STEP}, up to ×${CFG.MULT_MAX}. Higher steps take more hits.` : `Shooting fills the bar; every ${CFG.ADD_HITS_PER_STEP} hits add +1. Color flips when the value crosses zero.` }, (ctx, w, h) => {
+  elementCard({ title, vars: v, meta: `panel ${(CFG.TW - 0.1).toFixed(2)} × ${CFG.GATE_H} · border, faint fill, value text`, note: s.op === '/' ? `Starts at ÷2.0, ÷2.5 or ÷3.0. Shooting walks it down ${CFG.MULT_STEP} at a time; at ÷1.0 it flips into a ×1.0 gate and keeps climbing. Steps near ÷3 cost the most hits. A pair never has two bad gates.` : s.op === 'x' ? `Starts at ×${CFG.MULT_START.toFixed(1)} (does nothing). Shooting fills the bar; each fill adds ${CFG.MULT_STEP}, up to ×${CFG.MULT_MAX}. Higher steps take more hits.` : `Shooting fills the bar; every ${CFG.ADD_HITS_PER_STEP * CFG.GATE_DURABILITY} hits add +1. Color flips when the value crosses zero.` }, (ctx, w, h) => {
     const gw = Math.min(w * 0.6, 170), gh = gw * CFG.GATE_H / (CFG.TW - 0.1);
     gate(ctx, (w - gw) / 2, (h - gh) / 2, gw, gh, { f: 0, ...s });
   });
@@ -404,7 +409,7 @@ elementCard({ title: 'Fixed single gate', vars: 'levels.js single · width · sl
   vline(ctx, x0, h - 10, x0, 10, COLORS.rail, 2); vline(ctx, x0 + tw, h - 10, x0 + tw, 10, COLORS.rail, 2);
   gate(ctx, x0 + (tw - gw) / 2, h / 2 - gh / 2, gw, gh, { op: '+', v: 23, ch: 0.5, f: 0 });
 });
-elementCard({ title: 'Level gate', vars: "levels.js levelGate · gate op 'level' · COLORS.white", meta: `full width, can't be shot (bullets pass through) or dodged · crossing: ripple ${ANIM.rippleLevel} (the biggest), white spark ring, the maxMult sound, and the "Level complete" banner`, note: 'Ends a level. After level 1 the track goes back to random, ramping up linearly from the army you finished with (CFG.RAMP_GATE, RAMP_PAR).' }, (ctx, w, h) => {
+elementCard({ title: 'Level gate', vars: "levels.js levelGate · gate op 'level' · COLORS.white", meta: `full width, can't be shot (bullets pass through) or dodged · crossing: ripple ${ANIM.rippleLevel} (the biggest), white spark ring, the maxMult sound, and the "Level complete" banner`, note: 'Ends a level. It soaks up bullets (CFG.LEVEL_CHARGE_HITS to fill its bar) with a quiet levelCharge blip that rises as it nears; crossing it plays levelUp, louder the more it charged. After level 1 a level gate comes every CFG.LEVEL_EVERY pieces; each raises the fire rate (CFG.FIRE_LEVELS) and levels 2–4 each add an enemy type (UNLOCK_AT).' }, (ctx, w, h) => {
   const tw = w * 0.8, x0 = (w - tw) / 2, gh = tw * 0.5 * CFG.GATE_H / CFG.TW;
   vline(ctx, x0, h - 10, x0, 10, COLORS.rail, 2); vline(ctx, x0 + tw, h - 10, x0 + tw, 10, COLORS.rail, 2);
   gate(ctx, x0 + 2, h / 2 - gh / 2, tw - 4, gh, { op: 'level', n: 2, ch: 0, f: 0 });
@@ -457,7 +462,7 @@ elementCard({ title: 'Background parallax', vars: 'CFG.VOID_DEPTH · VOID_SCROLL
   // Two layers: the track lines move at full speed, the background at VOID_SCROLL and smaller.
   ctx.save(); ctx.globalAlpha = 0.45;
   ctx.scale(0.6, 0.6); drawPattern(ctx, w / 0.6, h / 0.6, t * CFG.VOID_SCROLL, 'grid'); ctx.restore();
-  ctx.fillStyle = css(COLORS.bg); ctx.fillRect(w * 0.3, 0, w * 0.4, h);
+  ctx.fillStyle = '#04051a'; ctx.fillRect(w * 0.3, 0, w * 0.4, h);   // the track (COLORS.bg is a hex number, so no css())
   ctx.save(); ctx.beginPath(); ctx.rect(w * 0.3, 0, w * 0.4, h); ctx.clip(); drawPattern(ctx, w, h, t, 'grid'); ctx.restore();
   vline(ctx, w * 0.3, 0, w * 0.3, h, COLORS.rail, 2); vline(ctx, w * 0.7, 0, w * 0.7, h, COLORS.rail, 2);
 });
@@ -506,6 +511,14 @@ for (const [key, t] of Object.entries(ENEMY_TYPES)) {
     const dx = t.strafe ? Math.sin(time * 2.5) * w * 0.18 : 0, flash = (time % 2) < 0.12 ? 1 : 0;
     enemyShape(ctx, w * 0.3 + dx * 0.3, h / 2, 34 * t.size, t, time, flash);
     for (let i = 0; i < 9; i++) enemyShape(ctx, w * 0.62 + (i % 3) * 16 * Math.sqrt(t.size) + dx * 0.3, h / 2 - 16 + Math.floor(i / 3) * 16 * Math.sqrt(t.size), 13 * t.size, t, time + i);
+  });
+}
+// Mini-bosses (bonus levels): one giant unit of the next enemy type.
+{
+  const cv = card($('enemy-types'), { title: 'Mini-boss', vars: `enemies.spawnBoss · CFG.BOSS_SIZE ${CFG.BOSS_SIZE} · BOSS_SPEED · BOSS_SWAY · BOSS_HP_SECONDS · BOSS_HIT`, meta: `${CFG.BOSS_SIZE}× its type's size, glows and pulses · advances at ×${CFG.BOSS_SPEED} speed, sways ×${CFG.BOSS_SWAY} · hp = the strike team's shots/s × ${CFG.BOSS_HP_SECONDS}s × (drone ${CFG.BOSS_HP_MUL.drone}, bomber ${CFG.BOSS_HP_MUL.bomber}, brute ${CFG.BOSS_HP_MUL.brute}) · if it reaches the team: one area hit, up to ${CFG.BOSS_HIT.share * 100}% · health bar at the top (#boss-bar)`, note: `Giant drone (level 3), giant bomber (6), giant brute (9). It arrives behind an escort of small units of its type (ESCORT_SHARE of the team: drone ${CFG.ESCORT_SHARE.drone}, bomber ${CFG.ESCORT_SHARE.bomber}, brute ${CFG.ESCORT_SHARE.brute}) and hangs back ${CFG.BOSS_HOLD} units ahead, shielded (dim, slow pulse; shots tick off) until they're gone. Then the track stops and it advances slowly: a team in good shape kills it before it arrives. Clusters of its type ride with each bonus squad first (CLUSTER_SHARE). A wall of grunts (SCREEN_SHARE ${CFG.SCREEN_SHARE}) walks in front of every cluster and escort, soaking up shots so the new type gets close enough to show its power. Killing it unleashes its type and lets the survivors rejoin your army; a killcam and a big burst mark the kill.` });
+  demo(cv, (ctx, w, h, time) => {
+    ctx.globalCompositeOperation = 'lighter';
+    ['drone', 'bomber', 'brute'].forEach((k, i) => enemyShape(ctx, w * (0.2 + i * 0.3), h / 2, 26 * ENEMY_TYPES[k].size * (1.4 + 0.08 * Math.sin(time * 5)), ENEMY_TYPES[k], time, 0.3 + 0.2 * Math.sin(time * 5)));
   });
 }
 
@@ -571,15 +584,15 @@ animCard({ title: 'March bob', vars: 'ANIM.bobFreq · bobHeight', meta: `|sin(${
     for (let i = 0; i < 14; i++) { const y = base - Math.abs(Math.sin(t * ANIM.bobFreq + i * 1.7)) * ANIM.bobHeight * PX * 8; dot(ctx, 20 + i * (w - 40) / 13, y, 22, COLORS.you); }
   });
 
-animCard({ title: 'Gate hit flash and charge', vars: 'ANIM.gateFlashDecay · CFG.ADD_HITS_PER_STEP · MULT_STEP · multHitsForStep()', meta: `flash 1 → 0 at ${ANIM.gateFlashDecay}/s · + / −: 1 per ${CFG.ADD_HITS_PER_STEP} hits · ×: +${CFG.MULT_STEP} per ${CFG.MULT_HITS_BASE}–${multHitsForStep(CFG.MULT_MAX - 0.1)} hits (more as it climbs), ×${CFG.MULT_START.toFixed(1)} → ×${CFG.MULT_MAX}`, note: 'Bullets fill each gate bar; the − gate climbs until it flips to +.', tall: true },
+animCard({ title: 'Gate hit flash and charge', vars: 'ANIM.gateFlashDecay · CFG.ADD_HITS_PER_STEP · MULT_STEP · multHitsForStep()', meta: `flash 1 → 0 at ${ANIM.gateFlashDecay}/s · + / −: 1 per ${CFG.ADD_HITS_PER_STEP * CFG.GATE_DURABILITY} hits · ×: +${CFG.MULT_STEP} per ${CFG.MULT_HITS_BASE * CFG.GATE_DURABILITY}–${multHitsForStep(CFG.MULT_MAX - 0.1) * CFG.GATE_DURABILITY} hits (more as it climbs; all × CFG.GATE_DURABILITY ${CFG.GATE_DURABILITY}), ×${CFG.MULT_START.toFixed(1)} → ×${CFG.MULT_MAX}`, note: 'Bullets fill each gate bar; the − gate climbs until it flips to +.', tall: true },
   (ctx, w, h, t, dt, st) => {
     if (!st.a) { st.a = { op: '+', v: -4, ch: 0, f: 0 }; st.b = { op: 'x', m: CFG.MULT_START, ch: 0, f: 0 }; st.acc = 0; st.hold = 0; }
     st.acc += dt;
     while (st.acc > 0.06) {
       st.acc -= 0.06;
-      st.a.ch = (st.a.ch || 0) + 1 / CFG.ADD_HITS_PER_STEP; st.a.f = 1;
+      st.a.ch = (st.a.ch || 0) + 1 / (CFG.ADD_HITS_PER_STEP * CFG.GATE_DURABILITY); st.a.f = 1;
       if (st.a.ch >= 0.999) { st.a.ch = 0; st.a.v++; if (st.a.v > 6) st.a.v = -4; }
-      if (st.b.m < CFG.MULT_MAX - 1e-6) { st.b.ch += 1 / multHitsForStep(st.b.m); st.b.f = 1; if (st.b.ch >= 0.999) { st.b.ch = 0; st.b.m = Math.round((st.b.m + CFG.MULT_STEP) * 10) / 10; } }
+      if (st.b.m < CFG.MULT_MAX - 1e-6) { st.b.ch += 1 / (multHitsForStep(st.b.m) * CFG.GATE_DURABILITY); st.b.f = 1; if (st.b.ch >= 0.999) { st.b.ch = 0; st.b.m = Math.round((st.b.m + CFG.MULT_STEP) * 10) / 10; } }
       else if ((st.hold += 0.06) > 1.5) { st.b.m = CFG.MULT_START; st.b.ch = 0; st.hold = 0; }
     }
     for (const g of [st.a, st.b]) g.f = Math.max(0, g.f - dt * ANIM.gateFlashDecay);
@@ -589,7 +602,7 @@ animCard({ title: 'Gate hit flash and charge', vars: 'ANIM.gateFlashDecay · CFG
     for (let i = 0; i < 10; i++) { const x = w / 2 + (i < 5 ? -gw / 2 - 4 : gw / 2 + 4) + ((i % 5) - 2) * 10, y = gy + gh + ((t * 300 + i * 23) % (h - gy - gh)); vline(ctx, x, y, x, y + 14, COLORS.bullet, 1.5); }
   }, {});
 
-animCard({ title: 'Grid ripple', vars: 'ANIM.rippleSpeed · rippleDecay · rippleLife · rippleDepth · rippleWidth · ripple*', meta: `ring ${ANIM.rippleSpeed} units/s, ${ANIM.rippleWidth} wide · fade e^(−${ANIM.rippleDecay}t) · ${ANIM.rippleLife}s life · dips the floor ${ANIM.rippleDepth} × strength (capped at 2.5) · strengths: battle won ${ANIM.rippleWin}, gate ${ANIM.rippleGate}, squad wiped ${ANIM.rippleWipe}, bomber blast ${ANIM.rippleBlast}, brute stomp ${ANIM.rippleStomp}, enemy hit ${ANIM.rippleHit}, army lost ${ANIM.rippleDeath}`, note: 'Top-down sketch; in game the floor visibly bends down into a rolling wave. Shown at gate strength.', tall: true },
+animCard({ title: 'Grid ripple', vars: 'ANIM.rippleSpeed · rippleDecay · rippleLife · rippleDepth · rippleWidth · ripple*', meta: `ring ${ANIM.rippleSpeed} units/s, ${ANIM.rippleWidth} wide · fade e^(−${ANIM.rippleDecay}t) · ${ANIM.rippleLife}s life · dips the floor ${ANIM.rippleDepth} × strength (capped at 2.5) · strengths: level gate ${ANIM.rippleLevel}, mini-boss down ${ANIM.rippleWin}, squad beaten ${ANIM.rippleBattle}, gate ${ANIM.rippleGate}, squad wiped ${ANIM.rippleWipe}, bomber blast ${ANIM.rippleBlast}, brute stomp ${ANIM.rippleStomp}, enemy hit ${ANIM.rippleHit}, army lost ${ANIM.rippleDeath}`, note: 'Top-down sketch; in game the floor visibly bends down into a rolling wave. Shown at gate strength.', tall: true },
   (ctx, w, h, t) => {
     const s = topDown(w), age = t % 2.2, cx = w / 2, cy = h * 0.6;
     const r = age * ANIM.rippleSpeed * s, fade = Math.exp(-age * ANIM.rippleDecay);
@@ -597,7 +610,7 @@ animCard({ title: 'Grid ripple', vars: 'ANIM.rippleSpeed · rippleDecay · rippl
     for (let gx = -CFG.TW; gx <= CFG.TW + 1e-6; gx += 0.4) { ctx.strokeStyle = css(COLORS.grid, 0.5); ctx.beginPath(); ctx.moveTo(cx + gx * s, 0); ctx.lineTo(cx + gx * s, h); ctx.stroke(); }
     for (let gz = -10; gz <= 10; gz++) { ctx.strokeStyle = css(COLORS.grid, 0.5); ctx.beginPath(); ctx.moveTo(cx - CFG.TW * s, cy + gz * s); ctx.lineTo(cx + CFG.TW * s, cy + gz * s); ctx.stroke(); }
     ctx.save(); ctx.beginPath(); ctx.rect(cx - CFG.TW * s, 0, 2 * CFG.TW * s, h); ctx.clip();
-    for (const [lw, a] of [[26 * ANIM.rippleWidth, 0.14], [9 * ANIM.rippleWidth, 0.4], [3, 0.95]]) { ctx.strokeStyle = `rgba(150,110,255,${a * fade})`; ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke(); }
+    for (const [lw, a] of [[26 * ANIM.rippleWidth, 0.14], [9 * ANIM.rippleWidth, 0.4], [3, 0.95]]) { ctx.strokeStyle = `rgba(150,110,255,${a * fade})`; ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(cx, cy, Math.max(0, r), 0, Math.PI * 2); ctx.stroke(); }
     ctx.restore(); rails(ctx, w, h, s);
   });
 
@@ -667,7 +680,7 @@ const SLOW_T = 8, SLOW = { danger: [], scale: [], vignette: [] };
     SLOW.vignette.push(Math.min(1, Math.max(0, (danger - 0.4) / (ANIM.slowMoThreshold - 0.4))));
   }
 }
-animCard({ title: 'Slow motion near defeat', vars: 'ANIM.slowMoThreshold · slowMoScale · slowMoIn · slowMoOut', meta: `danger = incoming enemy strength ÷ army · at ≥ ${ANIM.slowMoThreshold}, time eases to ×${ANIM.slowMoScale} over ~${ANIM.slowMoIn}s, back over ~${ANIM.slowMoOut}s · steering stays real-time · <b>breaking a top-3 score</b> (3rd, 2nd, then 1st; once each per run): when the score is within ${ANIM.recordLead}s of distance points of that place, time eases to ×${ANIM.recordScale} over ~${ANIM.recordIn}s, holds ${ANIM.recordHold}s after passing it (max ${ANIM.recordMax}s), then returns to full speed, with no vignette`, note: 'Danger (pink, dashed line = threshold) and time scale (cyan). The frame edge shows the vignette.', tall: true },
+animCard({ title: 'Slow motion near defeat', vars: 'ANIM.slowMoThreshold · slowMoScale · slowMoIn · slowMoOut', meta: `danger = incoming enemy strength ÷ army · at ≥ ${ANIM.slowMoThreshold}, time eases to ×${ANIM.slowMoScale} over ~${ANIM.slowMoIn}s, back over ~${ANIM.slowMoOut}s · steering stays real-time · <b>killcam</b>: in danger slow motion, and for ${ANIM.killcamHold}s at the first bomber blast and first brute stomp of a run (time ×${ANIM.killcamScale}), the camera moves in close on the army (in ~${ANIM.killcamIn}s, out ~${ANIM.killcamOut}s) · <b>breaking a top-3 score</b> (3rd, 2nd, then 1st; once each per run): when the score is within ${ANIM.recordLead}s of distance points of that place, time eases to ×${ANIM.recordScale} over ~${ANIM.recordIn}s, holds ${ANIM.recordHold}s after passing it (max ${ANIM.recordMax}s), then returns to full speed, with no vignette`, note: 'Danger (pink, dashed line = threshold) and time scale (cyan). The frame edge shows the vignette.', tall: true },
   (ctx, w, h, t) => {
     const i = Math.floor(((t % SLOW_T) / SLOW_T) * (SLOW.vignette.length - 1));
     const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.max(w, h) * 0.7);
@@ -759,7 +772,7 @@ animCard({ title: 'Unit loss fizzle', vars: 'Fizzles · COLORS.dying · ANIM.fiz
   });
 
 // Area attack: chance to die falls off from the center; the ring shows reach.
-animCard({ title: 'Area attacks (bomber and brute)', vars: 'ENEMY_TYPES.*.aoe · army.killArea() · sparks.ring()', meta: `bomber: radius ${ENEMY_TYPES.bomber.aoe.radius}, ${Math.round(ENEMY_TYPES.bomber.aoe.peak * 100)}% at center · brute: radius ${ENEMY_TYPES.brute.aoe.radius}, ${Math.round(ENEMY_TYPES.brute.aoe.peak * 100)}% at center · chance = peak × (1 − d²/r²) · both throb brighter in their last 4 units · shake, ripple and sound on impact`, note: 'Left: bomber (tight and deadly). Right: brute (wide, fewer per unit). Lost units fizzle red, leaving a crater.', tall: true },
+animCard({ title: 'Area attacks (bomber and brute)', vars: 'ENEMY_TYPES.*.aoe · army.killArea() · sparks.ring()', meta: `bomber: radius ${ENEMY_TYPES.bomber.aoe.radius}, ${Math.round(ENEMY_TYPES.bomber.aoe.peak * 100)}% at center · brute: radius ${ENEMY_TYPES.brute.aoe.radius}, ${Math.round(ENEMY_TYPES.brute.aoe.peak * 100)}% at center · chance = peak × (1 − d²/r²) · both throb brighter in their last 4 units · shake, ripple and sound on impact`, note: `Left: bomber (tight and deadly). Right: brute (wide, fewer per unit). Lost units fizzle red, leaving a crater. In game the blast also throws nearby units outward (up to ${ANIM.blastPush} units, reaching ${ANIM.blastReach}× the radius, never off the track) and the formation drifts back slowly over ${ANIM.blastRecover}s (starting at ×${ANIM.blastRecoverRate} speed, no regrouping meanwhile), so the gap where units died stays visible.`, tall: true },
   (ctx, w, h, t, dt, st) => {
     const period = 2.6, ph = t % period, s = Math.min(topDown(w), w / 9);
     if (!st.u || ph < st.lastPh) {
@@ -873,8 +886,10 @@ const SOUND_NOTES = {
   gateTick: 'A gate value ticking up from fire; pitch rises with the value.',
   blast: 'Bomber explosion: low boom and noise burst.',
   stomp: 'Brute stomp: heavy sub thud, crunch and ground rumble.',
+  levelCharge: 'A bullet soaked up by a level gate: a soft, airy blip. In game its pitch and volume rise as the gate nears.',
+  levelUp: 'Crossing a level gate, the crescendo: a long swell, then a thump, a bright echoing chord and a spray of sparkles. Louder the more the gate was charged.',
   maxMult: 'A × gate reaching its ×3.0 cap ("data stream"): a very fast run of sine blips rising through a pentatonic scale into an echo (plus a gold burst on the gate). Also plays when your score moves up a place on the board, and when initials are saved.',
-  win: 'Battle won: the blast sound plus a crackly fizzle that echoes away (feedback delay, darkening each repeat).',
+  win: 'Reserved for great moments: crossing a level gate (it lands on the levelUp crescendo) and killing a mini-boss. The blast sound plus a crackly fizzle that echoes away. Beating an ordinary squad no longer plays it.',
   lose: 'Army wiped out: long dive and rumble.',
 };
 const guideSfx = new Sfx();

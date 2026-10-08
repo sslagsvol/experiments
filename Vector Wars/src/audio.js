@@ -61,7 +61,7 @@ export class Sfx {
     if (cfg.maxRate && now - (this.last[name] || -1) < 1 / cfg.maxRate) return;
     this.last[name] = now;
     const out = ctx.createGain();
-    out.gain.value = cfg.volume;
+    out.gain.value = cfg.volume * (opts.gain ?? 1);
     out.connect(this.master);
     const rate = Math.max(0.3, this.rate);
     const p = rate * (opts.pitch || 1) * 2 ** (((SFX.tune || 0) + (cfg.tune || 0)) / 12);
@@ -156,6 +156,25 @@ const RECIPES = {
       a.tone(wet, at, { f0: f * p, dur: 0.06 * s, vol: 0.2, attack: 0.002 });
     });
     a.hiss(out, t, { type: 'highpass', f0: 4000 * p, f1: 9000 * p, dur: 0.25 * s, vol: 0.12, attack: 0.04 });
+  },
+  // A bullet soaked up by a level gate: a soft, airy blip (the caller raises
+  // its pitch and volume as the gate nears).
+  levelCharge(a, out, t, p, s) {
+    a.tone(out, t, { f0: 660 * p, f1: 990 * p, dur: 0.05 * s, vol: 0.4, attack: 0.003 });
+    a.hiss(out, t, { type: 'highpass', f0: 6000 * p, dur: 0.03 * s, vol: 0.12 });
+  },
+  // Crossing a level gate, the crescendo: a long swell, then a thump, a bright
+  // chord that echoes, and a spray of sparkles.
+  levelUp(a, out, t, p, s) {
+    a.hiss(out, t, { type: 'bandpass', f0: 300 * p, f1: 5000 * p, q: 2, dur: 0.4 * s, vol: 0.6, attack: 0.35 * s });
+    a.tone(out, t, { f0: 110 * p, f1: 440 * p, dur: 0.4 * s, vol: 0.5, attack: 0.35 * s });
+    const at = t + 0.38 * s, wet = a.echo(out, s, { time: 0.12, feedback: 0.4, cutoff: 5000 * p });
+    a.tone(out, at, { f0: 160 * p, f1: 50 * p, dur: 0.4 * s, vol: 0.9 });
+    [523, 659, 784, 1047, 1319].forEach((f) => {
+      a.tone(out, at, { f0: f * p, dur: 0.9 * s, vol: 0.14, attack: 0.004 });
+      a.tone(wet, at, { f0: f * p, dur: 0.5 * s, vol: 0.08, attack: 0.004 });
+    });
+    for (let i = 0; i < 14; i++) a.tone(out, at + (i * 0.03 + Math.random() * 0.02) * s, { f0: (2500 + Math.random() * 3500) * p, dur: 0.08 * s, vol: 0.15, attack: 0.002 });
   },
   // Bomber blast: low boom and a burst of noise.
   blast(a, out, t, p, s) {

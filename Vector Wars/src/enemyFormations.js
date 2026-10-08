@@ -34,8 +34,12 @@ export const TYPE_LIST = Object.values(ENEMY_TYPES);
 
 // Which unit types make up a squad. Tougher types unlock as the run goes on
 // (squadIndex = how many squads have spawned so far).
+// When each special type joins squads: the squad index on the classic track,
+// or the level number (each one unleashed by the bonus-level mini-boss before it).
+export const UNLOCK_AT = { drone: 3, bomber: 5, brute: 7 };
+
 export function squadMix(kind, squadIndex) {
-  const drones = squadIndex >= 2, bombers = squadIndex >= 3, brutes = squadIndex >= 4;
+  const drones = squadIndex >= UNLOCK_AT.drone, bombers = squadIndex >= UNLOCK_AT.bomber, brutes = squadIndex >= UNLOCK_AT.brute;
   switch (kind) {
     // Grunts are 80–90% of every squad; specials are the seasoning.
     case 'skirmish': return { back: [], mix: drones ? [['grunt', 0.82], ['drone', 0.18]] : [['grunt', 1]] };

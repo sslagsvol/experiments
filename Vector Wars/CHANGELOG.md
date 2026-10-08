@@ -14,7 +14,8 @@ Round-by-round history of playtest feedback and what changed, grouped by release
 | 0.6.0 | rounds 18–21 | PR #8 |
 | 0.6.1 | rounds 22–23 | PR #9 |
 | 0.7.0 | round 24 | PR #10 |
-| 0.8.0 | rounds 25–26 | `vw/v0.8.0` |
+| 0.8.0 | rounds 25–26 | PR #11 |
+| 0.9.0 | rounds 27–29 | `vw/v0.9.0` |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
@@ -276,4 +277,68 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - Gates: fixed single panels of any width (`acquire(..., { x, width, slow })`), level gates (`op: 'level'`).
 - Bot runs (careful / worse side / no steering): 207 / 74 / 37 units at the level gate, about 70s.
 - Style guide: fixed single gate, level gate and level banner cards. Version 0.8.0.
+
+## Round 27 — v0.9.0: slower fire, tougher gates (2026-10-08)
+- User: the fire rate is near its maximum from the start, so gates fill and numbers climb too fast. Start at about a quarter and make faster fire part of progression; make gates 20–30% more durable. Playtest locally before going live.
+- **Fire rate by level** (`CFG.FIRE_LEVELS`): 25% of the full rate in level 1, then 40%, 55%, 70%, 85%, full from level 6. The level banner says "fire rate up". `?classic` keeps full fire.
+- **Gate durability** (`CFG.GATE_DURABILITY` 1.25): every gate needs 25% more hits (+ / −: 5 per step; ×1→×3 about 140 hits).
+- **Level gates keep coming:** after level 1, one every `CFG.LEVEL_EVERY` (8) track pieces, so the fire-rate progression continues. The random track's ramp now keeps the level 1 army as its base.
+- Level 1 retuned for the slower fire: squads 0.3–0.6 of the best-case army. Bots: careful 55 at the level 2 gate, worse-side dies, no steering finishes with 6; careful survives 5 minutes, growing as fire rises.
+- Fixed a style guide error (since v0.7.0): the background-parallax card passed a hex number to `css()`, stopping its animation.
+
+## Round 28 — v0.9.0 (cont.): playtest notes, killcam, level-gate crescendo (2026-10-08)
+- User playtest: feels great; a little easy since people pick it up fast and dying is inconsequential (maybe a casual roguelike); levels 5–6 got boring. Requests: zoom the camera in on the army during slow motion (especially the first brute); the level gate should soak up bullets with a quiet sound that grows, so crossing it is the crescendo; then 1–2s with no enemies, minimal text ("Attack Speed Increased"), then a single small sprite of the level's new enemy, no words.
+- **Killcam:** in danger slow motion the camera moves in close on the army; the first bomber blast and first brute stomp of a run get a 1.4s killcam (time ×0.35) (`ANIM.killcam*`).
+- **Level gate:** soaks up bullets (`CFG.LEVEL_CHARGE_HITS` fills its bar) with a new quiet `levelCharge` blip that rises in pitch and volume as it nears; crossing plays the new `levelUp` crescendo (louder the more it charged). `Sfx.play` takes `gain`.
+- **After the gate:** `CFG.LEVEL_QUIET` (52) units of empty track; the banner reads only "Attack speed increased" (or "Level N"), then a 64px idle sprite of the enemy type that level adds, no words (`hud.levelBanner`).
+- **Enemy types arrive by level** after level 1: drones at level 2, bombers at 3, brutes at 4 (`UNLOCK_AT`), instead of on consecutive squads.
+- `LEVELS.md` sections 6–7: what the notes mean, a casual roguelike proposal (an upgrade choice at each level gate, one continue per run, cosmetic unlocks) and a level order where every level brings something new.
+- Style guide: killcam on the slow-motion card, level gate and banner cards updated, two new sounds. Sound lab: the two new sounds.
+
+## Round 29 — v0.9.0 (cont.): World 1 level progression (2026-10-08)
+- User: likes the progression idea over upgrades (parked); a continue only after a level that introduces a damage-over-time enemy (the planned burn enemy); burn look: pulsing glow, flicker, smoke trail. Build the level progression without the burn enemy.
+- **Levels 2–10 + endless** (`LEVELS` in `src/levels.js`, generated per level): normal, gauntlet, sprint and bonus shapes; ÷ gates from level 2, moving gates from 4, split setups (both sides good) from 7; the sprint runs the track ×1.5.
+- **Bonus levels 3, 6, 9:** your army waits (`#parked`), a strike team of 25 / 30 / 35 plays small squads and kind gates, then a **mini-boss**: one giant drone / bomber / brute (`enemies.spawnBoss`, 4× size, slow, sways less, generous hitbox, `#boss-bar`; hp from the team's fire rate). Kill it: big burst, killcam, its points (recap "Mini-bosses" row), and survivors pass a bonus × gate and rejoin your army (max 25% of it). If it reaches the team: one big area hit. Team wiped: bonus lost, army back, run continues.
+- **Enemy types unleashed by level:** drones 4, bombers 7, brutes 10 (`UNLOCK_AT`); the level banner shows the new one. `?classic` keeps the old squad-count pace.
+- Fire rate now steps over 10 levels (`CFG.FIRE_LEVELS`); "World 1 complete" at level 11.
+- `LEVELS.md` section 7: the decisions, burn-enemy rendering notes (flame-outline shape, shader flicker, cheap smoke via a trailing ghost point, sampled embers), and World 1 as built. Bot: careful run through all 11 levels, every boss killed.
+- Style guide: mini-boss card, bonus-level HUD card.
+
+## Round 30 — v0.9.0 (cont.): harder, bigger small armies, louder gate (2026-10-08)
+- User playtest: levels too easy, make them 30–50% harder (struggle beats boredom); units 2–3× bigger below about 50; the level-gate sound is too quiet (but liked); the sound and ripple after beating a squad feel out of place, keep them for great moments like a level gate.
+- **Difficulty** (`CFG.DIFFICULTY` 1.4): squad sizes (authored and random) and mini-boss hp × 1.4. Bot (careful): level 1 ends at about 30–36 (was 52), the army reaches about 230 by level 7 (was 908); one careful run died in the level 5 gauntlet.
+- **Small armies grow:** below 80 units the dots and spacing scale up, to 2.5× at 20 or fewer (`CFG.SMALL_ARMY_*`, in `packing()`); area-attack radius and dimming ignore the boost.
+- **Level gate louder:** `levelUp` volume 1.0 (was 0.75), gain 0.8–1.2 with charge, and the `win` blast now lands on its crescendo.
+- **Squad beaten:** a small ripple (`ANIM.rippleBattle` 0.7), no sound; the big ripple and `win` are kept for level gates and mini-bosses.
+- **Bonus reward floor:** survivors rejoin up to 25% of your army or 20 units, whichever is more (`CFG.BONUS_RETURN_MIN`), so a good bonus can rescue a small army.
+- Style guide: ripple strengths, `win` sound note, small-army note on the player unit card.
+
+## Round 31 — v0.9.0 (cont.): boss escorts and clusters (2026-10-08)
+- User: put little versions of the boss in front of the big one; the big one shouldn't reach the player unless they did something wrong; a few clusters of the new enemy through the level to raise the danger and show their powers.
+- **Escort:** the mini-boss arrives behind small units of its own type (`CFG.ESCORT_SHARE` of the team: drone 0.5, bomber 0.2, brute 0.12; 3–18 units). It hangs back `CFG.BOSS_HOLD` (12) ahead of the team, **shielded** (dim, slow pulse; shots stop with a dull tick) until the escort is gone.
+- **Then** the track stops and the boss advances slowly. Bot: careful and even no-aim teams of 30–35 kill it 7–10 units out; a team cut to 8 by the escort barely wins with 4 left.
+- **Clusters:** every bonus squad brings a small cluster of the boss's type (`CFG.CLUSTER_SHARE`; 2–9 units) on one side, so its power shows (the first blast or stomp gets the killcam).
+- `enemies.spawnSquad` takes a type override. Style guide mini-boss card and `LEVELS.md` updated.
+
+## Round 32 — v0.9.0 (cont.): faster start, Story / Challenge (2026-10-08)
+- User: levels 1 and 2 should be one level (too slow); bigger enemies earlier; massive battles by level 5–6; more grunts in front of the new enemies so they get close enough to show their powers; two title buttons, Story mode and Challenge mode (the classic mode: fast, nearly all enemies, for high scores).
+- **Levels 1 + 2 merged:** level 1 now has a first ÷ gate (+8 / ÷2) in place of +8 / −6, and the first bonus level follows it. New order: bonus at 2 / 4 / 6 (teams 30 / 35 / 40), drones from 3, bombers from 5, brutes from 7, gauntlet 7, sprint 8, finale 9, "World 1 complete" at 10 (`WORLD_END`).
+- **Bigger battles:** gate values ramp ×(1 + 0.7k) (was 0.35) and fire rate climbs over 6 levels (25% → full at 6). Bot: army 56 → 224 in level 3, squads up to 83; a careful bot dies in level 5's bomber battles.
+- **Grunt screens:** a wall of grunts walks in front of every cluster and boss escort (`CFG.SCREEN_SHARE` 0.25). Bonus regular squads × 0.45 (`BONUS_SQUAD_SCALE`) and a gate before the boss, so the fight is about the new type; bosses: killed 6–11 units out when the team aims.
+- **Title: Story mode / Challenge mode** (`#title-modes`). Challenge = the classic random track, every enemy type from the 2nd squad, full fire, track ×1.15 (`CFG.CHALLENGE_SPEED`); Space = Story, C = Challenge; `?classic` preselects Challenge. One shared leaderboard for now.
+- Style guide: title card with the buttons; mini-boss card mentions the grunt screens.
+
+## Round 33 — v0.9.0 (cont.): Quit instead of Restart (2026-10-08)
+- User: wherever there's a Restart button, make it Quit, back to the title screen.
+- Pause menu: **Quit** (was Restart) ends the run and returns to the title, where you pick Story or Challenge; key **Q** (was R). Style guide and docs updated.
+
+## Round 34 — v0.9.0 (cont.): blast scatter, roomier initials (2026-10-08)
+- User: when an explosion hits, the formation should burst outward slightly and recover slower than normal so the dead units are noticeable; more space around the initials inputs and buttons (too easy to mis-tap). Then ready to go live.
+- **Blast scatter** (`army.blast()`, `ANIM.blast*`): bomber blasts, brute stomps and mini-boss hits push units outward (up to 0.35 at the center, reaching 2.5× the radius, never off the track); the formation follows at ×0.12 speed easing back to normal over 1.6s, and holes don't refill meanwhile. Bot: average spread 0.32 → 0.66 at the blast, back to ~0.43 by 1.5s.
+- **Initials entry:** slots 30px apart (was 14), ▲ / letter / ▼ 10px apart, buttons at least 52×44px, ENTER 22px below and centered.
+- Style guide: area-attack card and initials card notes.
+
+## Round 35 — v0.9.0 (cont.): past World 1 gets much harder (2026-10-08)
+- User: once you pass World 1 there needs to be a major difficulty adjustment; it feels like you could go on forever.
+- **Endless (level 10+, story):** squads ×`CFG.ENDLESS_GROWTH` (1.3) bigger every level on top of the normal ramp, the track 5% faster per level (up to ×1.4), and every third level is a gauntlet. Bot: a 1,100-unit army at level 12 met a squad at the 1,500 cap and was wiped out within about 20 seconds.
 

@@ -286,14 +286,18 @@ html, body {
 }
 @keyframes entry-title { from { color: #ffd23d; text-shadow: 0 0 10px #ffd23d; } to { color: #ff8cc6; text-shadow: 0 0 10px #ff8cc6; } }
 .entry-rank { font-size: 13px; opacity: .8; margin: 2px 0 6px; }
-.slots { display: flex; justify-content: center; gap: 14px; }
-.slot { display: flex; flex-direction: column; align-items: center; }
+/* Generous spacing and big touch targets: the ▲▼ buttons, the letters and
+   ENTER sit well apart so a thumb doesn't hit the wrong one. */
+.slots { display: flex; justify-content: center; gap: 30px; margin: 6px 0; }
+.slot { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .slot button, .entry-ui .enter {
   font: inherit;
   color: var(--hud);
   background: none;
   border: 0;
-  padding: 4px 12px;
+  min-width: 52px;
+  min-height: 44px;
+  padding: 8px 14px;
   font-size: 20px;
   cursor: pointer;
   touch-action: none;
@@ -312,7 +316,8 @@ html, body {
 .slot.cur .ch { border-bottom-color: var(--hud); animation: cursor 0.8s steps(2, start) infinite; }
 @keyframes cursor { to { border-bottom-color: transparent; } }
 .entry-ui .enter {
-  margin-top: 8px;
+  display: block;
+  margin: 22px auto 0;
   padding: 8px 26px;
   font-size: 18px;
   letter-spacing: .15em;
@@ -330,7 +335,7 @@ html, body {
 #title.show-board #title-logo { opacity: 0; }
 #title.show-board #title-board { opacity: 1; }
 
-/* ---- Pause menu: the recap so far plus the board, Continue / Restart ---- */
+/* ---- Pause menu: the recap so far plus the board, Continue / Quit ---- */
 #pause {
   pointer-events: auto;
   justify-content: flex-start;
@@ -455,9 +460,52 @@ body.kb .touch-only { display: none; }
 }
 #toast .t2 { margin-top: 6px; font-size: 15px; color: var(--text); text-shadow: 0 0 6px rgba(70, 210, 255, 0.6); }
 #toast.show { animation: toast 2.4s ease-out forwards; }
+/* With a new enemy: the banner stays a little longer and the sprite (64px,
+   no words) fades in under the line after ~0.9s. */
+#toast.show.foe { animation-duration: 3.1s; }
+#toast .t3 { display: none; width: 64px; height: 64px; margin: 10px auto 0; opacity: 0; }
+#toast.foe .t3 { display: block; }
+#toast.show.foe .t3 { animation: toast-foe 3.1s ease-out forwards; }
+@keyframes toast-foe { 0%, 28% { opacity: 0; scale: 0.6; } 40% { opacity: 1; scale: 1.1; } 48% { scale: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes toast {
   0% { opacity: 0; translate: 0 12px; letter-spacing: .3em; }
   12% { opacity: 1; translate: 0 0; letter-spacing: 0; }
   75% { opacity: 1; }
   100% { opacity: 0; translate: 0 -8px; }
 }
+
+/* ---- Bonus levels: mini-boss health bar, waiting army ---- */
+/* Boss bar: thin, across the top under the score, in the enemy's pink. */
+#boss-bar {
+  position: absolute;
+  left: 50%;
+  top: calc(64px + env(safe-area-inset-top));
+  width: min(260px, 60vw);
+  height: 8px;
+  transform: translateX(-50%);
+  border: 1px solid var(--enemy);
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(255, 61, 154, 0.5);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+#boss-bar.on { opacity: 1; }
+#boss-bar .fill { height: 100%; width: 100%; background: var(--enemy); box-shadow: 0 0 8px var(--enemy); transition: width 0.12s; }
+/* Waiting army: small and dim, just above the count. */
+#parked {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(62px + env(safe-area-inset-bottom));
+  text-align: center;
+  font-size: 13px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--you);
+  opacity: .7;
+  text-shadow: 0 0 6px rgba(70, 210, 255, 0.6);
+}
+
+/* ---- Title: mode buttons (Story is the main CTA) ---- */
+#title-modes { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 18px; pointer-events: auto; }
+#title-modes .mode-note { margin: 2px 0 0; font-size: 12px; letter-spacing: .08em; opacity: .6; }

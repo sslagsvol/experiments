@@ -1,6 +1,6 @@
 # Vector Wars: level progression
 
-The plan for levels: how the game teaches its mechanics, how levels are structured, and what World 1 looks like. Status: **level 1 is built as a playtest (v0.8.0)**: the authored opening, then the random track ramping up linearly. The rest is planned. The roadmap entry is item 6 in `PLAN.md`; history is in `CHANGELOG.md`.
+The plan for levels: how the game teaches its mechanics, how levels are structured, and what World 1 looks like. Status: **level 1 is built as a playtest (v0.8.0, retuned in v0.9.0)**: the authored opening, then the random track ramping up linearly with a level gate every 8 pieces. The rest is planned. The roadmap entry is item 6 in `PLAN.md`; history is in `CHANGELOG.md`.
 
 ---
 
@@ -70,6 +70,8 @@ The order is fixed. The numbers are drafts, to be tuned by bot play (see section
 
 **As built (v0.8.0 playtest, `src/levels.js`):** start 20 · 5 grunts · +1 slow gate · 8 grunts · −10 / −1 · then squads sized as a share of the best-case army (0.7, 1.0, 1.2, 1.3, 1.4) between gate pairs (+5 / +12, +8 / −6, × / +10, +15 / −20) · "LEVEL 2" gate. About 70s for a bot; a person will be slower. Bot results: careful 207 units at the gate, always taking the worse side 74 (standing behind a red gate shoots it green, so the lesson works), never steering 37. After the gate the random track ramps linearly (`CFG.RAMP_*`), with drones, bombers and brutes arriving in turn. `?classic` plays the old fully random track.
 
+**Retuned in v0.9.0:** fire rate now starts at 25% and each level gate raises it (40%, 55%, 70%, 85%, then full from level 6; `CFG.FIRE_LEVELS`), and gates are 1.25× tougher (`CFG.GATE_DURABILITY`). Level 1 squads are now 0.3, 0.4, 0.5, 0.55, 0.6 of the best-case army. Bot results: careful 55 units at the level 2 gate (+1 gate reaches about +7); always taking the worse side dies at about 68s; never steering finishes with 6. The careful bot then grows with each fire-rate step (66 at level 4, about 1,000 at level 6) and was still alive at 5 minutes. After level 1 a level gate comes every `CFG.LEVEL_EVERY` (8) track pieces, about every 40s.
+
 **The math we want:**
 - **Careful play** (pumped gates, took the −1, shot squads before contact) ends with a substantial army, about 100–150.
 - **One big mistake** (the −10 gate, or a wave that got through) still finishes, smaller.
@@ -91,13 +93,55 @@ The order is fixed. The numbers are drafts, to be tuned by bot play (see section
 5. **Stars per level** (finish; finish with N+ units; max a gate)? Good for replays, but they only make sense if levels can be replayed one at a time.
 6. **How unleashed enemies score:** a flat ×2 for newly unleashed types, or permanently higher values.
 
-## 6. How to build it
+## 6. Playtest notes (v0.9.0) and what they mean
+
+**"It feels great, but a little easy: people pick it up fast, and dying is inconsequential."** Two separate problems:
+- *Easy:* the opening teaches well, so the next levels have to ask more of the player sooner (see "boring" below).
+- *Dying costs nothing:* a restart is instant and nothing is lost, so there are no stakes. The fix the user floated is a **roguelike** structure, kept casual.
+
+**"Levels 5 and 6 started to feel boring."** Why, as built: after level 4 (brutes) nothing new arrives; the random track repeats the same gate/squad rhythm; levels are all 8 pieces long; and only the numbers grow. Each level needs to bring something new or change the rhythm.
+
+## 7. Decisions (round 29) and World 1 as built
+
+**From the user:**
+- **Progression over upgrades.** The pick-1-of-3 upgrade idea is interesting but parked; levels themselves are the progression (fire rate up each level, new enemies, new gate types, new level shapes).
+- **A continue only after damage over time arrives.** No continues for now. Once the burn enemy is introduced (its level ends World 1's successor, World 2's opener or similar), a run gets one continue from then on, since damage over time can snowball in a way the player can't fully control.
+- **The burn enemy's look:** "something that feels like burning: a pulsing glow, a flicker, a smoke trail". What renders well at scale (hundreds of enemies, one draw call):
+  - *Shape:* a new outline in the enemy shader, a teardrop / flame point (round bottom, pointed top), orange-red (a new `COLORS.burn`). Reads as fire even as a dot.
+  - *Flicker:* per-unit brightness and a slight size jitter from `time + id` in the shader, with the color sliding orange → yellow at the peaks. Free: no extra geometry.
+  - *Pulsing glow:* the same throb the bomber uses, faster and irregular (two sines).
+  - *Smoke trail:* a full trail per unit is expensive. Cheap version: each burner draws one extra, dimmer, larger grey point a short way behind it (two points per unit, still one draw call), plus a few embers from the spark system sampled from 1 in ~8 burners.
+  - *On your army:* burning units flicker orange in the crowd shader (the fizzle shader's cyan → red already exists) until they die or the burn ends.
+
+**World 1 as built (v0.9.0, round 32):** levels 1 and 2 merged (level 1 now also teaches ÷); a mini-boss every other level, so the big enemies come early; each bonus mini-boss is the next enemy type, unleashed on the following main level.
+
+| Level | Shape | New |
+|---|---|---|
+| 1 | authored | grunts; + / − / ÷ / × gates |
+| 2 | **bonus** (team 30) | giant drone mini-boss |
+| 3 | normal (8) | **drones**; moving gates |
+| 4 | **bonus** (team 35) | giant bomber mini-boss |
+| 5 | normal, longer (10) | **bombers**; split setups — big battles |
+| 6 | **bonus** (team 40) | giant brute mini-boss |
+| 7 | gauntlet (7) | **brutes** — massive battles |
+| 8 | sprint (8 gates, track ×1.5) | |
+| 9 | finale (12) | |
+| 10+ | endless, much harder | "World 1 complete"; squads ×1.3 bigger every level, track +5% faster per level (to ×1.4), every third level a gauntlet |
+
+- **Bonus levels:** your army waits ("Army N waiting" above the count); a strike team plays small squads between kind + gates, each squad joined by a small **cluster of the coming boss's type** (showing its power: drones weave, bombers blast, brutes stomp). Then the mini-boss arrives behind an **escort of small units of its own type**; it hangs back, **shielded**, until the escort is gone, then the track stops and it advances slowly (health bar at the top). A team in good shape kills it before it arrives; if it reaches the team, one big area hit. Then a full-width bonus × gate, then the level gate. Kill the boss and the survivors rejoin your army (capped at 25% of it). Lose the whole team and the bonus ends at once: no reward, your army comes back, the run goes on.
+- **Fire rate** rises at every level gate (`CFG.FIRE_LEVELS`, 25% → full by level 10).
+- **World boss and bomb:** not built yet; level 10 is a long finale for now.
+- **Bot run (careful), before the difficulty raise:** all 11 transitions; bosses killed at levels 3, 6 and 9; army 52 → 66 → 174 → 329 → 908 → 870 by level 10.
+- **After `CFG.DIFFICULTY` 1.4 (round 30):** careful runs end level 1 at 30–36 and reach about 230 by level 7; one died in the level 5 gauntlet. Bonus reward: up to 25% of the army or 20 units, whichever is more.
+
+## 8. How to build it
 
 **Authored chunks.** A level is a list of short, hand-made pieces: "squad of 6 grunts, centered", "+1 gate, half width, slow approach", "red pair −10 / −1", "level gate". The game already builds the track from gates and squads; levels replace the random choices with these lists (`src/levels.js`). After the last level, the track can go back to random.
 
 **Bot tuning.** The `?debug` hook can play levels headlessly with simple strategies (careful, sloppy, one mistake, two mistakes) and report the army at each beat. That's how the level 1 math gets tuned instead of guessed.
 
 **In order:**
-1. **v0.8.0: levels, first pass.** The level framework and authored chunks; the level gate; the level-complete menu with "Go to Level N" and the army snapshot; levels 1 and 2; the slow gate approach; the "NEW" card.
-2. **v0.9.0: bonus levels.** The strike team, mini-bosses (giant drone first), "unleashed" enemies and their scoring, the bonus × gate, levels 3–4 and bonus 1–2.
-3. **v0.10.0: world boss and bomb** (Batch D), levels 5–7 and bonus 3. World 1 complete.
+1. **Faster fire as a level reward** (v0.9.0): built. Later it could become a choice at the level-complete menu (fire rate, or something else).
+2. **v0.8.0: levels, first pass.** The level framework and authored chunks; the level gate; the level-complete menu with "Go to Level N" and the army snapshot; levels 1 and 2; the slow gate approach; the "NEW" card.
+3. **Next: bonus levels.** The strike team, mini-bosses (giant drone first), "unleashed" enemies and their scoring, the bonus × gate, levels 3–4 and bonus 1–2.
+4. **Then: world boss and bomb** (Batch D), levels 5–7 and bonus 3. World 1 complete.

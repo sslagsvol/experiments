@@ -2,8 +2,8 @@
 
 A crowd-runner in the style of the "army through gates" mobile ads, redesigned around what those games get wrong: fake choices, hidden numbers, no skill expression, and art that buries the numbers. One thumb, thousands of units, 60fps on a mid-range phone.
 
-- **Play:** `index.html`. URL options: `?debug` (overlay plus the `window.vectorWars` test hook), `?units=N` (starting army), `?seed=N` (a different track), `?grid=hex` (a grid pattern), `?classic` (the old fully random track, no level 1).
-- **Version:** **v0.8.0 beta** (`VERSION` in `src/config.js`, shown on the title and pause screens). See section 7.
+- **Play:** `index.html`. The title screen offers **Story mode** (the levels, `LEVELS.md`) and **Challenge mode** (the classic fast random track with nearly every enemy unlocked, for high-score runs; both share the one leaderboard). URL options: `?debug` (overlay plus the `window.vectorWars` test hook), `?units=N` (starting army), `?seed=N` (a different track), `?grid=hex` (a grid pattern), `?classic` (the old fully random track, no level 1).
+- **Version:** **v0.9.0 beta** (`VERSION` in `src/config.js`, shown on the title and pause screens). See section 7.
 - **Style guide:** `style-guide.html`, every color, sprite, formation, animation and sound. Visual or animation changes must update it (rule in `CLAUDE.md`).
 - **Sound lab:** `sound-lab.html`, every sound with detune (lower, same speed) and stretch (longer, same pitch), globally or per sound (`SFX.tune` / `SFX.stretch`).
 - **History:** `CHANGELOG.md`, the round-by-round log of playtest feedback and what changed.
@@ -39,10 +39,11 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 - **Losses** fizzle cyan → red → black where they died.
 
 ### Fire and gates
-- Auto-fire from the army, rate `min(50, 3 + 2√N)`. *(Rework planned: batch B.)*
+- Auto-fire from the army, rate `min(50, 3 + 2√N)` × the level's share (`CFG.FIRE_LEVELS`): **25% in level 1**, then 40%, 55%, 70%, 85% and full from level 6. Faster fire is a reward of progression. *(Rework planned: batch B.)*
 - **Gate mix** (`CFG.GATE_MIX`): × 8%, + 32%, − 35%, ÷ 25%. A pair never has two bad options.
-  - **+ / −** fill a charge bar: 4 hits per step.
-  - **×** starts at ×1.0 (no effect) and climbs 0.1 per step to ×3.0, costing more hits as it climbs (`multHitsForStep()`, about 110 hits). Maxing it plays the "data stream" cascade and bursts gold.
+  - Every gate is `CFG.GATE_DURABILITY` (1.25×) tougher than its base hit counts.
+  - **+ / −** fill a charge bar: 5 hits per step (4 × 1.25).
+  - **×** starts at ×1.0 (no effect) and climbs 0.1 per step to ×3.0, costing more hits as it climbs (`multHitsForStep()` × durability, about 140 hits). Maxing it plays the "data stream" cascade and bursts gold.
   - **÷** starts at ÷2–÷3 and shooting walks it down; at ÷1.0 it flips into a ×1.0 gate and keeps climbing.
 - **Split gates:** each panel applies only to the units that cross it (× multiplies them; + / − scale by their share). The primary panel (where the army's center goes) shatters.
 - **Moving gates** (15% of gate spots): a single 1.5-wide panel sweeping side to side. Mostly good; only the units that pass through it are affected.
@@ -67,7 +68,7 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 - **HUD:** live score (top left; while it's on pace for 1st–3rd on the board it doubles in size with a gold / pink / lime medal badge, and moving up a place plays the max-multiplier sound), "Hi" score, pause and mute (top right), army count at the bottom center with gains (green, left) and losses (red, right) as running totals. The camera is lens-shifted up for thumb room.
 - **Score** = distance × 10 + each enemy defeated × its hp × 5.
 - **Recap:** a big count-up score, each enemy type's idle sprite with kills and points, then distance, peak army and losses.
-- **Pause:** the pause button, Esc / P, or leaving the tab mid-run. A big "Paused" over the recap so far ("Score so far") and the board with where this run would place (tabs on phones, side by side on wide screens). Continue is the main button; Restart starts a fresh run at once.
+- **Pause:** the pause button, Esc / P, or leaving the tab mid-run. A big "Paused" over the recap so far ("Score so far") and the board with where this run would place (tabs on phones, side by side on wide screens). Continue is the main button; Quit goes back to the title screen.
 - **High scores:** an 80s top-10 board with initials entry (▲▼ or typing, specials allowed), and a title attract mode. Global via Supabase (project `uxwcslorwepzrmpbqmjd`), cached locally with an offline queue.
 
 ### Feel
@@ -82,7 +83,7 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
    - **Built:** the background grid dropped from 4 to 9 below the track, scrolls at 0.45× the track's speed and follows the camera sideways (0.6), so the road reads as raised (`CFG.VOID_*`). Six grid patterns on the track and background: grid, hexagons, oblique grid, triangles, dot grid, outlined polka dots (`GRID_PATTERNS`, one shader). Beta toggles on the pause menu (Grid, Parallax deep / classic), the G key and `?grid=`; remembered per device.
    - **Still to do:** play it on a phone (depth, not motion sickness); pick the patterns to keep and tune their spacing and brightness; give each level its own pattern once levels exist (item 6); maybe a far layer (stars or a horizon skyline) moving slower still. Keep the background dimmer than anything interactive.
 2. **Keyboard controls.** *Shipped in v0.7.0.*
-   - ← → or A / D steer (a tap nudges, a hold ramps to a sweep in 0.25s; Shift is ×1.8), feeding the same target as the drag (`G.tx`). Space / Enter start, continue and retry; R restarts from pause; M mutes; G cycles the grid; Esc / P pause. Hints appear on the title and pause screens only after a key press. Settings `CFG.KEY_STEER_*`.
+   - ← → or A / D steer (a tap nudges, a hold ramps to a sweep in 0.25s; Shift is ×1.8), feeding the same target as the drag (`G.tx`). Space / Enter start, continue and retry; Q quits from pause (back to the title); M mutes; G cycles the grid; Esc / P pause. Hints appear on the title and pause screens only after a key press. Settings `CFG.KEY_STEER_*`.
    - **Still to do:** tune the sweep speed after playing.
 3. **Batch D: mini-boss plus the bomb it awards.**
    - **Mini-boss:** a large wireframe shape with a health bar, about one every 8 segments from the second loop on. The track stops when it's in range. It advances slowly and **slams** every few seconds: a telegraphed pulsing ring, then a radius kill with a grid shockwave. Spread out or dodge. If it reaches the army it eats units each second. On death it shatters into tumbling segments (voxel-style).
@@ -100,9 +101,9 @@ These come from playtests; the order among them and against D / B / E is still t
    - Lessons (mechanics) vs levels (what players see): early levels pack several lessons. Army carries over between main levels.
    - **Bonus levels** every couple of main levels: a forced small strike team (the micro-battles), ending in a **mini-boss** that is a giant version of the next enemy type. Beating it **unleashes** that type into main levels, worth more points; survivors rejoin the main army through a capped bonus × gate.
    - Each world ends with the **world boss** (Batch D, item 3), which earns the bomb.
-   - Builds in three releases: v0.8.0 framework, level gate, level-complete menu, army snapshot, levels 1–2; v0.9.0 bonus levels and mini-bosses; v0.10.0 world boss and bomb.
+   - Built so far: v0.8.0 level 1 playtest; v0.9.0 World 1 (levels 2–10: bonus levels with mini-bosses that unleash drones, bombers and brutes; gauntlet, sprint and finale shapes; ÷, moving and split gates by level), fire-rate progression, tougher gates, level-gate crescendo, killcam. Upgrades parked; a continue only once damage over time (the burn enemy) arrives. See `LEVELS.md` sections 6–7. Next: the level-complete menu and army snapshot, then bonus levels and mini-bosses, then the world boss and bomb.
 
-7. **Fire enemy (new type).**
+7. **Fire / burn enemy (new type).** *Look and continue rule decided: see `LEVELS.md` section 7.*
    - On contact or death it sets the army on fire in a radius. Units caught in it **keep burning for a duration** (about 2–3s): they flicker orange-red and each has a chance to die every tick, so the damage keeps coming after the hit.
    - Open questions: does fire spread to neighbors (risky with tight formations, dramatic with big ones)? Can moving or a good gate put it out? A flame shape and its own color; it unlocks after the bomber.
    - Builds on the area-damage code (`killArea`). Needs a per-unit burn timer in `crowd.js`, the burning look in the point shader, its sprite in `sprites.js`, a sound, and the style guide.
@@ -171,4 +172,5 @@ The game is in **beta**, so versions are **0.MINOR.PATCH**.
 | 0.6.0 | 2026-10-07 | PR #8 (`10993c3`) | New gate sounds, slow motion for breaking top-3 scores |
 | 0.6.1 | 2026-10-07 | PR #9 (`803dd97`) | Sound lab (detune and stretch) |
 | 0.7.0 | 2026-10-07 | PR #10 (`ca4c1a7`) | Version numbers, stronger parallax, grid patterns, keyboard controls |
-| 0.8.0 | (this branch) | `vw/v0.8.0` | Level plan; level 1 playtest: authored opening, level gate, banner, linear ramp after |
+| 0.8.0 | 2026-10-08 | PR #11 (`f236537`) | Level plan; level 1 playtest: authored opening, level gate, banner, linear ramp after |
+| 0.9.0 | (this branch) | `vw/v0.9.0` | Slower fire that grows per level, tougher gates, killcam, level-gate crescendo; World 1 levels 2–10 with bonus levels and mini-bosses |

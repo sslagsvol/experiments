@@ -43,7 +43,9 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
   </button>
   <div id="army-hud"><div id="gain" class="delta"></div><div id="count">0</div><div id="loss" class="delta"></div></div>
-  <div id="toast"><div class="t1"></div><div class="t2"></div></div>
+  <div id="boss-bar"><div class="fill"></div></div>
+  <div id="parked"></div>
+  <div id="toast"><div class="t1"></div><div class="t2"></div><canvas class="t3" width="112" height="112"></canvas></div>
   <div id="debug"></div>
 </div>
 
@@ -55,8 +57,12 @@
     </div>
     <div id="title-board"></div>
   </div>
-  <p class="blink"><span class="touch-only">Touch</span><span class="kb-only">Press Space</span> to start</p>
-  <p class="kb-hint">← → or A D steer · Shift fast · P pause · M mute</p>
+  <div id="title-modes">
+    <button type="button" class="btn primary" data-mode="story">Story mode</button>
+    <button type="button" class="btn" data-mode="challenge">Challenge mode</button>
+    <p class="mode-note">Challenge: every enemy, fast, for high scores</p>
+  </div>
+  <p class="kb-hint">Space story · C challenge · ← → or A D steer · P pause · M mute</p>
   <div class="version"></div>
 </div>
 
@@ -79,9 +85,9 @@
   </div>
   <div class="pause-actions">
     <button id="resume" type="button" class="btn primary">Continue</button>
-    <button id="restart" type="button" class="btn">Restart</button>
+    <button id="quit" type="button" class="btn">Quit</button>
   </div>
-  <p class="kb-hint">Space continue · R restart · G grid</p>
+  <p class="kb-hint">Space continue · Q quit · G grid</p>
   <div class="pause-lab" aria-label="Experiments">
     <button id="grid-btn" type="button">Grid</button>
     <button id="parallax-btn" type="button">Parallax</button>
