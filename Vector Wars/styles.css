@@ -455,6 +455,13 @@ body.kb .touch-only { display: none; }
 }
 #toast .t2 { margin-top: 6px; font-size: 15px; color: var(--text); text-shadow: 0 0 6px rgba(70, 210, 255, 0.6); }
 #toast.show { animation: toast 2.4s ease-out forwards; }
+/* With a new enemy: the banner stays a little longer and the sprite (64px,
+   no words) fades in under the line after ~0.9s. */
+#toast.show.foe { animation-duration: 3.1s; }
+#toast .t3 { display: none; width: 64px; height: 64px; margin: 10px auto 0; opacity: 0; }
+#toast.foe .t3 { display: block; }
+#toast.show.foe .t3 { animation: toast-foe 3.1s ease-out forwards; }
+@keyframes toast-foe { 0%, 28% { opacity: 0; scale: 0.6; } 40% { opacity: 1; scale: 1.1; } 48% { scale: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes toast {
   0% { opacity: 0; translate: 0 12px; letter-spacing: .3em; }
   12% { opacity: 1; translate: 0 0; letter-spacing: 0; }

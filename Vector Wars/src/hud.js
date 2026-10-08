@@ -147,11 +147,29 @@ export class Hud {
     this.parallaxBtn.textContent = `Parallax: ${parallax ? 'deep' : 'classic'}`;
   }
 
-  // A big banner across the upper screen: "LEVEL 1", "LEVEL 1 COMPLETE".
+  // A big banner across the upper screen ("LEVEL 1").
   toast(title, sub = '') {
     this.toastEl.querySelector('.t1').textContent = title;
     this.toastEl.querySelector('.t2').textContent = sub;
+    this.toastEl.classList.remove('foe');
     restart(this.toastEl, 'show');
+  }
+
+  // After a level gate: one short line ("Attack speed increased"), then, if
+  // this level adds an enemy type, a single small idle sprite of it, no words.
+  levelBanner(title, newType) {
+    this.toast(title);
+    cancelAnimationFrame(this.foeRaf);
+    if (!newType) return;
+    this.toastEl.classList.add('foe');
+    const c = this.toastEl.querySelector('.t3'), ctx = c.getContext('2d'), t0 = performance.now();
+    const tick = (now) => {
+      const t = (now - t0) / 1000;
+      ctx.clearRect(0, 0, c.width, c.height);
+      drawEnemy(ctx, newType, c.width / 2, c.height / 2, 54 * Math.min(1.25, Math.sqrt(newType.size)), t, { idle: true });
+      if (t < 3.2) this.foeRaf = requestAnimationFrame(tick);
+    };
+    this.foeRaf = requestAnimationFrame(tick);
   }
 
   setPauseButton(on) { this.pauseBtn.classList.toggle('show', on); }

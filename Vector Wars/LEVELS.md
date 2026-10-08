@@ -93,7 +93,40 @@ The order is fixed. The numbers are drafts, to be tuned by bot play (see section
 5. **Stars per level** (finish; finish with N+ units; max a gate)? Good for replays, but they only make sense if levels can be replayed one at a time.
 6. **How unleashed enemies score:** a flat ×2 for newly unleashed types, or permanently higher values.
 
-## 6. How to build it
+## 6. Playtest notes (v0.9.0) and what they mean
+
+**"It feels great, but a little easy: people pick it up fast, and dying is inconsequential."** Two separate problems:
+- *Easy:* the opening teaches well, so the next levels have to ask more of the player sooner (see "boring" below).
+- *Dying costs nothing:* a restart is instant and nothing is lost, so there are no stakes. The fix the user floated is a **roguelike** structure, kept casual.
+
+**"Levels 5 and 6 started to feel boring."** Why, as built: after level 4 (brutes) nothing new arrives; the random track repeats the same gate/squad rhythm; levels are all 8 pieces long; and only the numbers grow. Each level needs to bring something new or change the rhythm.
+
+## 7. Proposals (to discuss)
+
+### A casual roguelike run
+- **A run is a climb from level 1.** Dying ends the run; your best level and score are what you keep. (That's already true; what's missing is anything to lose.)
+- **A choice at every level gate** (replacing the fixed fire-rate step): pick 1 of 3 upgrades, shown as big icons with two or three words each. Examples: *Attack speed*, *Gate power* (gates move faster when shot), *Spread shot*, *Tight formation* (less spill), *Shield the rear* (leaks hurt less), *Reinforcements* (+N units now), *Bomb charge*. Runs then differ, a good build is something to protect, and dying loses it. One tap, no menus, so it stays casual.
+- **One continue per run:** the first death rewinds to the start of that level with the army you entered it with; the second ends the run. A near miss, not a cheap restart.
+- **Light between-run rewards,** never power: unlock grid patterns and army colors at milestones (reach level 5, beat a mini-boss), and maybe "start at level 3" once you've reached level 6.
+- Score and leaderboard: unchanged (score per run).
+
+### Make every level bring something
+Proposed order after level 1 (one new thing per level, plus rhythm changes):
+
+| Level | New | Shape |
+|---|---|---|
+| 2 | Drones; ÷ gates | normal |
+| 3 | **Bonus level:** small strike team, giant-drone mini-boss | short, intense |
+| 4 | Bombers; moving gates | normal |
+| 5 | **Gauntlet:** back-to-back squads, few gates | short |
+| 6 | Brutes; split-gate setups | longer |
+| 7 | **Bonus level:** giant-bomber mini-boss | short, intense |
+| 8 | **Sprint:** gates only, the track speeds up | short and joyful |
+| 9 | World boss (earns the bomb) | finale |
+
+Track hazards (spike strips, saws, narrow bridges) and the fire enemy come in World 2.
+
+## 8. How to build it
 
 **Authored chunks.** A level is a list of short, hand-made pieces: "squad of 6 grunts, centered", "+1 gate, half width, slow approach", "red pair −10 / −1", "level gate". The game already builds the track from gates and squads; levels replace the random choices with these lists (`src/levels.js`). After the last level, the track can go back to random.
 

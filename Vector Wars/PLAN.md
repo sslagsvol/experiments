@@ -101,7 +101,7 @@ These come from playtests; the order among them and against D / B / E is still t
    - Lessons (mechanics) vs levels (what players see): early levels pack several lessons. Army carries over between main levels.
    - **Bonus levels** every couple of main levels: a forced small strike team (the micro-battles), ending in a **mini-boss** that is a giant version of the next enemy type. Beating it **unleashes** that type into main levels, worth more points; survivors rejoin the main army through a capped bonus × gate.
    - Each world ends with the **world boss** (Batch D, item 3), which earns the bomb.
-   - Built so far: v0.8.0 level 1 playtest; v0.9.0 fire-rate progression, tougher gates, recurring level gates. Next: the level-complete menu and army snapshot, then bonus levels and mini-bosses, then the world boss and bomb.
+   - Built so far: v0.8.0 level 1 playtest; v0.9.0 fire-rate progression, tougher gates, recurring level gates, level-gate crescendo, killcam. Playtest notes and proposals (a casual roguelike run; every level brings something new) are in `LEVELS.md` sections 6–7. Next: the level-complete menu and army snapshot, then bonus levels and mini-bosses, then the world boss and bomb.
 
 7. **Fire enemy (new type).**
    - On contact or death it sets the army on fire in a radius. Units caught in it **keep burning for a duration** (about 2–3s): they flicker orange-red and each has a chance to die every tick, so the damage keeps coming after the hit.

@@ -15,7 +15,7 @@ Round-by-round history of playtest feedback and what changed, grouped by release
 | 0.6.1 | rounds 22–23 | PR #9 |
 | 0.7.0 | round 24 | PR #10 |
 | 0.8.0 | rounds 25–26 | PR #11 |
-| 0.9.0 | round 27 | `vw/v0.9.0` |
+| 0.9.0 | rounds 27–28 | `vw/v0.9.0` |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
@@ -285,4 +285,13 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Level gates keep coming:** after level 1, one every `CFG.LEVEL_EVERY` (8) track pieces, so the fire-rate progression continues. The random track's ramp now keeps the level 1 army as its base.
 - Level 1 retuned for the slower fire: squads 0.3–0.6 of the best-case army. Bots: careful 55 at the level 2 gate, worse-side dies, no steering finishes with 6; careful survives 5 minutes, growing as fire rises.
 - Fixed a style guide error (since v0.7.0): the background-parallax card passed a hex number to `css()`, stopping its animation.
+
+## Round 28 — v0.9.0 (cont.): playtest notes, killcam, level-gate crescendo (2026-10-08)
+- User playtest: feels great; a little easy since people pick it up fast and dying is inconsequential (maybe a casual roguelike); levels 5–6 got boring. Requests: zoom the camera in on the army during slow motion (especially the first brute); the level gate should soak up bullets with a quiet sound that grows, so crossing it is the crescendo; then 1–2s with no enemies, minimal text ("Attack Speed Increased"), then a single small sprite of the level's new enemy, no words.
+- **Killcam:** in danger slow motion the camera moves in close on the army; the first bomber blast and first brute stomp of a run get a 1.4s killcam (time ×0.35) (`ANIM.killcam*`).
+- **Level gate:** soaks up bullets (`CFG.LEVEL_CHARGE_HITS` fills its bar) with a new quiet `levelCharge` blip that rises in pitch and volume as it nears; crossing plays the new `levelUp` crescendo (louder the more it charged). `Sfx.play` takes `gain`.
+- **After the gate:** `CFG.LEVEL_QUIET` (52) units of empty track; the banner reads only "Attack speed increased" (or "Level N"), then a 64px idle sprite of the enemy type that level adds, no words (`hud.levelBanner`).
+- **Enemy types arrive by level** after level 1: drones at level 2, bombers at 3, brutes at 4 (`UNLOCK_AT`), instead of on consecutive squads.
+- `LEVELS.md` sections 6–7: what the notes mean, a casual roguelike proposal (an upgrade choice at each level gate, one continue per run, cosmetic unlocks) and a level order where every level brings something new.
+- Style guide: killcam on the slow-motion card, level gate and banner cards updated, two new sounds. Sound lab: the two new sounds.
 

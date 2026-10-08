@@ -139,8 +139,8 @@
     <div class="card">
       <div class="stage hud-stage"><div id="hud"><div id="toast" class="sg-toast"><div class="t1">Level 1 complete</div><div class="t2">150 units · on to level 2</div></div></div></div>
       <div class="controls"><button type="button" id="sg-toast-replay">Replay</button></div>
-      <h3>Level banner</h3><div class="var">hud.toast() · #toast .t1 · .t2 · @keyframes toast</div>
-      <div class="meta">Audiowide clamp(30px, 10vw, 54px) white with --you glow, 24% down the screen · sub line 15px · sweeps in (letter-spacing .3em → 0) and fades over 2.4s (ANIM.toastLife) · "Level 1" at the start of a run, "Level 1 complete" at a level gate</div>
+      <h3>Level banner</h3><div class="var">hud.toast() · hud.levelBanner() · #toast .t1 · .t2 · .t3 · @keyframes toast, toast-foe</div>
+      <div class="meta">Audiowide clamp(30px, 10vw, 54px) white with --you glow, 24% down the screen · sub line 15px · sweeps in (letter-spacing .3em → 0) and fades over 2.4s (ANIM.toastLife) · "Level 1" at the start of a run · after a level gate, one short line ("Attack speed increased") and, when the level adds an enemy type, a single 64px idle sprite of it with no words, fading in at ~0.9s (banner 3.1s) · the track is empty for CFG.LEVEL_QUIET units after the gate so nothing else is on screen</div>
     </div>
     <div class="card">
       <div class="stage danger-stage"><div id="danger" style="opacity:1"></div><div id="hud"><div id="army-hud"><div id="count" class="danger">68</div><div id="loss" class="delta live">−214</div></div></div></div>
@@ -404,7 +404,7 @@ elementCard({ title: 'Fixed single gate', vars: 'levels.js single · width · sl
   vline(ctx, x0, h - 10, x0, 10, COLORS.rail, 2); vline(ctx, x0 + tw, h - 10, x0 + tw, 10, COLORS.rail, 2);
   gate(ctx, x0 + (tw - gw) / 2, h / 2 - gh / 2, gw, gh, { op: '+', v: 23, ch: 0.5, f: 0 });
 });
-elementCard({ title: 'Level gate', vars: "levels.js levelGate · gate op 'level' · COLORS.white", meta: `full width, can't be shot (bullets pass through) or dodged · crossing: ripple ${ANIM.rippleLevel} (the biggest), white spark ring, the maxMult sound, and the "Level complete" banner`, note: 'Ends a level. After level 1 the track goes back to random, ramping up linearly from the army you finished with (CFG.RAMP_GATE, RAMP_PAR).' }, (ctx, w, h) => {
+elementCard({ title: 'Level gate', vars: "levels.js levelGate · gate op 'level' · COLORS.white", meta: `full width, can't be shot (bullets pass through) or dodged · crossing: ripple ${ANIM.rippleLevel} (the biggest), white spark ring, the maxMult sound, and the "Level complete" banner`, note: 'Ends a level. It soaks up bullets (CFG.LEVEL_CHARGE_HITS to fill its bar) with a quiet levelCharge blip that rises as it nears; crossing it plays levelUp, louder the more it charged. After level 1 a level gate comes every CFG.LEVEL_EVERY pieces; each raises the fire rate (CFG.FIRE_LEVELS) and levels 2–4 each add an enemy type (UNLOCK_AT).' }, (ctx, w, h) => {
   const tw = w * 0.8, x0 = (w - tw) / 2, gh = tw * 0.5 * CFG.GATE_H / CFG.TW;
   vline(ctx, x0, h - 10, x0, 10, COLORS.rail, 2); vline(ctx, x0 + tw, h - 10, x0 + tw, 10, COLORS.rail, 2);
   gate(ctx, x0 + 2, h / 2 - gh / 2, tw - 4, gh, { op: 'level', n: 2, ch: 0, f: 0 });
@@ -667,7 +667,7 @@ const SLOW_T = 8, SLOW = { danger: [], scale: [], vignette: [] };
     SLOW.vignette.push(Math.min(1, Math.max(0, (danger - 0.4) / (ANIM.slowMoThreshold - 0.4))));
   }
 }
-animCard({ title: 'Slow motion near defeat', vars: 'ANIM.slowMoThreshold · slowMoScale · slowMoIn · slowMoOut', meta: `danger = incoming enemy strength ÷ army · at ≥ ${ANIM.slowMoThreshold}, time eases to ×${ANIM.slowMoScale} over ~${ANIM.slowMoIn}s, back over ~${ANIM.slowMoOut}s · steering stays real-time · <b>breaking a top-3 score</b> (3rd, 2nd, then 1st; once each per run): when the score is within ${ANIM.recordLead}s of distance points of that place, time eases to ×${ANIM.recordScale} over ~${ANIM.recordIn}s, holds ${ANIM.recordHold}s after passing it (max ${ANIM.recordMax}s), then returns to full speed, with no vignette`, note: 'Danger (pink, dashed line = threshold) and time scale (cyan). The frame edge shows the vignette.', tall: true },
+animCard({ title: 'Slow motion near defeat', vars: 'ANIM.slowMoThreshold · slowMoScale · slowMoIn · slowMoOut', meta: `danger = incoming enemy strength ÷ army · at ≥ ${ANIM.slowMoThreshold}, time eases to ×${ANIM.slowMoScale} over ~${ANIM.slowMoIn}s, back over ~${ANIM.slowMoOut}s · steering stays real-time · <b>killcam</b>: in danger slow motion, and for ${ANIM.killcamHold}s at the first bomber blast and first brute stomp of a run (time ×${ANIM.killcamScale}), the camera moves in close on the army (in ~${ANIM.killcamIn}s, out ~${ANIM.killcamOut}s) · <b>breaking a top-3 score</b> (3rd, 2nd, then 1st; once each per run): when the score is within ${ANIM.recordLead}s of distance points of that place, time eases to ×${ANIM.recordScale} over ~${ANIM.recordIn}s, holds ${ANIM.recordHold}s after passing it (max ${ANIM.recordMax}s), then returns to full speed, with no vignette`, note: 'Danger (pink, dashed line = threshold) and time scale (cyan). The frame edge shows the vignette.', tall: true },
   (ctx, w, h, t) => {
     const i = Math.floor(((t % SLOW_T) / SLOW_T) * (SLOW.vignette.length - 1));
     const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.max(w, h) * 0.7);
@@ -873,6 +873,8 @@ const SOUND_NOTES = {
   gateTick: 'A gate value ticking up from fire; pitch rises with the value.',
   blast: 'Bomber explosion: low boom and noise burst.',
   stomp: 'Brute stomp: heavy sub thud, crunch and ground rumble.',
+  levelCharge: 'A bullet soaked up by a level gate: a soft, airy blip. In game its pitch and volume rise as the gate nears.',
+  levelUp: 'Crossing a level gate, the crescendo: a long swell, then a thump, a bright echoing chord and a spray of sparkles. Louder the more the gate was charged.',
   maxMult: 'A × gate reaching its ×3.0 cap ("data stream"): a very fast run of sine blips rising through a pentatonic scale into an echo (plus a gold burst on the gate). Also plays when your score moves up a place on the board, and when initials are saved.',
   win: 'Battle won: the blast sound plus a crackly fizzle that echoes away (feedback delay, darkening each repeat).',
   lose: 'Army wiped out: long dive and rumble.',

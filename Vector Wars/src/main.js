@@ -5,7 +5,7 @@ import { CFG, COLORS, ANIM, GRID_PATTERNS, mulberry32, multHitsForStep } from '.
 import { createWorld } from './world.js';
 import { Army } from './crowd.js';
 import { EnemyForce } from './enemies.js';
-import { squadMix, mixEst, TYPE_LIST } from './enemyFormations.js';
+import { squadMix, mixEst, TYPE_LIST, ENEMY_TYPES, UNLOCK_AT } from './enemyFormations.js';
 import { GatePool, FONT, gateColor } from './gates.js';
 import { Bullets, Sparks, Fallers, Fizzles } from './fx.js';
 import { UNIT_SPACING } from './formations.js';
@@ -154,6 +154,9 @@ function newRun() {
     rampFrom: CLASSIC ? 0 : -1, // gateIdx where the random track (and its linear ramp) began
     rampArmy: 0,     // army at the level gate: the base of the linear ramp
     nextLevelSeg: -1, // random track: G.seg at which the next level gate goes in
+    killcam: 0,      // 0..1, eased: how far the camera has moved in on the army
+    killcamT: 0,     // s left of a first-blast / first-stomp killcam
+    seenAoe: {},     // enemy type ids whose area attack has already had its killcam
     rng: mulberry32(SEED),
     fireAcc: 0,
     shake: 0,
@@ -231,9 +234,13 @@ function spawnBeat() {
     G.rampFrom = G.gateIdx;
     G.enemyIdx = 2;   // random squads pick up from here: drones next, then bombers, then brutes
     G.nextLevelSeg = G.seg + CFG.LEVEL_EVERY;
-    G.nextW = wz + CFG.SEG_ENEMY;
+    G.nextW = wz + CFG.LEVEL_QUIET;
   }
 }
+
+// Which enemy types squads may use (squadMix / UNLOCK_AT): by squad count on
+// the classic track, by level otherwise (level 2 drones, 3 bombers, 4 brutes).
+const unlockIdx = () => CLASSIC ? G.enemyIdx : G.level;
 
 // Fire rate for the current level (it grows at each level gate).
 const fireMul = () => CLASSIC ? 1 : CFG.FIRE_LEVELS[Math.min(CFG.FIRE_LEVELS.length - 1, G.level - 1)];
@@ -249,7 +256,7 @@ function spawnNext() {
     // Random track: a level gate every LEVEL_EVERY pieces (fire rate goes up).
     gates.acquire(G.nextW, null, null, { op: 'level', n: G.level + 1 + gates.active.filter((g) => g.S && g.S.op === 'level' && !g.done).length, ch: 0, f: 0 }, 0, { x: 0, width: 2 * CFG.TW - 0.1 });
     G.nextLevelSeg = G.seg + CFG.LEVEL_EVERY;
-    G.nextW += CFG.SEG_GATE;
+    G.nextW += CFG.LEVEL_QUIET;
     return;
   }
   const kind = PATTERN[G.seg % PATTERN.length];
@@ -329,9 +336,9 @@ function spawnSquad({ wz, spec }) {
     const ref = 0.8 * projectedArmy(wz) + 0.2 * par;
     const threat = CFG.ENEMY_THREAT_MIN + G.rng() * (CFG.ENEMY_THREAT_MAX - CFG.ENEMY_THREAT_MIN);
     // Size by strength, not headcount: a squad with brutes or bombers has fewer units.
-    n = Math.round(Math.max(8, ref * threat / mixEst(squadMix(kind, G.enemyIdx))));
+    n = Math.round(Math.max(8, ref * threat / mixEst(squadMix(kind, unlockIdx()))));
   }
-  enemies.spawnSquad(kind, n, (G.rng() * 2 - 1) * CFG.TW, wz, G.rng, G.enemyIdx);
+  enemies.spawnSquad(kind, n, (G.rng() * 2 - 1) * CFG.TW, wz, G.rng, unlockIdx());
   G.enemyIdx++;
 }
 
@@ -434,11 +441,13 @@ function levelUp(g) {
   shatterSparks(g);
   world.addRipple(army.cx, G.dist, ANIM.rippleLevel, time);
   sparks.ring(army.cx, 0.3, G.dist - army.front, 1.6, COLORS.white, 50);
-  sfx.play('maxMult');
+  sfx.play('levelUp', { gain: 0.6 + 0.4 * g.S.ch });
   const fireBefore = fireMul();
   G.level = g.S.n;
   const fireUp = fireMul() > fireBefore;
-  hud.toast(`Level ${g.S.n - 1} complete`, `${army.N.toLocaleString('en-US')} units${fireUp ? ' · fire rate up' : ''} · on to level ${g.S.n}`);
+  // Minimal and direct: what you got, then (no words) the enemy this level adds.
+  const newType = TYPE_LIST.find((t) => UNLOCK_AT[Object.keys(ENEMY_TYPES).find((k) => ENEMY_TYPES[k] === t)] === G.level);
+  hud.levelBanner(fireUp ? 'Attack speed increased' : `Level ${G.level}`, newType || null);
   if (!G.rampArmy) G.rampArmy = Math.max(30, army.N);   // the ramp starts from the army at the end of level 1
 }
 
@@ -490,7 +499,16 @@ function hitGate(s) {
 function bulletTest(x, oldW, newW) {
   for (const g of gates.active) {
     if (g.done || oldW >= g.wz || newW < g.wz || Math.abs(x) >= CFG.TW) continue;
-    if (g.S && (g.S.op === 'level' || Math.abs(x - g.sx) > g.sw / 2)) continue;   // missed a single gate (level gates let bullets through)
+    if (g.S && g.S.op === 'level') {
+      // Level gates soak up bullets quietly, a soft blip that grows louder and
+      // higher as the gate nears; crossing it is the crescendo.
+      const s = g.S, near = 1 - Math.min(1, (g.wz - G.dist) / CFG.VIEW_AHEAD);
+      s.ch = Math.min(1, s.ch + 1 / CFG.LEVEL_CHARGE_HITS);
+      s.f = Math.max(s.f, 0.35);
+      sfx.play('levelCharge', { pitch: 1 + near * 1.2, gain: 0.3 + near * 0.7 });
+      return true;
+    }
+    if (g.S && Math.abs(x - g.sx) > g.sw / 2) continue;   // missed the single gate
     const side = g.S || (x < 0 ? g.L : g.R);
     if (hitGate(side)) {
       if (side.maxed) { side.maxed = false; maxedOut(g, side); }
@@ -535,6 +553,9 @@ function onHit(t, x, z, leaked) {
     sparks.emit(x, 0.3, w, c, 30, 5);
     world.addRipple(x, w, t.shape === 3 ? ANIM.rippleStomp : ANIM.rippleBlast, time);
     sfx.play(t.shape === 3 ? 'stomp' : 'blast');
+    // The first blast and first stomp of a run get a killcam: slow motion,
+    // camera in close.
+    if (!G.seenAoe[t.id]) { G.seenAoe[t.id] = true; G.killcamT = ANIM.killcamHold; }
     G.shake = Math.max(G.shake, t.shape === 3 ? 0.3 : 0.22);
   } else {
     const k = Math.floor(t.damage) + (Math.random() < t.damage % 1 ? 1 : 0);
@@ -668,10 +689,16 @@ function update(dt, realDt) {
   // Slow motion: ease in when the army is about to be overwhelmed.
   const slow = G.state === 'play' && G.danger >= ANIM.slowMoThreshold;
   const recordMoment = G.state === 'play' && recordSlowMo(realDt);
-  const targetScale = Math.min(slow ? ANIM.slowMoScale : 1, recordMoment ? ANIM.recordScale : 1);
-  const ease = targetScale < G.timeScale ? (recordMoment && !slow ? ANIM.recordIn : ANIM.slowMoIn) : ANIM.slowMoOut;
+  G.killcamT = Math.max(0, G.killcamT - realDt);
+  const cam = G.state === 'play' && G.killcamT > 0;
+  const targetScale = Math.min(slow ? ANIM.slowMoScale : 1, recordMoment ? ANIM.recordScale : 1, cam ? ANIM.killcamScale : 1);
+  const ease = targetScale < G.timeScale ? (cam ? ANIM.killcamIn : recordMoment && !slow ? ANIM.recordIn : ANIM.slowMoIn) : ANIM.slowMoOut;
   G.timeScale += (targetScale - G.timeScale) * Math.min(1, realDt / ease);
   sfx.rate = G.timeScale;
+  // Killcam: the camera follows danger slow motion in, and the first-blast /
+  // first-stomp moments. (The record-breaking slow motion keeps the wide view.)
+  const camTarget = G.state === 'play' ? Math.max(cam ? 1 : 0, slow ? Math.min(1, (1 - G.timeScale) / (1 - ANIM.slowMoScale)) : 0) : 0;
+  G.killcam += (camTarget - G.killcam) * Math.min(1, realDt / (camTarget > G.killcam ? ANIM.killcamIn : ANIM.killcamOut));
 
   // Housekeeping (runs in every state so the scene settles after a loss).
   bullets.update(dt, G.dist, G.state === 'play' ? bulletTest : () => false);
@@ -743,7 +770,7 @@ function step(realDt) {
   const dt = realDt * G.timeScale;
   time += dt;
   update(dt, realDt);
-  world.update(time, G.dist, G.ax, G.shake, G.battle);
+  world.update(time, G.dist, G.ax, G.shake, G.battle, G.killcam);
   syncHud(realDt);
   world.renderer.info.reset();
   world.render();

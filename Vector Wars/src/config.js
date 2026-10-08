@@ -92,6 +92,8 @@ export const CFG = {
   RAMP_GATE: 0.12,
   RAMP_PAR: 0.15,
   LEVEL_EVERY: 8,          // after level 1, a level gate every this many track pieces
+  LEVEL_QUIET: 52,         // empty track after a level gate, so the banner shows with no enemies on screen
+  LEVEL_CHARGE_HITS: 60,   // bullets to fill a level gate's charge bar (it soaks them up; the crossing is the crescendo)
   // Keyboard steering: units/s across the track at full hold (after a short
   // ramp from KEY_STEER_START of that), ×KEY_STEER_FAST with Shift.
   KEY_STEER_SPEED: 5,
@@ -121,6 +123,8 @@ export const SFX = {
   gateDown: { volume: 0.5 },               // passing a bad gate
   gateTick: { volume: 0.18, maxRate: 10 }, // a gate's value ticking up from shooting
   maxMult: { volume: 0.8 },                // a × gate reaching its ×3.0 cap
+  levelCharge: { volume: 0.08, maxRate: 14 }, // a bullet soaked up by a level gate (louder and higher as it nears)
+  levelUp: { volume: 0.75 },               // crossing a level gate: the crescendo
   blast:   { volume: 0.55, maxRate: 5 },   // bomber explosion
   stomp:   { volume: 0.65, maxRate: 4 },   // brute stomp
   win:     { volume: 0.55 },               // battle won: the blast plus an echoing crackle
@@ -136,6 +140,12 @@ export const ANIM = {
   gateSlowFrom: 20,        // starts slowing this far before the gate (units)
   gateSlowTo: 4,           // back to full speed this close to it
   rippleLevel: 2.8,
+  // Killcam: in slow motion, and for a moment at the first bomber blast and
+  // first brute stomp of a run, the camera moves in close on the army.
+  killcamHold: 1.4,        // s (real time) of the first-blast / first-stomp killcam
+  killcamScale: 0.35,      // time scale during it
+  killcamIn: 0.25,         // s to ease the camera in
+  killcamOut: 0.6,         // s to ease it back out
   toastLife: 2.4,          // s a "LEVEL 1" / "LEVEL 1 COMPLETE" banner stays up
   bobFreq: 11,             // unit march bob speed (rad/s)
   bobHeight: 0.04,         // unit march bob height (world units)

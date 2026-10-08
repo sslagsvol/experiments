@@ -222,15 +222,17 @@ export function createWorld(canvas) {
       ripples[ripI].set(x, wz, time, amp);
       ripI = (ripI + 1) % RIPPLES;
     },
-    update(time, dist, ax, shake, battle = 0) {
+    // killcam 0..1 moves the camera in close on the army (slow motion).
+    update(time, dist, ax, shake, battle = 0, killcam = 0) {
       floorMat.uniforms.uTime.value = time;
       floorMat.uniforms.uDist.value = dist;
       const sx = shake ? (Math.random() * 2 - 1) * shake : 0;
       const sy = shake ? (Math.random() * 2 - 1) * shake : 0;
       const push = battle * ANIM.battleCamPush;
-      camera.position.set(ax * 0.3 + sx, 6.2 - push * 0.7 + sy, 7.4 - push);
+      const k = killcam * killcam * (3 - 2 * killcam);
+      camera.position.set(ax * (0.3 + 0.6 * k) + sx, 6.2 - push * 0.7 - (2.8 - push * 0.7) * k + sy, 7.4 - push - (3.8 - push) * k);
       floorMat.uniforms.uCamX.value = ax * 0.3 * CFG.VOID_FOLLOW * followMul;
-      lookAt.set(ax * 0.45, 0, -7 + push * 0.6);
+      lookAt.set(ax * (0.45 + 0.55 * k), 0, -7 + push * 0.6 + (4.2 - push * 0.6) * k);
       camera.lookAt(lookAt);
     },
     render() { composer.render(); },
