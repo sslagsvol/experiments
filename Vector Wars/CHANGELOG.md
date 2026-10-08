@@ -15,7 +15,7 @@ Round-by-round history of playtest feedback and what changed, grouped by release
 | 0.6.1 | rounds 22–23 | PR #9 |
 | 0.7.0 | round 24 | PR #10 |
 | 0.8.0 | rounds 25–26 | PR #11 |
-| 0.9.0 | rounds 27–29 | `vw/v0.9.0` |
+| 0.9.0 | rounds 27–35 | PR #12 |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.

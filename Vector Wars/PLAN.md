@@ -173,4 +173,4 @@ The game is in **beta**, so versions are **0.MINOR.PATCH**.
 | 0.6.1 | 2026-10-07 | PR #9 (`803dd97`) | Sound lab (detune and stretch) |
 | 0.7.0 | 2026-10-07 | PR #10 (`ca4c1a7`) | Version numbers, stronger parallax, grid patterns, keyboard controls |
 | 0.8.0 | 2026-10-08 | PR #11 (`f236537`) | Level plan; level 1 playtest: authored opening, level gate, banner, linear ramp after |
-| 0.9.0 | (this branch) | `vw/v0.9.0` | Slower fire that grows per level, tougher gates, killcam, level-gate crescendo; World 1 levels 2–10 with bonus levels and mini-bosses |
+| 0.9.0 | 2026-10-08 | PR #12 (`1743790`) | Slower fire that grows per level, tougher gates, killcam, level-gate crescendo; World 1 levels 2–10 with bonus levels and mini-bosses |
