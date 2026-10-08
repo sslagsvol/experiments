@@ -54,7 +54,9 @@
     </div>
     <div id="title-board"></div>
   </div>
-  <p class="blink">Touch to start</p>
+  <p class="blink"><span class="touch-only">Touch</span><span class="kb-only">Press Space</span> to start</p>
+  <p class="kb-hint">← → or A D steer · Shift fast · P pause · M mute</p>
+  <div class="version"></div>
 </div>
 
 <div id="over" class="overlay hidden">
@@ -78,6 +80,12 @@
     <button id="resume" type="button" class="btn primary">Continue</button>
     <button id="restart" type="button" class="btn">Restart</button>
   </div>
+  <p class="kb-hint">Space continue · R restart · G grid</p>
+  <div class="pause-lab" aria-label="Experiments">
+    <button id="grid-btn" type="button">Grid</button>
+    <button id="parallax-btn" type="button">Parallax</button>
+  </div>
+  <div class="version"></div>
 </div>
 
 <script type="module" src="src/main.js"></script>

@@ -6,6 +6,10 @@
 // something animates, update style-guide.html in the same change (or flag it
 // under "Style guide debt" in CHANGELOG.md).
 
+// The game's version: 0.MINOR.PATCH while in beta. Bump it on the release
+// branch (vw/vX.Y.Z) and add a matching heading in CHANGELOG.md. See PLAN.md.
+export const VERSION = '0.7.0';
+
 export const CFG = {
   TW: 2.0,                 // track half-width (world units)
   SPEED: 6.5,              // forward speed (units/s)
@@ -69,6 +73,20 @@ export const CFG = {
   LEADERBOARD: { url: 'https://uxwcslorwepzrmpbqmjd.supabase.co', key: 'sb_publishable_Hhx4UfgA2LvnRncQ8d1Nvw_iI_WJeKc' },
 
   CAMERA_LIFT: 0.12,       // shifts the view so the army sits higher, leaving thumb room
+  // Background (the void grid below the track). Deeper, slower and following
+  // the camera all push it further away, so the road reads as raised.
+  VOID_DEPTH: 9,           // units below the track (was 4)
+  VOID_SCROLL: 0.45,       // its forward scroll speed relative to the track
+  VOID_FOLLOW: 0.6,        // how much its pattern follows the camera sideways
+  // Grid pattern on the track and background (GRID_PATTERNS). Try others with
+  // ?grid=hex, the G key, or the pause menu; later, one per level.
+  GRID_PATTERN: 'grid',
+  // Keyboard steering: units/s across the track at full hold (after a short
+  // ramp from KEY_STEER_START of that), ×KEY_STEER_FAST with Shift.
+  KEY_STEER_SPEED: 5,
+  KEY_STEER_START: 0.35,
+  KEY_STEER_RAMP: 0.25,
+  KEY_STEER_FAST: 1.8,
   SCORE_PER_DIST: 10,      // points per unit of distance
   SCORE_PER_HP: 5,         // points per hit point of each enemy defeated (grunt 5, brute 40)
 };
@@ -78,6 +96,9 @@ export const CFG = {
 // tune = detune in semitones (negative = deeper) at the same speed; stretch =
 // longer at the same pitch. Both work globally (here) and per sound. Try
 // values in sound-lab.html.
+// Track / background grid patterns, in shader order (world.js).
+export const GRID_PATTERNS = ['grid', 'hex', 'oblique', 'triangles', 'dots', 'rings'];
+
 export const SFX = {
   master: 0.55,
   tune: 0,

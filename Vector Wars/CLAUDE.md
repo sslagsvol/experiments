@@ -25,4 +25,5 @@ How to update:
 ## Version history
 
 - One commit per round of changes, with messages prefixed `Vector Wars:`; log each round in `CHANGELOG.md` and keep the roadmap in `PLAN.md` current.
-- Risky batches go on `vw/*` branches; milestones are tagged `vector-wars-vX.Y`.
+- Versions are 0.MINOR.PATCH while in beta (`VERSION` in `src/config.js`). Each release is a branch `vw/vX.Y.Z`: bump `VERSION` first and add it to the Releases table in `CHANGELOG.md`. After the user merges, tag the merge commit `vector-wars-vX.Y.Z` (annotated). Full steps: `PLAN.md` section 7.
+- Stage only the files you changed (not `git add -A`): other sessions may be editing the repo at the same time.

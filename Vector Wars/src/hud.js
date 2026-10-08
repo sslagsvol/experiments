@@ -2,7 +2,7 @@
 // toggles so layout never thrashes during play. No three.js imports, so the
 // style guide can render the real recap with renderRecap().
 
-import { fmt } from './config.js';
+import { fmt, VERSION } from './config.js';
 import { TYPE_LIST } from './enemyFormations.js';
 import { drawEnemy } from './sprites.js';
 import { CHARSET, INITIALS, ordinal, rankFor } from './scores.js';
@@ -37,6 +37,9 @@ export class Hud {
     this.pauseTabs = [...this.pauseEl.querySelectorAll('.pause-tabs button')];
     for (const b of this.pauseTabs) b.addEventListener('click', () => this.pauseTab(b.dataset.tab));
     this.stopPauseRecap = null;
+    for (const el of document.querySelectorAll('.version')) el.textContent = `v${VERSION} beta`;
+    this.gridBtn = document.getElementById('grid-btn');
+    this.parallaxBtn = document.getElementById('parallax-btn');
     this.last = { score: -1, rank: -1, count: -1, danger: -1, live: null };
     this.stopRecap = null;
     this.entry = null;        // the initials entry while it's open
@@ -135,6 +138,12 @@ export class Hud {
     this.entryEl.classList.add('hidden');
     renderBoard(this.recap, scores, highlight);
     this.allowRetry();
+  }
+
+  // Pause-menu experiments: the grid pattern and background parallax.
+  setLab(pattern, parallax) {
+    this.gridBtn.textContent = `Grid: ${pattern}`;
+    this.parallaxBtn.textContent = `Parallax: ${parallax ? 'deep' : 'classic'}`;
   }
 
   setPauseButton(on) { this.pauseBtn.classList.toggle('show', on); }

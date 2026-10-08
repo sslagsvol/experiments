@@ -28,3 +28,24 @@ export class DragInput {
   consumeDx() { const d = this.dx; this.dx = 0; return d; }
   consumeTap() { const t = this.taps > 0; this.taps = 0; return t; }
 }
+
+// Keyboard steering: which steer keys are held (← → or A / D), and Shift.
+export class KeyInput {
+  constructor(target) {
+    this.held = new Set();
+    this.fast = false;
+    const STEER = { ArrowLeft: -1, a: -1, A: -1, ArrowRight: 1, d: 1, D: 1 };
+    target.addEventListener('keydown', (e) => {
+      this.fast = e.shiftKey;
+      if (STEER[e.key]) { this.held.add(STEER[e.key] < 0 ? 'L' : 'R'); e.preventDefault(); }
+    });
+    target.addEventListener('keyup', (e) => {
+      this.fast = e.shiftKey;
+      if (STEER[e.key]) this.held.delete(STEER[e.key] < 0 ? 'L' : 'R');
+    });
+    target.addEventListener('blur', () => this.held.clear());
+  }
+
+  // -1 left, 1 right, 0 none (or both).
+  get dir() { return (this.held.has('R') ? 1 : 0) - (this.held.has('L') ? 1 : 0); }
+}

@@ -93,8 +93,8 @@
   <p class="sg-sub">Titles use <code>Audiowide</code>; everything else uses <code>Share Tech Mono</code>, including the gate labels drawn into textures (<code>FONT</code> in <code>src/gates.js</code>). These use the real game classes.</p>
   <div class="grid wide">
     <div class="card">
-      <div class="stage"><div class="overlay"><h1>Vector Wars</h1><p class="sub">Drag to steer · Shoot gates to raise them</p><p class="blink">Touch to start</p></div></div>
-      <h3>Title screen</h3><div class="var">.overlay h1 · .overlay .sub · .blink</div>
+      <div class="stage"><div class="overlay"><h1>Vector Wars</h1><p class="sub">Drag to steer · Shoot gates to raise them</p><p class="blink">Touch to start</p><p class="kb-hint" style="display:block">← → or A D steer · Shift fast · P pause · M mute</p><div class="version"></div></div></div>
+      <h3>Title screen</h3><div class="var">.overlay h1 · .overlay .sub · .blink · .kb-hint · .version</div>
       <div class="meta">Audiowide clamp(40px, 13vw, 76px), --you glow · blink 1.2s steps(2)</div>
     </div>
     <div class="card">
@@ -129,9 +129,12 @@
       <div class="stage"><div id="pause" class="overlay"><h1 class="paused">Paused</h1>
         <div class="pause-tabs"><button type="button" data-tab="run" class="on">This run</button><button type="button" data-tab="board">High scores</button></div>
         <div class="pause-body"><div id="sg-pause-recap" class="recap"></div><div class="pause-board"><div id="sg-pause-board"></div><div id="pause-pace">On pace for 6th place</div></div></div>
-        <div class="pause-actions"><button type="button" class="btn primary">Continue</button><button type="button" class="btn">Restart</button></div></div></div>
+        <div class="pause-actions"><button type="button" class="btn primary">Continue</button><button type="button" class="btn">Restart</button></div>
+        <p class="kb-hint" style="display:block">Space continue · R restart · G grid</p>
+        <div class="pause-lab"><button type="button">Grid: grid</button><button type="button">Parallax: deep</button></div>
+        <div class="version"></div></div></div>
       <h3>Pause menu</h3><div class="var">#pause · h1.paused · .pause-tabs · .pause-body(.show-board) · #pause-pace · .btn(.primary)</div>
-      <div class="meta">Opened by the pause button, Esc / P, or leaving the tab mid-run · the recap so far ("Score so far") and the board, with where this score would place · phones switch between them with tabs; 680px+ shows both side by side · "Paused" breathes over 2.4s · Continue is the big lime CTA, Restart starts a fresh run at once</div>
+      <div class="meta">Opened by the pause button, Esc / P, or leaving the tab mid-run · the recap so far ("Score so far") and the board, with where this score would place · phones switch between them with tabs; 680px+ shows both side by side · "Paused" breathes over 2.4s · Continue is the big lime CTA, Restart starts a fresh run at once · keyboard hints (.kb-hint) appear only after a key press (body.kb) · beta experiments (.pause-lab, dashed): grid pattern and parallax · version along the bottom, 11px at 40%</div>
     </div>
     <div class="card">
       <div class="stage danger-stage"><div id="danger" style="opacity:1"></div><div id="hud"><div id="army-hud"><div id="count" class="danger">68</div><div id="loss" class="delta live">−214</div></div></div></div>
@@ -188,7 +191,7 @@
 </main>
 
 <script type="module">
-import { CFG, COLORS, ANIM, BLOOM, multHitsForStep } from './src/config.js';
+import { CFG, COLORS, ANIM, BLOOM, GRID_PATTERNS, VERSION, multHitsForStep } from './src/config.js';
 import { FORMATIONS, UNIT_SPACING } from './src/formations.js';
 import { enemyFormation, ENEMY_KINDS, ENEMY_TYPES, TYPE_LIST } from './src/enemyFormations.js';
 import { drawEnemy } from './src/sprites.js';
@@ -387,6 +390,58 @@ elementCard({ title: 'Track', vars: 'COLORS.grid · rail · horizon', meta: `hal
   for (let k = -2; k <= 2; k++) { ctx.beginPath(); ctx.moveTo(vx + k * 2, hy); ctx.lineTo(vx + k * 24, h); ctx.stroke(); }
   for (let i = 0; i < 9; i++) { const f = ((i + t * 1.2) % 9) / 9, y = hy + (h - hy) * f * f; const hw = 6 + (60 - 6) * f * f; ctx.beginPath(); ctx.moveTo(vx - hw, y); ctx.lineTo(vx + hw, y); ctx.stroke(); }
   vline(ctx, vx - 6, hy, vx - 60, h, COLORS.rail, 2); vline(ctx, vx + 6, hy, vx + 60, h, COLORS.rail, 2);
+});
+
+// Grid patterns (world.js floorFS): 2D versions, scrolling like the track.
+const PATTERN_NOTES = {
+  grid: 'The original: track lines every 0.4 across and 1.0 along; background 0.8 × 2.0.',
+  hex: 'Hexagon outlines, 0.6 across the flats on the track.',
+  oblique: 'A grid turned 45°: diagonal lines both ways.',
+  triangles: 'Three line families at 60°: equilateral triangles.',
+  dots: 'A dot at every lattice point; brightened ×1.6 since dots cover less.',
+  rings: 'Outlined polka dots: rings on a staggered (brick) layout.',
+};
+function drawPattern(ctx, w, h, t, kind) {
+  const cell = 26, off = (t * 18) % cell, line = css(COLORS.grid.map((v) => v * 1.4)), sx = (x) => x;
+  ctx.strokeStyle = line; ctx.fillStyle = line; ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  if (kind === 'grid') {
+    for (let x = 0; x <= w; x += cell * 0.5) { ctx.moveTo(x, 0); ctx.lineTo(x, h); }
+    for (let y = off - cell; y <= h; y += cell) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
+  } else if (kind === 'oblique' || kind === 'triangles') {
+    const angs = kind === 'oblique' ? [Math.PI / 4, -Math.PI / 4] : [0, Math.PI / 3, -Math.PI / 3];
+    for (const a of angs) {
+      const nx = -Math.sin(a), ny = Math.cos(a), dx = Math.cos(a), dy = Math.sin(a), R = w + h;
+      for (let k = -R; k <= R; k += cell) {
+        const cx = w / 2 + nx * k, cy = h / 2 + ny * k + off;
+        ctx.moveTo(cx - dx * R, cy - dy * R); ctx.lineTo(cx + dx * R, cy + dy * R);
+      }
+    }
+  } else if (kind === 'hex') {
+    const r = cell / Math.sqrt(3);
+    for (let row = -2; row * cell * 0.866 < h + cell; row++) for (let col = -1; col * cell < w + cell; col++) {
+      const cx = col * cell + (row & 1 ? cell / 2 : 0), cy = row * cell * 0.866 + off;
+      for (let j = 0; j <= 6; j++) { const a = Math.PI / 6 + j * Math.PI / 3; ctx[j ? 'lineTo' : 'moveTo'](cx + r * Math.cos(a), cy + r * Math.sin(a)); }
+    }
+  } else {
+    for (let row = -2; row * cell < h + cell; row++) for (let col = -1; col * cell < w + cell; col++) {
+      const cx = col * cell + (kind === 'rings' && row & 1 ? cell / 2 : 0) + cell / 2, cy = row * cell + off;
+      ctx.moveTo(cx + (kind === 'dots' ? 2 : 7), cy);
+      ctx.arc(cx, cy, kind === 'dots' ? 2 : 7, 0, Math.PI * 2);
+    }
+  }
+  if (kind === 'dots') ctx.fill(); else ctx.stroke();
+}
+for (const kind of GRID_PATTERNS) {
+  elementCard({ title: `Grid: ${kind}`, vars: `GRID_PATTERNS · uPattern ${GRID_PATTERNS.indexOf(kind)}${kind === CFG.GRID_PATTERN ? ' · default' : ''}`, meta: 'track: 0.6-unit cells (grid: original spacing) · background ×1.6 larger at 30% brightness · ripples light it up', note: PATTERN_NOTES[kind] + ' Beta experiment: ?grid=' + kind + ', the G key, or Grid on the pause menu (remembered per device). Later: one per level.' }, (ctx, w, h, t) => drawPattern(ctx, w, h, t, kind));
+}
+elementCard({ title: 'Background parallax', vars: 'CFG.VOID_DEPTH · VOID_SCROLL · VOID_FOLLOW', meta: `background grid ${CFG.VOID_DEPTH} below the track (was 4) · scrolls at ×${CFG.VOID_SCROLL} the track's speed · follows the camera sideways ×${CFG.VOID_FOLLOW}`, note: 'Deeper, slower and camera-following all push the background further away, so the road reads as raised. "Parallax: classic" on the pause menu restores the original for comparison.' }, (ctx, w, h, t) => {
+  // Two layers: the track lines move at full speed, the background at VOID_SCROLL and smaller.
+  ctx.save(); ctx.globalAlpha = 0.45;
+  ctx.scale(0.6, 0.6); drawPattern(ctx, w / 0.6, h / 0.6, t * CFG.VOID_SCROLL, 'grid'); ctx.restore();
+  ctx.fillStyle = css(COLORS.bg); ctx.fillRect(w * 0.3, 0, w * 0.4, h);
+  ctx.save(); ctx.beginPath(); ctx.rect(w * 0.3, 0, w * 0.4, h); ctx.clip(); drawPattern(ctx, w, h, t, 'grid'); ctx.restore();
+  vline(ctx, w * 0.3, 0, w * 0.3, h, COLORS.rail, 2); vline(ctx, w * 0.7, 0, w * 0.7, h, COLORS.rail, 2);
 });
 
 // ---------- Formations (live from formations.js) ----------
@@ -754,6 +809,8 @@ const startEntry = () => {
   const e = new InitialsEntry(sgEntry, 5, (ini) => { e.close(); sgEntry.innerHTML = `<div class="entry-title">Saved "${ini}"</div><p class="note">(Demo only; nothing stored.)</p>`; setTimeout(startEntry, 2000); });
 };
 startEntry();
+
+for (const el of document.querySelectorAll('.version')) el.textContent = `v${VERSION} beta`;
 
 // Pause menu: the real recap and board, tabs live.
 renderRecap(document.getElementById('sg-pause-recap'), {

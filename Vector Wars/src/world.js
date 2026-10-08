@@ -6,7 +6,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { CFG, COLORS, ANIM, BLOOM } from './config.js';
+import { CFG, COLORS, ANIM, BLOOM, GRID_PATTERNS } from './config.js';
 
 const RIPPLES = 8;
 
@@ -35,10 +35,15 @@ void main() {
   gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
 }`;
 
+// Grid patterns (GRID_PATTERNS order): 0 grid, 1 hexagons, 2 oblique grid,
+// 3 triangles, 4 dot grid, 5 outlined polka dots. All antialiased with fwidth.
 const floorFS = /* glsl */ `
 uniform float uDist;
 uniform float uTW;
 uniform float uVoid;
+uniform float uPattern;
+uniform float uScroll;
+uniform float uCamX;
 uniform vec3 uGrid;
 uniform vec3 uBg;
 varying vec3 vPos;
@@ -47,12 +52,43 @@ float gridLine(float c, float w) {
   float f = abs(fract(c - 0.5) - 0.5) / fwidth(c);
   return 1.0 - min(f / w, 1.0);
 }
+// Distance to the nearest hexagon edge (cells 1 unit across the flats).
+float hexEdge(vec2 p) {
+  const vec2 s = vec2(1.0, 1.7320508);
+  vec4 c = floor(vec4(p, p - vec2(0.5, 0.8660254)) / s.xyxy) + 0.5;
+  vec4 h = vec4(p - c.xy * s, p - (c.zw + 0.5) * s);
+  vec2 q = abs(dot(h.xy, h.xy) < dot(h.zw, h.zw) ? h.xy : h.zw);
+  return 0.5 - max(dot(q, s * 0.5), q.x);
+}
+// Pattern brightness at p (pattern units); w = line width in pixels.
+float pattern(vec2 p, float w) {
+  float px = max(length(fwidth(p)), 1e-4);
+  if (uPattern < 0.5) return max(gridLine(p.x, w), gridLine(p.y, w));
+  if (uPattern < 1.5) return 1.0 - min(abs(hexEdge(p)) / (px * w * 0.7), 1.0);
+  if (uPattern < 2.5) return max(gridLine((p.x + p.y) * 0.7071, w), gridLine((p.x - p.y) * 0.7071, w));
+  if (uPattern < 3.5) return max(gridLine(p.y, w), max(gridLine(dot(p, vec2(0.8660254, 0.5)), w), gridLine(dot(p, vec2(-0.8660254, 0.5)), w)));
+  if (uPattern < 4.5) {
+    float d = length(fract(p) - 0.5) - 0.07;
+    return (1.0 - smoothstep(0.0, px * 1.4, d)) * 1.6;
+  }
+  vec2 q = p;
+  q.x += 0.5 * mod(floor(q.y), 2.0);
+  float d = abs(length(fract(q) - 0.5) - 0.26);
+  return 1.0 - min(d / (px * w * 0.6), 1.0);
+}
 void main() {
-  float wz = -vPos.z + uDist;
   float inT = step(abs(vPos.x), uTW) * (1.0 - uVoid);
-  float inner = max(gridLine(vPos.x / 0.4, 1.3), gridLine(wz, 1.3));
-  float outer = max(gridLine(vPos.x / 0.8, 1.0), gridLine(wz * 0.5, 1.0)) * 0.3;
-  float l = mix(outer, inner, inT);
+  float l;
+  if (uVoid > 0.5) {
+    // Background: scrolls slower and follows the camera, so it reads as far below.
+    float wz = -vPos.z + uDist * uScroll;
+    vec2 p = vec2(vPos.x - uCamX, wz);
+    l = (uPattern < 0.5 ? max(gridLine(p.x / 0.8, 1.0), gridLine(p.y * 0.5, 1.0)) : pattern(p / 1.6, 1.0)) * 0.3;
+  } else {
+    float wz = -vPos.z + uDist;
+    l = uPattern < 0.5 ? max(gridLine(vPos.x / 0.4, 1.3), gridLine(wz, 1.3)) : pattern(vec2(vPos.x, wz) / 0.6, 1.3);
+    l *= inT;
+  }
   float fade = exp(-max(-vPos.z, 0.0) / 40.0);
   vec3 col = uBg + uGrid * (l * (1.0 + vRip * 5.0) + inT * 0.05) * fade;
   col += vec3(0.5, 0.15, 1.0) * vRip * 0.5 * fade;
@@ -90,6 +126,9 @@ export function createWorld(canvas) {
     uDist: { value: 0 },
     uRip: { value: ripples },
     uTW: { value: CFG.TW },
+    uPattern: { value: Math.max(0, GRID_PATTERNS.indexOf(CFG.GRID_PATTERN)) },
+    uScroll: { value: CFG.VOID_SCROLL },
+    uCamX: { value: 0 },
     uGrid: { value: new THREE.Vector3(...COLORS.grid) },
     uBg: { value: new THREE.Vector3(bg.r, bg.g, bg.b) },
   };
@@ -107,7 +146,8 @@ export function createWorld(canvas) {
     return mesh;
   }
   floorMesh(2 * CFG.TW, 16, 0, false);
-  floorMesh(60, 60, -4, true);
+  const voidMesh = floorMesh(120, 120, -CFG.VOID_DEPTH, true);
+  let followMul = 1;
   const floorMat = { uniforms: shared };
 
   // Faint walls under the rails so the track reads as a raised platform.
@@ -189,9 +229,23 @@ export function createWorld(canvas) {
       const sy = shake ? (Math.random() * 2 - 1) * shake : 0;
       const push = battle * ANIM.battleCamPush;
       camera.position.set(ax * 0.3 + sx, 6.2 - push * 0.7 + sy, 7.4 - push);
+      floorMat.uniforms.uCamX.value = ax * 0.3 * CFG.VOID_FOLLOW * followMul;
       lookAt.set(ax * 0.45, 0, -7 + push * 0.6);
       camera.lookAt(lookAt);
     },
     render() { composer.render(); },
+    // Grid pattern by name (GRID_PATTERNS); returns the one now showing.
+    setPattern(name) {
+      const i = GRID_PATTERNS.indexOf(name);
+      if (i >= 0) floorMat.uniforms.uPattern.value = i;
+      return GRID_PATTERNS[floorMat.uniforms.uPattern.value];
+    },
+    // Background parallax on (the new deep, slow, camera-following void) or
+    // off (the original: 4 below, same speed).
+    setParallax(on) {
+      floorMat.uniforms.uScroll.value = on ? CFG.VOID_SCROLL : 1;
+      voidMesh.position.y = on ? 0 : CFG.VOID_DEPTH - 4;
+      followMul = on ? 1 : 0;
+    },
   };
 }

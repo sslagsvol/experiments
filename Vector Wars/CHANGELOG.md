@@ -1,6 +1,19 @@
 # Vector Wars: change log
 
-Round-by-round history of playtest feedback and what changed. Forward-looking plans and the roadmap live in `PLAN.md`.
+Round-by-round history of playtest feedback and what changed, grouped by release. Forward-looking plans and the roadmap live in `PLAN.md`; the version scheme is in its section 7.
+
+## Releases
+| Version | Rounds | Merge |
+|---|---|---|
+| 0.1.0 | prototype, round 1 plan | direct to main |
+| 0.2.0 | round 1 (batch A), style guide | PR #3 |
+| 0.3.0 | rounds 2–14 (batch C onward) | PR #4 |
+| 0.3.1 | round 15 | PR #5 |
+| 0.4.0 | round 16 | PR #6 |
+| 0.5.0 | round 17 | PR #7 |
+| 0.6.0 | rounds 18–21 | PR #8 |
+| 0.6.1 | rounds 22–23 | PR #9 |
+| 0.7.0 | round 24 | `vw/v0.7.0` |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
@@ -241,3 +254,11 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 
 ## Round 24: Sfx.attach for the synth lab (2026-10-07)
 - `Sfx.unlock()` now builds its master chain through a new `Sfx.attach(ctx, dest)`, so a sound can also be rendered into an `OfflineAudioContext`. No change to how the game sounds. The new `../synthlab` experiment uses it to turn the game's sounds into keyboard samples.
+
+## Round 24 — v0.7.0: versions, parallax, grid patterns, keyboard (2026-10-07)
+- **Version numbers:** `VERSION` in `src/config.js` ("0.7.0"), shown small along the bottom of the title and pause screens. Past releases numbered after the fact (0.1.0–0.6.1); scheme and release steps in `PLAN.md` section 7; local tags `vector-wars-v*`.
+- **Stronger parallax:** background grid 9 below the track (was 4), scrolling at ×0.45 and following the camera ×0.6 (`CFG.VOID_*`). "Parallax: classic" on the pause menu restores the old look for comparison.
+- **Grid patterns (experiment):** grid, hex, oblique, triangles, dots, rings on the track and background (`GRID_PATTERNS`, `CFG.GRID_PATTERN`). Pick with the pause-menu Grid button, the G key or `?grid=`; remembered per device.
+- **Keyboard controls:** ← → / A D steering with a ramp and Shift for fast; Space / Enter, R, M, G; hints only after a key press (`CFG.KEY_STEER_*`, `KeyInput` in `input.js`).
+- Restored `LEADERBOARD.md`, which was deleted by accident in the sound-lab commit (`b43c9e4`).
+- Style guide: six grid-pattern cards, a parallax card, version and keyboard hints on the title and pause cards.
