@@ -112,7 +112,7 @@
     <div class="card">
       <div class="stage" style="padding:16px 8px"><div id="sg-entry"></div></div>
       <h3>Initials entry (try it)</h3><div class="var">InitialsEntry · CHARSET · .slot.cur · .enter</div>
-      <div class="meta">3 slots · ▲▼ cycle A–Z, 0–9 and ! ? . - * # @ &amp; $ % + = &lt; &gt; / _ space (hold to repeat) · tap a slot to select · keyboard typing, arrows, Backspace, Enter · "New high score" flashes gold/pink</div>
+      <div class="meta">3 slots · ▲▼ cycle A–Z, 0–9 and ! ? . - * # @ &amp; $ % + = &lt; &gt; / _ space (hold to repeat) · tap a slot to select · keyboard typing, arrows, Backspace, Enter · "New high score" flashes gold/pink · spaced for thumbs: slots 30px apart, ▲ / letter / ▼ 10px apart, buttons at least 52×44px, ENTER 22px below</div>
     </div>
     <div class="card">
       <div class="stage hud-stage"><div id="hud"><div id="dist"><span id="score">24,869</span><span id="rank-badge"></span></div><button id="pause-btn" class="show" type="button" aria-label="Pause (demo)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button><div id="best">Hi 24,869</div><button id="mute" type="button" aria-label="Mute sound (demo)"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="on" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/><path class="x" d="M16 9l5 6M21 9l-5 6"/></svg></button><div id="army-hud"><div id="gain" class="delta live">+371</div><div id="count">640</div><div id="loss" class="delta live">−24</div></div></div></div>
@@ -610,7 +610,7 @@ animCard({ title: 'Grid ripple', vars: 'ANIM.rippleSpeed · rippleDecay · rippl
     for (let gx = -CFG.TW; gx <= CFG.TW + 1e-6; gx += 0.4) { ctx.strokeStyle = css(COLORS.grid, 0.5); ctx.beginPath(); ctx.moveTo(cx + gx * s, 0); ctx.lineTo(cx + gx * s, h); ctx.stroke(); }
     for (let gz = -10; gz <= 10; gz++) { ctx.strokeStyle = css(COLORS.grid, 0.5); ctx.beginPath(); ctx.moveTo(cx - CFG.TW * s, cy + gz * s); ctx.lineTo(cx + CFG.TW * s, cy + gz * s); ctx.stroke(); }
     ctx.save(); ctx.beginPath(); ctx.rect(cx - CFG.TW * s, 0, 2 * CFG.TW * s, h); ctx.clip();
-    for (const [lw, a] of [[26 * ANIM.rippleWidth, 0.14], [9 * ANIM.rippleWidth, 0.4], [3, 0.95]]) { ctx.strokeStyle = `rgba(150,110,255,${a * fade})`; ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke(); }
+    for (const [lw, a] of [[26 * ANIM.rippleWidth, 0.14], [9 * ANIM.rippleWidth, 0.4], [3, 0.95]]) { ctx.strokeStyle = `rgba(150,110,255,${a * fade})`; ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(cx, cy, Math.max(0, r), 0, Math.PI * 2); ctx.stroke(); }
     ctx.restore(); rails(ctx, w, h, s);
   });
 
@@ -772,7 +772,7 @@ animCard({ title: 'Unit loss fizzle', vars: 'Fizzles · COLORS.dying · ANIM.fiz
   });
 
 // Area attack: chance to die falls off from the center; the ring shows reach.
-animCard({ title: 'Area attacks (bomber and brute)', vars: 'ENEMY_TYPES.*.aoe · army.killArea() · sparks.ring()', meta: `bomber: radius ${ENEMY_TYPES.bomber.aoe.radius}, ${Math.round(ENEMY_TYPES.bomber.aoe.peak * 100)}% at center · brute: radius ${ENEMY_TYPES.brute.aoe.radius}, ${Math.round(ENEMY_TYPES.brute.aoe.peak * 100)}% at center · chance = peak × (1 − d²/r²) · both throb brighter in their last 4 units · shake, ripple and sound on impact`, note: 'Left: bomber (tight and deadly). Right: brute (wide, fewer per unit). Lost units fizzle red, leaving a crater.', tall: true },
+animCard({ title: 'Area attacks (bomber and brute)', vars: 'ENEMY_TYPES.*.aoe · army.killArea() · sparks.ring()', meta: `bomber: radius ${ENEMY_TYPES.bomber.aoe.radius}, ${Math.round(ENEMY_TYPES.bomber.aoe.peak * 100)}% at center · brute: radius ${ENEMY_TYPES.brute.aoe.radius}, ${Math.round(ENEMY_TYPES.brute.aoe.peak * 100)}% at center · chance = peak × (1 − d²/r²) · both throb brighter in their last 4 units · shake, ripple and sound on impact`, note: `Left: bomber (tight and deadly). Right: brute (wide, fewer per unit). Lost units fizzle red, leaving a crater. In game the blast also throws nearby units outward (up to ${ANIM.blastPush} units, reaching ${ANIM.blastReach}× the radius, never off the track) and the formation drifts back slowly over ${ANIM.blastRecover}s (starting at ×${ANIM.blastRecoverRate} speed, no regrouping meanwhile), so the gap where units died stays visible.`, tall: true },
   (ctx, w, h, t, dt, st) => {
     const period = 2.6, ph = t % period, s = Math.min(topDown(w), w / 9);
     if (!st.u || ph < st.lastPh) {

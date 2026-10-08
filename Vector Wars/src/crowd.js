@@ -224,6 +224,21 @@ export class Army {
 
   shake(amount) { this.shakeAmt = Math.max(this.shakeAmt, amount); }
 
+  // An area attack at (x, z), radius r: throw nearby units outward (never off
+  // the track) and slow the formation's recovery (ANIM.blast*).
+  blast(x, z, r) {
+    const p = this.pos, R = r * ANIM.blastReach, lim = CFG.TW - 0.08;
+    for (let i = 0; i < this.L; i++) {
+      if (!this.alive[i]) continue;
+      const j = i * 3, dx = p[j] - x, dz = p[j + 2] - z, d = Math.hypot(dx, dz);
+      if (d > R) continue;
+      const f = (1 - d / R) * ANIM.blastPush, a = d > 1e-3 ? 0 : Math.random() * Math.PI * 2;
+      p[j] = Math.max(-lim, Math.min(lim, p[j] + (d > 1e-3 ? dx / d : Math.cos(a)) * f));
+      p[j + 2] += (d > 1e-3 ? dz / d : Math.sin(a)) * f;
+    }
+    this.recoverT = ANIM.blastRecover;
+  }
+
   shrink() { while (this.L > 0 && !this.alive[this.L - 1]) this.L--; }
 
   // onFall(x, z) fires for each unit that crosses a rail.
@@ -237,6 +252,9 @@ export class Army {
     const since = time - this.morphT0;
     this.clock += dt * (1 + ANIM.swirlBurst * Math.exp(-since * ANIM.swirlBurstDecay));
     this.shakeAmt = Math.max(0, this.shakeAmt - dt * ANIM.shakeDecay);
+    // After a blast the formation drifts back slowly, easing up to normal speed.
+    this.recoverT = Math.max(0, (this.recoverT || 0) - dt);
+    const recover = this.recoverT > 0 ? ANIM.blastRecoverRate + (1 - ANIM.blastRecoverRate) * Math.pow(1 - this.recoverT / ANIM.blastRecover, 2) : 1;
 
     const p = this.pos, alive = this.alive, cur = FORMATIONS[this.pat];
     let minX = 1e9, maxX = -1e9, minZ = 1e9, maxZ = -1e9, sumX = 0;
@@ -248,7 +266,7 @@ export class Army {
         tx += Math.sin(i * 12.9898 + time * 31) * this.shakeAmt;
         tz += Math.sin(i * 78.233 + time * 27) * this.shakeAmt;
       }
-      const j = i * 3, k = Math.min(1, dt * (6 + (i % 5) * 1.5));
+      const j = i * 3, k = Math.min(1, dt * (6 + (i % 5) * 1.5) * recover);
       p[j] += (tx - p[j]) * k;
       p[j + 1] = 0.12 + Math.abs(Math.sin(time * ANIM.bobFreq + i * 1.7)) * ANIM.bobHeight;
       p[j + 2] += (tz - p[j + 2]) * k;
@@ -268,7 +286,7 @@ export class Army {
 
     // Regroup: move rim units into inner holes that are back on the track.
     let h = 0, t = this.L - 1;
-    for (let moves = 0; moves < 6; moves++) {
+    for (let moves = 0; moves < (this.recoverT > 0 ? 0 : 6); moves++) {   // (holes stay open while recovering from a blast)
       while (h < t && (alive[h] || !this.inBounds(h))) h++;
       while (t > h && !alive[t]) t--;
       if (h >= t) break;

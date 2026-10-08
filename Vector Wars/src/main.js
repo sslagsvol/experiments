@@ -715,6 +715,7 @@ function onHit(t, x, z, leaked, boss = false) {
     // The mini-boss reached the team: one huge area hit, then it's gone.
     const w = G.dist - z, h = CFG.BOSS_HIT;
     killed = army.killArea(x, z, h.radius, h.peak, Math.ceil(army.N * h.share), unitLost);
+    army.blast(x, z, h.radius);
     sparks.ring(x, 0.3, w, h.radius * 1.3, COLORS[t.color], 60);
     world.addRipple(x, w, ANIM.rippleDeath, time);
     sfx.play('stomp');
@@ -724,6 +725,7 @@ function onHit(t, x, z, leaked, boss = false) {
     // Dense (packed) armies get a slightly smaller radius so kills stay in range.
     const r = t.aoe.radius * Math.max(0.6, Math.min(1, army.pack)), w = G.dist - z, c = COLORS[t.color];
     killed = army.killArea(x, z, r, t.aoe.peak, t.aoe.max, unitLost);
+    army.blast(x, z, r);
     sparks.ring(x, 0.2, w, r, c, 40);
     sparks.emit(x, 0.3, w, c, 30, 5);
     world.addRipple(x, w, t.shape === 3 ? ANIM.rippleStomp : ANIM.rippleBlast, time);

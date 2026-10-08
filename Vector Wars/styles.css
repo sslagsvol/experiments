@@ -286,14 +286,18 @@ html, body {
 }
 @keyframes entry-title { from { color: #ffd23d; text-shadow: 0 0 10px #ffd23d; } to { color: #ff8cc6; text-shadow: 0 0 10px #ff8cc6; } }
 .entry-rank { font-size: 13px; opacity: .8; margin: 2px 0 6px; }
-.slots { display: flex; justify-content: center; gap: 14px; }
-.slot { display: flex; flex-direction: column; align-items: center; }
+/* Generous spacing and big touch targets: the ▲▼ buttons, the letters and
+   ENTER sit well apart so a thumb doesn't hit the wrong one. */
+.slots { display: flex; justify-content: center; gap: 30px; margin: 6px 0; }
+.slot { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .slot button, .entry-ui .enter {
   font: inherit;
   color: var(--hud);
   background: none;
   border: 0;
-  padding: 4px 12px;
+  min-width: 52px;
+  min-height: 44px;
+  padding: 8px 14px;
   font-size: 20px;
   cursor: pointer;
   touch-action: none;
@@ -312,7 +316,8 @@ html, body {
 .slot.cur .ch { border-bottom-color: var(--hud); animation: cursor 0.8s steps(2, start) infinite; }
 @keyframes cursor { to { border-bottom-color: transparent; } }
 .entry-ui .enter {
-  margin-top: 8px;
+  display: block;
+  margin: 22px auto 0;
   padding: 8px 26px;
   font-size: 18px;
   letter-spacing: .15em;

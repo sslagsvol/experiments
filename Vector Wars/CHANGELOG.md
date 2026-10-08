@@ -332,3 +332,9 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - User: wherever there's a Restart button, make it Quit, back to the title screen.
 - Pause menu: **Quit** (was Restart) ends the run and returns to the title, where you pick Story or Challenge; key **Q** (was R). Style guide and docs updated.
 
+## Round 34 — v0.9.0 (cont.): blast scatter, roomier initials (2026-10-08)
+- User: when an explosion hits, the formation should burst outward slightly and recover slower than normal so the dead units are noticeable; more space around the initials inputs and buttons (too easy to mis-tap). Then ready to go live.
+- **Blast scatter** (`army.blast()`, `ANIM.blast*`): bomber blasts, brute stomps and mini-boss hits push units outward (up to 0.35 at the center, reaching 2.5× the radius, never off the track); the formation follows at ×0.12 speed easing back to normal over 1.6s, and holes don't refill meanwhile. Bot: average spread 0.32 → 0.66 at the blast, back to ~0.43 by 1.5s.
+- **Initials entry:** slots 30px apart (was 14), ▲ / letter / ▼ 10px apart, buttons at least 52×44px, ENTER 22px below and centered.
+- Style guide: area-attack card and initials card notes.
+

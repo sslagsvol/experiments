@@ -168,6 +168,13 @@ export const ANIM = {
   rippleBattle: 0.7,       // a squad beaten: a small ripple (the big win ripple and sound are kept for level gates and mini-bosses)
   // Killcam: in slow motion, and for a moment at the first bomber blast and
   // first brute stomp of a run, the camera moves in close on the army.
+  // Blast scatter: an area attack (bomber, brute, mini-boss) throws nearby
+  // units outward, and the formation pulls back together slowly so the gap
+  // where units died stays visible.
+  blastPush: 0.35,         // max push (world units) at the blast center
+  blastReach: 2.5,         // × the attack radius that gets pushed
+  blastRecover: 1.6,       // s of slow recovery (no regrouping meanwhile)
+  blastRecoverRate: 0.12,  // × the normal follow speed at the start of recovery
   killcamHold: 1.4,        // s (real time) of the first-blast / first-stomp killcam
   killcamScale: 0.35,      // time scale during it
   killcamIn: 0.25,         // s to ease the camera in
