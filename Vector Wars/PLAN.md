@@ -2,11 +2,12 @@
 
 A crowd-runner in the style of the "army through gates" mobile ads, redesigned around what those games get wrong: fake choices, hidden numbers, no skill expression, and art that buries the numbers. One thumb, thousands of units, 60fps on a mid-range phone.
 
-- **Play:** `index.html`. URL options: `?debug` (overlay plus the `window.vectorWars` test hook), `?units=N` (starting army), `?seed=N` (a different track).
-- **Style guide:** `style-guide.html`, every color, sprite, formation, animation and sound.
-- **Sound lab:** `sound-lab.html`, every sound with detune (lower, same speed) and stretch (longer, same pitch), globally or per sound (`SFX.tune` / `SFX.stretch`). Visual or animation changes must update it (rule in `CLAUDE.md`).
+- **Play:** `index.html`. URL options: `?debug` (overlay plus the `window.vectorWars` test hook), `?units=N` (starting army), `?seed=N` (a different track), `?grid=hex` (a grid pattern).
+- **Version:** **v0.7.0 beta** (`VERSION` in `src/config.js`, shown on the title and pause screens). See section 7.
+- **Style guide:** `style-guide.html`, every color, sprite, formation, animation and sound. Visual or animation changes must update it (rule in `CLAUDE.md`).
+- **Sound lab:** `sound-lab.html`, every sound with detune (lower, same speed) and stretch (longer, same pitch), globally or per sound (`SFX.tune` / `SFX.stretch`).
 - **History:** `CHANGELOG.md`, the round-by-round log of playtest feedback and what changed.
-- **Leaderboard setup:** `LEADERBOARD.md`.
+- **Leaderboard:** Supabase table `vector_wars_scores`, already set up. The setup notes and SQL were removed in v0.6.1; they're in git history (`git show d02685f:"Vector Wars/LEADERBOARD.md"`).
 
 ---
 
@@ -31,7 +32,7 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 ## 3. The game as built
 
 ### Army
-- **Relative drag:** the army follows the finger's movement, not its position (`CFG.DRAG_SPAN`, `STEER_RESPONSE`). Its center stays on the track, but a wide army hugging an edge loses its outer units over the rail.
+- **Relative drag:** the army follows the finger's movement, not its position (`CFG.DRAG_SPAN`, `STEER_RESPONSE`). Its center stays on the track, but a wide army hugging an edge loses its outer units over the rail. On a keyboard, ← → or A / D steer (hold to sweep, Shift for fast).
 - **Formations:** sunflower, hex, rings, wedge, diamond and phalanx. Good gates morph to the next one with an outward ripple and a swirl burst; bad gates make it shake.
 - **Size:** every dot is one unit. Full spacing up to 1,200, then progressively tighter, reaching the rails at the 5,000 cap (`CFG.CAPACITY`). Overflow and units pushed past a rail fall into the void below the raised track.
 - **Losses** fizzle cyan → red → black where they died.
@@ -76,45 +77,41 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 ## 4. Roadmap
 
 ### Next up
-1. **Batch D: mini-boss plus the bomb it awards.**
+1. **Stronger parallax and grid patterns.** *First pass shipped in v0.7.0.*
+   - **Built:** the background grid dropped from 4 to 9 below the track, scrolls at 0.45× the track's speed and follows the camera sideways (0.6), so the road reads as raised (`CFG.VOID_*`). Six grid patterns on the track and background: grid, hexagons, oblique grid, triangles, dot grid, outlined polka dots (`GRID_PATTERNS`, one shader). Beta toggles on the pause menu (Grid, Parallax deep / classic), the G key and `?grid=`; remembered per device.
+   - **Still to do:** play it on a phone (depth, not motion sickness); pick the patterns to keep and tune their spacing and brightness; give each level its own pattern once levels exist (item 6); maybe a far layer (stars or a horizon skyline) moving slower still. Keep the background dimmer than anything interactive.
+2. **Keyboard controls.** *Shipped in v0.7.0.*
+   - ← → or A / D steer (a tap nudges, a hold ramps to a sweep in 0.25s; Shift is ×1.8), feeding the same target as the drag (`G.tx`). Space / Enter start, continue and retry; R restarts from pause; M mutes; G cycles the grid; Esc / P pause. Hints appear on the title and pause screens only after a key press. Settings `CFG.KEY_STEER_*`.
+   - **Still to do:** tune the sweep speed after playing.
+3. **Batch D: mini-boss plus the bomb it awards.**
    - **Mini-boss:** a large wireframe shape with a health bar, about one every 8 segments from the second loop on. The track stops when it's in range. It advances slowly and **slams** every few seconds: a telegraphed pulsing ring, then a radius kill with a grid shockwave. Spread out or dodge. If it reaches the army it eats units each second. On death it shatters into tumbling segments (voxel-style).
    - **Bomb ("Overload"):** the mini-boss's reward. One charge at a time (an inventory may come later). Shown as a top-right icon (excluded from drag input).
      - **Tap:** lose half the army, destroy every enemy in sight. "In sight" = every squad that exists, since squads only spawn at the fog line (38 units); queued squads are untouched. Gates are untouched; a mini-boss takes heavy damage instead.
      - **Last stand:** holding a charge and dropping below 100 in a battle auto-detonates it, still costing half the army.
      - **Feel:** freeze-frame, white flash, a fast shockwave ring (about 30 u/s) shattering enemies as it reaches them, the outer half of the army popping, 0.5s of slow motion, shake and a big ripple. Sample sparks (about 1 per 8 kills) and process kills per frame as the ring passes.
-2. **Batch B: firepower rework.** Volley fire from front-rank positions; linear DPS (N × damage per unit) with a capped number of visible bullets and damage aggregated per bullet; bullets brighter and thicker as damage per bullet rises; gate "toughness" so big armies don't raise gates instantly.
-3. **Batch E: balance pass.** Tune the par curve, threat range, capacity, gate toughness, area damage and boss hp. Test on a real phone after D.
+4. **Batch B: firepower rework.** Volley fire from front-rank positions; linear DPS (N × damage per unit) with a capped number of visible bullets and damage aggregated per bullet; bullets brighter and thicker as damage per bullet rises; gate "toughness" so big armies don't raise gates instantly.
+5. **Batch E: balance pass.** Tune the par curve, threat range, capacity, gate toughness, area damage and boss hp. Test on a real phone after D.
 
-### Proposed next (playtest round 18, not yet prioritized)
-These come from the user; the order among them and against D / B / E is still to decide.
+### Proposed next (not yet prioritized)
+These come from playtests; the order among them and against D / B / E is still to decide.
 
-4. **Batch F: levels.**
+6. **Batch F: levels.**
    - **Level gates:** a full-width gate across the track ("LEVEL 2", "LEVEL 3"…) that ends a level. It can't be shot or dodged; it's a finish line with a big ripple and a sound.
    - **Shape:** the first levels are short (about 45–60s) and about building the army: generous gates, few, small squads. Levels lengthen and harden after that (the sawtooth idea under *Structure* below). Score and army carry over between levels.
    - **End-of-level menu:** a version of the pause menu. "Level 1 complete" in place of "Paused", the level's recap and the board. The main button is **"Go to Level 2"**; Restart stays secondary. Ties into level progress in the score and possibly a per-level best.
    - **Micro-battle levels:** it's most fun when both armies are close in size and both small, because each fight becomes a mini-game of which enemies to take out first. A few levels should have sparse gates (so the army stays small) and focus on these close fights: small, evenly matched squads with a readable mix of types (pick off the bomber before it reaches you, focus the brute, let the grunts come). Squad sizing would target about 0.8–1.0× the army instead of 0.35–0.85×, and slow motion will kick in often, which suits it.
    - **Army snapshot** (pause menu and end-of-level menu): the army as it is at that moment, in its current formation and size, shown at the top of the menu. Idle animation for interest: slow rotation, a gentle breathing scale, a twinkle on the dots.
      - Suggested build: copy the army's dot positions and colors into a small 2D canvas when the menu opens (5,000 dots is cheap) and animate that, rather than a second WebGL view. It then also works in the style guide.
-5. **Fire enemy (new type).**
+7. **Fire enemy (new type).**
    - On contact or death it sets the army on fire in a radius. Units caught in it **keep burning for a duration** (about 2–3s): they flicker orange-red and each has a chance to die every tick, so the damage keeps coming after the hit.
    - Open questions: does fire spread to neighbors (risky with tight formations, dramatic with big ones)? Can moving or a good gate put it out? A flame shape and its own color; it unlocks after the bomber.
    - Builds on the area-damage code (`killArea`). Needs a per-unit burn timer in `crowd.js`, the burning look in the point shader, its sprite in `sprites.js`, a sound, and the style guide.
-6. **Stronger parallax** between the road and the background.
-   - Today the void grid sits at y = −4 below the track. Options: drop it much deeper, scroll it slower than the track, and/or add a far layer (stars or a horizon skyline) moving slower still. Keep the background dimmer than anything interactive.
-   - Check on a phone that it reads as depth, not motion sickness.
-
-7. **Keyboard controls** (desktop play).
-   - **Steer:** ← → or A / D. Holding moves the army across the track at a steady speed with a short ramp-up, so a tap nudges and a hold sweeps; Shift for a faster sweep. It feeds the same target position as the drag (`G.tx`), so the edge spill and steering response stay the same.
-   - **Everything else:** Space or Enter starts a run, continues from pause and retries after game over; R restarts from the pause menu; M toggles mute. Esc / P already pause, and the initials entry already takes typing and arrows.
-   - **Hints:** show the keys on the title screen only when a keyboard is used (first key press), never on touch devices.
-   - The style guide gets a card for any new on-screen hint.
-
 ### Ideas parked for later
 - **Track hazards:** saws, rollers, spike strips; narrow bridges and gaps; rail breaks.
 - **Gates:** locked gates (N hits to open), order-of-operations runs, gates that flip sign on a timer.
-- **Enemies:** (fire enemy promoted to item 5 above) squads that shoot back; shielded units (immune from the front); splitters that break into grunts; an enemy that steals units on contact.
+- **Enemies:** (fire enemy promoted to item 7 above) squads that shoot back; shielded units (immune from the front); splitters that break into grunts; an enemy that steals units on contact.
 - **Run upgrades:** crates and barrels to shoot for spread, pierce or fire rate.
-- **Structure:** (level gates promoted to item 4 above) worlds of levels that each teach one idea (sawtooth difficulty); a boss every 10 levels; a daily seeded challenge with its own board; chunk-based levels in JSON; a headless level validator that plays every level with bot strategies (the `?debug` step hook is the start).
+- **Structure:** (level gates promoted to item 6 above) worlds of levels that each teach one idea (sawtooth difficulty); a boss every 10 levels; a daily seeded challenge with its own board; chunk-based levels in JSON; a headless level validator that plays every level with bot strategies (the `?debug` step hook is the start).
 - **Meta:** coins for small permanent upgrades (diminishing returns; every level beatable without them); stars; settings (drag sensitivity, effects intensity).
 - **Platform:** PWA install; Capacitor builds for iOS haptics and the app stores.
 - **Monetization (if any):** cosmetics only. Never pay-to-win, never interrupt a run.
@@ -144,3 +141,33 @@ Chosen from four options (`concepts/art-directions.html`), inspired by Geometry 
 | `src/audio.js` | Synthesized sound effects |
 
 **Performance:** typed arrays and pooling everywhere; no per-frame allocation in hot loops; DPR capped at 2 with an adaptive resolution drop. Measured on desktop: 1,200 units at about 1.5ms/frame. Still to do: profile a full battle at 5,000 units on a real mid-range phone.
+
+## 7. Versions and releases
+
+The game is in **beta**, so versions are **0.MINOR.PATCH**.
+- **MINOR** goes up for a release with anything a player would notice (gameplay, visuals, sound, UI).
+- **PATCH** goes up for a release that only fixes bugs, docs or tools (style guide, sound lab).
+- **1.0.0** leaves beta: levels, the mini-boss and bomb, the balance pass, and a real-phone performance check all done.
+
+**Where it lives:** `VERSION` in `src/config.js`. The title and pause screens show it small along the bottom ("v0.7.0 beta"), and the style guide reads it too.
+
+**Making a release** (one per merge to `main`):
+1. Work on a branch named for the version: `vw/v0.8.0`.
+2. Bump `VERSION` in `src/config.js` at the start of the branch.
+3. In `CHANGELOG.md`, add the version to the **Releases** table and head its rounds with it.
+4. The user publishes the branch and merges it in GitHub Desktop.
+5. After the merge, Claude tags the merge commit `vector-wars-vX.Y.Z` (annotated). Tags are local for now: GitHub Desktop hasn't pushed them, so `CHANGELOG.md` is the record of truth. To jump back to a version locally: `git checkout vector-wars-v0.5.0`.
+
+**Released so far** (assigned after the fact; details in `CHANGELOG.md`):
+
+| Version | Date | Merge | What |
+|---|---|---|---|
+| 0.1.0 | 2026-10-07 | direct to main (`1a6a312`) | The prototype: crowd, gates, bullets, enemies, neon look |
+| 0.2.0 | 2026-10-07 | PR #3 (`612b4ae`) | Formations, 5,000-unit capacity, falling off; the live style guide |
+| 0.3.0 | 2026-10-07 | PR #4 (`3bda6b7`) | Battles and enemy formations, enemy types, split and moving gates, slow motion, HUD and score, sound, high scores |
+| 0.3.1 | 2026-10-07 | PR #5 (`52724d2`) | Docs tidy, style guide fixes |
+| 0.4.0 | 2026-10-07 | PR #6 (`36e4170`) | Global leaderboard live |
+| 0.5.0 | 2026-10-07 | PR #7 (`26736dd`) | Pause menu, live score with top-3 badge |
+| 0.6.0 | 2026-10-07 | PR #8 (`10993c3`) | New gate sounds, slow motion for breaking top-3 scores |
+| 0.6.1 | 2026-10-07 | PR #9 (`803dd97`) | Sound lab (detune and stretch) |
+| 0.7.0 | (this branch) | `vw/v0.7.0` | Version numbers, stronger parallax, grid patterns, keyboard controls |

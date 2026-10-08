@@ -1,6 +1,6 @@
 // 80s-style top-10 high score table.
 //
-// Global when CFG.LEADERBOARD has a Supabase URL + key (see LEADERBOARD.md):
+// Global when CFG.LEADERBOARD has a Supabase URL + key (Supabase table vector_wars_scores; setup SQL in git history, LEADERBOARD.md at d02685f):
 // scores live in the vector_wars_scores table, read and appended through
 // Supabase's REST API (no SDK). Anyone can read or add a score; nobody can
 // edit or delete one. Otherwise, and whenever the network is down, the board

@@ -1,7 +1,7 @@
 // Game loop and rules. URL params: ?units=800 (start size), ?seed=42,
 // ?debug (FPS / unit counts overlay).
 
-import { CFG, COLORS, ANIM, mulberry32, multHitsForStep } from './config.js';
+import { CFG, COLORS, ANIM, GRID_PATTERNS, mulberry32, multHitsForStep } from './config.js';
 import { createWorld } from './world.js';
 import { Army } from './crowd.js';
 import { EnemyForce } from './enemies.js';
@@ -9,7 +9,7 @@ import { squadMix, mixEst, TYPE_LIST } from './enemyFormations.js';
 import { GatePool, FONT, gateColor } from './gates.js';
 import { Bullets, Sparks, Fallers, Fizzles } from './fx.js';
 import { UNIT_SPACING } from './formations.js';
-import { DragInput } from './input.js';
+import { DragInput, KeyInput } from './input.js';
 import { Hud } from './hud.js';
 import { Sfx } from './audio.js';
 import { cachedScores, fetchScores, rankFor, submitScore } from './scores.js';
@@ -45,11 +45,58 @@ pauseBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); setPaused
 // Taps on the menu never reach the game (no steering, no stray taps on resume).
 pauseEl.addEventListener('pointerdown', (e) => e.stopPropagation());
 document.getElementById('resume').addEventListener('click', () => setPaused(false));
-document.getElementById('restart').addEventListener('click', () => { setPaused(false); newRun(); startPlay(); });
+document.getElementById('restart').addEventListener('click', () => restartRun());
+function restartRun() { setPaused(false); newRun(); startPlay(); }
+// Keyboard: steering is read each frame (keys); everything else is here.
+// The initials entry handles its own keys while it's open.
+const keys = new KeyInput(window);
 window.addEventListener('keydown', (e) => {
-  if (e.key !== 'Escape' && e.key !== 'p' && e.key !== 'P') return;
-  if (G.state === 'play' && !hud.entering) setPaused(!G.paused);
+  document.body.classList.add('kb');   // show keyboard hints
+  if (hud.entering || e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  if (k === 'Escape' || k === 'p') {
+    if (G.state === 'play') setPaused(!G.paused);
+  } else if (k === ' ' || k === 'Enter') {
+    e.preventDefault();
+    sfx.unlock();
+    if (G.state === 'title') startPlay();
+    else if (G.paused) setPaused(false);
+    else if (G.state === 'over' && time - G.overAt > 0.6 && hud.canRetry()) newRun();
+  } else if (k === 'r') {
+    if (G.paused) restartRun();
+  } else if (k === 'm') {
+    sfx.unlock(); sfx.setMuted(!sfx.muted); syncMute();
+  } else if (k === 'g') {
+    cyclePattern();
+  }
 });
+// Touch hides the keyboard hints again.
+window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') document.body.classList.remove('kb'); }, { capture: true });
+
+// Experiments (beta): grid pattern and background parallax, remembered per
+// device. ?grid=hex picks a pattern for one visit.
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch { /* storage unavailable */ } },
+};
+let pattern = world.setPattern(params.get('grid') || store.get('vector-wars-grid') || CFG.GRID_PATTERN);
+let parallax = store.get('vector-wars-parallax') !== 'off';
+world.setParallax(parallax);
+function cyclePattern() {
+  pattern = world.setPattern(GRID_PATTERNS[(GRID_PATTERNS.indexOf(pattern) + 1) % GRID_PATTERNS.length]);
+  store.set('vector-wars-grid', pattern);
+  hud.setLab(pattern, parallax);
+  if (G.paused) world.render();
+}
+document.getElementById('grid-btn').addEventListener('click', cyclePattern);
+document.getElementById('parallax-btn').addEventListener('click', () => {
+  parallax = !parallax;
+  world.setParallax(parallax);
+  store.set('vector-wars-parallax', parallax ? 'on' : 'off');
+  hud.setLab(pattern, parallax);
+  if (G.paused) world.render();
+});
+hud.setLab(pattern, parallax);
 document.addEventListener('visibilitychange', () => { if (document.hidden) setPaused(true); });
 window.addEventListener('blur', () => setPaused(true));
 
@@ -91,6 +138,7 @@ function newRun() {
   G = {
     state: 'title',
     paused: false,
+    keyHold: 0,      // s the steer key has been held
     record: -1,      // s into the breaking-a-top-3-score slow motion (-1 = not running)
     recordPass: -1,  // when in that moment the score passed it
     recordNext: 2,   // board place whose score is next to break: 3rd, then 2nd, then 1st (-1 = all done)
@@ -474,6 +522,13 @@ function update(dt, realDt) {
 
   if (G.state === 'play') {
     G.tx += dx / window.innerWidth * (2 * CFG.TW) / CFG.DRAG_SPAN;
+    // Keyboard: a tap nudges, a hold ramps up to a steady sweep.
+    const kd = keys.dir;
+    G.keyHold = kd ? G.keyHold + realDt : 0;
+    if (kd) {
+      const ramp = Math.min(1, CFG.KEY_STEER_START + (1 - CFG.KEY_STEER_START) * G.keyHold / CFG.KEY_STEER_RAMP);
+      G.tx += kd * CFG.KEY_STEER_SPEED * ramp * (keys.fast ? CFG.KEY_STEER_FAST : 1) * realDt;
+    }
     // Only the army's center is kept on the track: a wide crowd hugging an
     // edge loses its outer units over the rail.
     const lim = CFG.TW - CFG.EDGE_MARGIN;

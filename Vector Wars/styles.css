@@ -398,3 +398,39 @@ html, body {
   box-shadow: 0 0 12px rgba(157, 255, 61, 0.5), inset 0 0 12px rgba(157, 255, 61, 0.3);
 }
 .btn:active { scale: 0.96; }
+
+/* ---- Version, keyboard hints, beta experiments ---- */
+/* Version: small and quiet along the bottom of the title and pause screens. */
+.version {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(8px + env(safe-area-inset-bottom));
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--text);
+  opacity: .4;
+  pointer-events: none;
+}
+#pause .version { position: static; margin-top: 16px; }
+/* Keyboard hints show only once a key is pressed (body.kb); touch hides them. */
+.kb-hint, .kb-only { display: none; }
+body.kb .kb-hint { display: block; }
+body.kb .kb-only { display: inline; }
+body.kb .touch-only { display: none; }
+.kb-hint { margin: 10px 0 0; font-size: 13px; color: var(--text); opacity: .65; letter-spacing: .06em; }
+/* Pause-menu experiments (beta): small toggles under the main buttons. */
+.pause-lab { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
+.pause-lab button {
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--you);
+  background: none;
+  border: 1px dashed rgba(70, 210, 255, 0.5);
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
