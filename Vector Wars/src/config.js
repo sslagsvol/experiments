@@ -48,7 +48,7 @@ export const CFG = {
   FIRE_MAX: 50,
   // Fire rate grows with progression: level 1 fires at FIRE_LEVELS[0] of the
   // full rate, and each level gate moves one step up (?classic always 1).
-  FIRE_LEVELS: [0.25, 0.4, 0.55, 0.7, 0.85, 1],
+  FIRE_LEVELS: [0.25, 0.33, 0.41, 0.5, 0.58, 0.66, 0.75, 0.83, 0.91, 1],
   // Every gate takes this many times its listed hits to step (+ / − per +1,
   // × and ÷ per 0.1).
   GATE_DURABILITY: 1.25,
@@ -91,7 +91,15 @@ export const CFG = {
   // linearly per gate: gate values ×(1 + RAMP_GATE·k), squad "par" ×(1 + RAMP_PAR·k).
   RAMP_GATE: 0.12,
   RAMP_PAR: 0.15,
-  LEVEL_EVERY: 8,          // after level 1, a level gate every this many track pieces
+  LEVEL_SPACING_SPRINT: 14, // gap between gates in a sprint level
+  // Bonus levels: a mini-boss is one giant unit of the next enemy type.
+  BOSS_SIZE: 4,            // × its type's size
+  BOSS_SPEED: 0.45,        // × ENEMY_CHARGE_SPEED: it advances slowly
+  BOSS_HP_SECONDS: 5,      // hp = the strike team's shots per second × this
+  BOSS_SWAY: 0.45,         // × its type's side-to-side sway and turning
+  BOSS_HP_MUL: { drone: 0.8, bomber: 1, brute: 1.3 },
+  BOSS_HIT: { radius: 1.5, peak: 0.75, share: 0.5 },   // if it reaches the team: area hit, up to half of it
+  BONUS_RETURN_CAP: 0.25,  // survivors rejoin your army, at most this share of it (only if the boss died)
   LEVEL_QUIET: 52,         // empty track after a level gate, so the banner shows with no enemies on screen
   LEVEL_CHARGE_HITS: 60,   // bullets to fill a level gate's charge bar (it soaks them up; the crossing is the crescendo)
   // Keyboard steering: units/s across the track at full hold (after a short

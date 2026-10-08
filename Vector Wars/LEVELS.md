@@ -101,30 +101,38 @@ The order is fixed. The numbers are drafts, to be tuned by bot play (see section
 
 **"Levels 5 and 6 started to feel boring."** Why, as built: after level 4 (brutes) nothing new arrives; the random track repeats the same gate/squad rhythm; levels are all 8 pieces long; and only the numbers grow. Each level needs to bring something new or change the rhythm.
 
-## 7. Proposals (to discuss)
+## 7. Decisions (round 29) and World 1 as built
 
-### A casual roguelike run
-- **A run is a climb from level 1.** Dying ends the run; your best level and score are what you keep. (That's already true; what's missing is anything to lose.)
-- **A choice at every level gate** (replacing the fixed fire-rate step): pick 1 of 3 upgrades, shown as big icons with two or three words each. Examples: *Attack speed*, *Gate power* (gates move faster when shot), *Spread shot*, *Tight formation* (less spill), *Shield the rear* (leaks hurt less), *Reinforcements* (+N units now), *Bomb charge*. Runs then differ, a good build is something to protect, and dying loses it. One tap, no menus, so it stays casual.
-- **One continue per run:** the first death rewinds to the start of that level with the army you entered it with; the second ends the run. A near miss, not a cheap restart.
-- **Light between-run rewards,** never power: unlock grid patterns and army colors at milestones (reach level 5, beat a mini-boss), and maybe "start at level 3" once you've reached level 6.
-- Score and leaderboard: unchanged (score per run).
+**From the user:**
+- **Progression over upgrades.** The pick-1-of-3 upgrade idea is interesting but parked; levels themselves are the progression (fire rate up each level, new enemies, new gate types, new level shapes).
+- **A continue only after damage over time arrives.** No continues for now. Once the burn enemy is introduced (its level ends World 1's successor, World 2's opener or similar), a run gets one continue from then on, since damage over time can snowball in a way the player can't fully control.
+- **The burn enemy's look:** "something that feels like burning: a pulsing glow, a flicker, a smoke trail". What renders well at scale (hundreds of enemies, one draw call):
+  - *Shape:* a new outline in the enemy shader, a teardrop / flame point (round bottom, pointed top), orange-red (a new `COLORS.burn`). Reads as fire even as a dot.
+  - *Flicker:* per-unit brightness and a slight size jitter from `time + id` in the shader, with the color sliding orange → yellow at the peaks. Free: no extra geometry.
+  - *Pulsing glow:* the same throb the bomber uses, faster and irregular (two sines).
+  - *Smoke trail:* a full trail per unit is expensive. Cheap version: each burner draws one extra, dimmer, larger grey point a short way behind it (two points per unit, still one draw call), plus a few embers from the spark system sampled from 1 in ~8 burners.
+  - *On your army:* burning units flicker orange in the crowd shader (the fizzle shader's cyan → red already exists) until they die or the burn ends.
 
-### Make every level bring something
-Proposed order after level 1 (one new thing per level, plus rhythm changes):
+**World 1 as built (v0.9.0):** each bonus mini-boss is the next enemy type, unleashed on the following main level.
 
-| Level | New | Shape |
+| Level | Shape | New |
 |---|---|---|
-| 2 | Drones; ÷ gates | normal |
-| 3 | **Bonus level:** small strike team, giant-drone mini-boss | short, intense |
-| 4 | Bombers; moving gates | normal |
-| 5 | **Gauntlet:** back-to-back squads, few gates | short |
-| 6 | Brutes; split-gate setups | longer |
-| 7 | **Bonus level:** giant-bomber mini-boss | short, intense |
-| 8 | **Sprint:** gates only, the track speeds up | short and joyful |
-| 9 | World boss (earns the bomb) | finale |
+| 1 | authored | grunts; + / − / × gates |
+| 2 | normal (8 pieces) | ÷ gates |
+| 3 | **bonus** (team 25) | giant drone mini-boss |
+| 4 | normal (8) | **drones**; moving gates |
+| 5 | gauntlet (7, back-to-back squads) | |
+| 6 | **bonus** (team 30) | giant bomber mini-boss |
+| 7 | normal, longer (10) | **bombers**; split setups (both sides good) |
+| 8 | sprint (8 gates, track ×1.5) | |
+| 9 | **bonus** (team 35) | giant brute mini-boss |
+| 10 | finale (12) | **brutes** |
+| 11+ | endless | "World 1 complete" |
 
-Track hazards (spike strips, saws, narrow bridges) and the fire enemy come in World 2.
+- **Bonus levels:** your army waits ("Army N waiting" above the count); a strike team plays small squads between kind + gates, then the mini-boss (health bar at the top, slow advance, sways; if it reaches the team, one big area hit), then a full-width bonus × gate, then the level gate. Kill the boss and the survivors rejoin your army (capped at 25% of it). Lose the whole team and the bonus ends at once: no reward, your army comes back, the run goes on.
+- **Fire rate** rises at every level gate (`CFG.FIRE_LEVELS`, 25% → full by level 10).
+- **World boss and bomb:** not built yet; level 10 is a long finale for now.
+- **Bot run (careful):** all 11 transitions; bosses killed at levels 3, 6 and 9 (hp 28, 68, 138); army 52 → 66 → 174 → 329 → 908 → 870 by level 10.
 
 ## 8. How to build it
 

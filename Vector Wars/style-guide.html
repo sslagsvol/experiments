@@ -143,6 +143,11 @@
       <div class="meta">Audiowide clamp(30px, 10vw, 54px) white with --you glow, 24% down the screen · sub line 15px · sweeps in (letter-spacing .3em → 0) and fades over 2.4s (ANIM.toastLife) · "Level 1" at the start of a run · after a level gate, one short line ("Attack speed increased") and, when the level adds an enemy type, a single 64px idle sprite of it with no words, fading in at ~0.9s (banner 3.1s) · the track is empty for CFG.LEVEL_QUIET units after the gate so nothing else is on screen</div>
     </div>
     <div class="card">
+      <div class="stage hud-stage"><div id="hud"><div id="boss-bar" class="on" style="top:20px"><div class="fill" style="width:62%"></div></div><div id="parked" style="bottom:52px">Army 340 waiting</div><div id="army-hud" style="visibility:visible"><div id="count">25</div></div></div></div>
+      <h3>Bonus level HUD</h3><div class="var">#boss-bar (.on) .fill · #parked · hud.setBoss() · setParked()</div>
+      <div class="meta">Boss bar: min(260px, 60vw) × 8px, --enemy border and fill with glow, under the score; fades in while a mini-boss is alive and shrinks as it takes hits · waiting army: 13px uppercase --you at 70%, just above the strike team's count</div>
+    </div>
+    <div class="card">
       <div class="stage danger-stage"><div id="danger" style="opacity:1"></div><div id="hud"><div id="army-hud"><div id="count" class="danger">68</div><div id="loss" class="delta live">−214</div></div></div></div>
       <h3>Danger state</h3><div class="var">#danger · #count.danger · @keyframes heartbeat</div>
       <div class="meta">Vignette opacity follows danger from 0.4 up to ANIM.slowMoThreshold, and pulses when enemies slip past to the rear · count turns pink and beats every 0.9s</div>
@@ -506,6 +511,14 @@ for (const [key, t] of Object.entries(ENEMY_TYPES)) {
     const dx = t.strafe ? Math.sin(time * 2.5) * w * 0.18 : 0, flash = (time % 2) < 0.12 ? 1 : 0;
     enemyShape(ctx, w * 0.3 + dx * 0.3, h / 2, 34 * t.size, t, time, flash);
     for (let i = 0; i < 9; i++) enemyShape(ctx, w * 0.62 + (i % 3) * 16 * Math.sqrt(t.size) + dx * 0.3, h / 2 - 16 + Math.floor(i / 3) * 16 * Math.sqrt(t.size), 13 * t.size, t, time + i);
+  });
+}
+// Mini-bosses (bonus levels): one giant unit of the next enemy type.
+{
+  const cv = card($('enemy-types'), { title: 'Mini-boss', vars: `enemies.spawnBoss · CFG.BOSS_SIZE ${CFG.BOSS_SIZE} · BOSS_SPEED · BOSS_SWAY · BOSS_HP_SECONDS · BOSS_HIT`, meta: `${CFG.BOSS_SIZE}× its type's size, glows and pulses · advances at ×${CFG.BOSS_SPEED} speed, sways ×${CFG.BOSS_SWAY} · hp = the strike team's shots/s × ${CFG.BOSS_HP_SECONDS}s × (drone ${CFG.BOSS_HP_MUL.drone}, bomber ${CFG.BOSS_HP_MUL.bomber}, brute ${CFG.BOSS_HP_MUL.brute}) · if it reaches the team: one area hit, up to ${CFG.BOSS_HIT.share * 100}% · health bar at the top (#boss-bar)`, note: 'Giant drone (level 3), giant bomber (6), giant brute (9). Killing it unleashes its type on the next level and lets the survivors rejoin your army; a short killcam and a big burst mark the kill.' });
+  demo(cv, (ctx, w, h, time) => {
+    ctx.globalCompositeOperation = 'lighter';
+    ['drone', 'bomber', 'brute'].forEach((k, i) => enemyShape(ctx, w * (0.2 + i * 0.3), h / 2, 26 * ENEMY_TYPES[k].size * (1.4 + 0.08 * Math.sin(time * 5)), ENEMY_TYPES[k], time, 0.3 + 0.2 * Math.sin(time * 5)));
   });
 }
 

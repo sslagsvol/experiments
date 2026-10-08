@@ -15,7 +15,7 @@ Round-by-round history of playtest feedback and what changed, grouped by release
 | 0.6.1 | rounds 22–23 | PR #9 |
 | 0.7.0 | round 24 | PR #10 |
 | 0.8.0 | rounds 25–26 | PR #11 |
-| 0.9.0 | rounds 27–28 | `vw/v0.9.0` |
+| 0.9.0 | rounds 27–29 | `vw/v0.9.0` |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
@@ -294,4 +294,13 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Enemy types arrive by level** after level 1: drones at level 2, bombers at 3, brutes at 4 (`UNLOCK_AT`), instead of on consecutive squads.
 - `LEVELS.md` sections 6–7: what the notes mean, a casual roguelike proposal (an upgrade choice at each level gate, one continue per run, cosmetic unlocks) and a level order where every level brings something new.
 - Style guide: killcam on the slow-motion card, level gate and banner cards updated, two new sounds. Sound lab: the two new sounds.
+
+## Round 29 — v0.9.0 (cont.): World 1 level progression (2026-10-08)
+- User: likes the progression idea over upgrades (parked); a continue only after a level that introduces a damage-over-time enemy (the planned burn enemy); burn look: pulsing glow, flicker, smoke trail. Build the level progression without the burn enemy.
+- **Levels 2–10 + endless** (`LEVELS` in `src/levels.js`, generated per level): normal, gauntlet, sprint and bonus shapes; ÷ gates from level 2, moving gates from 4, split setups (both sides good) from 7; the sprint runs the track ×1.5.
+- **Bonus levels 3, 6, 9:** your army waits (`#parked`), a strike team of 25 / 30 / 35 plays small squads and kind gates, then a **mini-boss**: one giant drone / bomber / brute (`enemies.spawnBoss`, 4× size, slow, sways less, generous hitbox, `#boss-bar`; hp from the team's fire rate). Kill it: big burst, killcam, its points (recap "Mini-bosses" row), and survivors pass a bonus × gate and rejoin your army (max 25% of it). If it reaches the team: one big area hit. Team wiped: bonus lost, army back, run continues.
+- **Enemy types unleashed by level:** drones 4, bombers 7, brutes 10 (`UNLOCK_AT`); the level banner shows the new one. `?classic` keeps the old squad-count pace.
+- Fire rate now steps over 10 levels (`CFG.FIRE_LEVELS`); "World 1 complete" at level 11.
+- `LEVELS.md` section 7: the decisions, burn-enemy rendering notes (flame-outline shape, shader flicker, cheap smoke via a trailing ghost point, sampled embers), and World 1 as built. Bot: careful run through all 11 levels, every boss killed.
+- Style guide: mini-boss card, bonus-level HUD card.
 

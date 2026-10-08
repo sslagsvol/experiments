@@ -101,9 +101,9 @@ These come from playtests; the order among them and against D / B / E is still t
    - Lessons (mechanics) vs levels (what players see): early levels pack several lessons. Army carries over between main levels.
    - **Bonus levels** every couple of main levels: a forced small strike team (the micro-battles), ending in a **mini-boss** that is a giant version of the next enemy type. Beating it **unleashes** that type into main levels, worth more points; survivors rejoin the main army through a capped bonus × gate.
    - Each world ends with the **world boss** (Batch D, item 3), which earns the bomb.
-   - Built so far: v0.8.0 level 1 playtest; v0.9.0 fire-rate progression, tougher gates, recurring level gates, level-gate crescendo, killcam. Playtest notes and proposals (a casual roguelike run; every level brings something new) are in `LEVELS.md` sections 6–7. Next: the level-complete menu and army snapshot, then bonus levels and mini-bosses, then the world boss and bomb.
+   - Built so far: v0.8.0 level 1 playtest; v0.9.0 World 1 (levels 2–10: bonus levels with mini-bosses that unleash drones, bombers and brutes; gauntlet, sprint and finale shapes; ÷, moving and split gates by level), fire-rate progression, tougher gates, level-gate crescendo, killcam. Upgrades parked; a continue only once damage over time (the burn enemy) arrives. See `LEVELS.md` sections 6–7. Next: the level-complete menu and army snapshot, then bonus levels and mini-bosses, then the world boss and bomb.
 
-7. **Fire enemy (new type).**
+7. **Fire / burn enemy (new type).** *Look and continue rule decided: see `LEVELS.md` section 7.*
    - On contact or death it sets the army on fire in a radius. Units caught in it **keep burning for a duration** (about 2–3s): they flicker orange-red and each has a chance to die every tick, so the damage keeps coming after the hit.
    - Open questions: does fire spread to neighbors (risky with tight formations, dramatic with big ones)? Can moving or a good gate put it out? A flame shape and its own color; it unlocks after the bomber.
    - Builds on the area-damage code (`killArea`). Needs a per-unit burn timer in `crowd.js`, the burning look in the point shader, its sprite in `sprites.js`, a sound, and the style guide.
@@ -173,4 +173,4 @@ The game is in **beta**, so versions are **0.MINOR.PATCH**.
 | 0.6.1 | 2026-10-07 | PR #9 (`803dd97`) | Sound lab (detune and stretch) |
 | 0.7.0 | 2026-10-07 | PR #10 (`ca4c1a7`) | Version numbers, stronger parallax, grid patterns, keyboard controls |
 | 0.8.0 | 2026-10-08 | PR #11 (`f236537`) | Level plan; level 1 playtest: authored opening, level gate, banner, linear ramp after |
-| 0.9.0 | (this branch) | `vw/v0.9.0` | Fire rate starts at 25% and grows per level; gates 25% tougher; a level gate every 8 pieces after level 1 |
+| 0.9.0 | (this branch) | `vw/v0.9.0` | Slower fire that grows per level, tougher gates, killcam, level-gate crescendo; World 1 levels 2–10 with bonus levels and mini-bosses |

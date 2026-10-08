@@ -70,6 +70,7 @@ export class EnemyForce {
     this.w = new Float32Array(max);    // world distance along the track
     this.ox = new Float32Array(max);   // formation x offset
     this.hp = new Float32Array(max);
+    this.big = new Float32Array(max);  // size multiplier: 1, or CFG.BOSS_SIZE for a mini-boss
     this.flash = new Float32Array(max);
     this.type = new Uint8Array(max);
     this.alive = new Uint8Array(max);
@@ -119,6 +120,7 @@ export class EnemyForce {
       this.ox[i] = px;
       this.type[i] = t.id;
       this.hp[i] = t.hp;
+      this.big[i] = 1;
       this.flash[i] = 0;
       this.alive[i] = 1;
       this.owner[i] = s.id;
@@ -129,6 +131,24 @@ export class EnemyForce {
     this.bounds(s);
     return s;
   }
+
+  // A mini-boss: one giant unit of the given type with `hp`, alone in its own
+  // squad. It advances slowly and hits hard on contact (main.js onHit).
+  spawnBoss(typeKey, hp, anchorX, anchorW) {
+    const t = ENEMY_TYPES[typeKey], i = this.free.pop();
+    const s = { id: this.nextId++, kind: 'boss', ax: anchorX, spread: 0, units: [i], n: 1, charging: false, boss: true,
+      minX: anchorX, maxX: anchorX, minW: anchorW, maxW: anchorW, cx: anchorX, cw: anchorW };
+    this.x[i] = anchorX; this.w[i] = anchorW; this.ox[i] = 0;
+    this.type[i] = t.id; this.hp[i] = hp; this.big[i] = CFG.BOSS_SIZE; this.flash[i] = 0;
+    this.alive[i] = 1; this.owner[i] = s.id;
+    s.hpMax = hp;
+    this.squads.push(s);
+    return s;
+  }
+
+  // The live mini-boss squad, if any.
+  get boss() { return this.squads.find((s) => s.boss && s.n > 0) || null; }
+  bossHp(s) { return s && s.n > 0 ? this.hp[s.units[0]] / s.hpMax : 0; }
 
   kill(i, s) { this.alive[i] = 0; this.free.push(i); s.n--; }
 
@@ -165,25 +185,28 @@ export class EnemyForce {
           continue;
         }
         // Stragglers far from the fight run faster so battles don't drag.
+        // A mini-boss advances slowly and never hurries.
         const gap = this.w[i] - dist + army.front;
-        this.w[i] -= (CFG.ENEMY_CHARGE_SPEED * t.speed + Math.max(0, gap - 6) * CFG.ENEMY_CATCHUP) * dt;
+        this.w[i] -= s.boss ? CFG.ENEMY_CHARGE_SPEED * CFG.BOSS_SPEED * dt : (CFG.ENEMY_CHARGE_SPEED * t.speed + Math.max(0, gap - 6) * CFG.ENEMY_CATCHUP) * dt;
         // Hold formation on the approach; once level with the army, turn
         // inward and hit its flank. Bombers always home on the center;
         // drones weave.
         const rz = -(this.w[i] - dist);
         const close = rz > army.front - 1.2;
         let tx = close || t.converge ? army.cx : army.cx + this.ox[i] * s.spread;
-        if (t.strafe && !close) tx += Math.sin(time * 2.5 + i * 1.3) * t.strafe;
-        const step = CFG.ENEMY_HOMING * t.homing * (close ? 3 : 1) * dt;
+        // A mini-boss sways less and turns slower, so it can be tracked and shot.
+        const bossK = s.boss ? CFG.BOSS_SWAY : 1;
+        if (t.strafe && !close) tx += Math.sin(time * 2.5 * bossK + i * 1.3) * t.strafe * bossK;
+        const step = CFG.ENEMY_HOMING * t.homing * bossK * (close ? 3 : 1) * dt;
         this.x[i] += Math.max(-step, Math.min(step, tx - this.x[i]));
         this.x[i] = clampX(this.x[i]);
         if (army.N <= 0) continue;
         if (rz >= army.front - 0.05 && rz <= army.back + 0.3 && Math.abs(this.x[i] - army.cx) <= army.halfW + 0.12) {
           this.kill(i, s);
-          onHit(t, this.x[i], rz, false);
+          onHit(t, this.x[i], rz, false, s.boss);
         } else if (rz > army.back + CFG.ENEMY_LEAK_MARGIN) {
           this.kill(i, s);
-          onHit(t, this.x[i], army.back, true);
+          onHit(t, this.x[i], army.back, true, s.boss);
         }
       }
       this.bounds(s);
@@ -203,10 +226,12 @@ export class EnemyForce {
           f += close * (0.8 + 0.8 * Math.sin(time * 14 + i));
         }
         p[c * 3] = this.x[i];
-        p[c * 3 + 1] = 0.14 * t.size + (s.charging ? Math.abs(Math.sin(time * 13 + i)) * 0.05 : 0);
+        const size = t.size * this.big[i];
+        if (s.boss) f += 0.4 + 0.3 * Math.sin(time * 5);   // a mini-boss glows and pulses
+        p[c * 3 + 1] = 0.14 * size + (s.charging ? Math.abs(Math.sin(time * 13 + i)) * 0.05 * this.big[i] : 0);
         p[c * 3 + 2] = -(this.w[i] - dist);
         sh[c] = t.shape;
-        sz[c] = 0.18 * t.size;
+        sz[c] = 0.18 * size;
         col[c * 3] = k[0] * f; col[c * 3 + 1] = k[1] * f; col[c * 3 + 2] = k[2] * f;
         c++;
       }
@@ -220,18 +245,18 @@ export class EnemyForce {
   hitTest(x, oldW, newW) {
     const r0 = 0.13;
     for (const s of this.squads) {
-      const r = r0 * 2.3;
+      const r = r0 * 2.3 * (s.boss ? CFG.BOSS_SIZE : 1);
       if (s.n <= 0 || x < s.minX - r || x > s.maxX + r || newW < s.minW - r || oldW > s.maxW + r) continue;
       for (const i of s.units) {
         if (!this.alive[i] || this.owner[i] !== s.id) continue;
-        const ri = r0 * TYPE_LIST[this.type[i]].size;
+        const ri = r0 * TYPE_LIST[this.type[i]].size * this.big[i] * (this.big[i] > 1 ? 1.3 : 1);   // bosses: a generous hitbox
         if (Math.abs(this.x[i] - x) < ri && this.w[i] >= oldW - ri && this.w[i] <= newW + ri) {
           this.flash[i] = 1;
           const t = TYPE_LIST[this.type[i]];
-          if (--this.hp[i] > 0) return { s, t, killed: false };
+          if (--this.hp[i] > 0) return { s, t, killed: false, boss: !!s.boss };
           this.kill(i, s);
           this.bounds(s);
-          return { s, t, killed: true };
+          return { s, t, killed: true, boss: !!s.boss };
         }
       }
     }
@@ -249,6 +274,8 @@ export class EnemyForce {
     let t = 0;
     for (const s of this.squads) {
       if (s.n <= 0 || !s.charging || s.minW - dist + army.front >= range) continue;
+      // A mini-boss closing in counts as near-defeat danger (slow motion, killcam).
+      if (s.boss) { t += army.N * 0.9; continue; }
       for (const i of s.units) if (this.alive[i] && this.owner[i] === s.id) t += TYPE_LIST[this.type[i]].est;
     }
     return t;

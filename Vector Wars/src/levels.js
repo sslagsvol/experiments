@@ -42,3 +42,30 @@ export const LEVEL_1 = {
     { gap: 26, levelGate: 2 },
   ],
 };
+
+// Levels 2+: generated from a short description (see LEVELS.md section 7).
+//   kind: 'normal'   gates and squads (pattern below), `pieces` long
+//         'gauntlet' back-to-back squads, few gates
+//         'sprint'   gates only, the track runs at `speed`
+//         'bonus'    a small strike team (`team` units; your army waits),
+//                    a few squads, then a giant `boss` (the next enemy type to
+//                    be unleashed), a bonus × gate, and back to your army
+//   div / moving / split: gate types allowed (÷ gates, moving gates, pairs
+//   where both sides are good). Enemy types join by level (UNLOCK_AT).
+// After the last entry, levels repeat ENDLESS.
+export const LEVELS = {
+  2:  { kind: 'normal', pieces: 8, div: true },
+  3:  { kind: 'bonus', team: 25, boss: 'drone', squads: 3 },
+  4:  { kind: 'normal', pieces: 8, div: true, moving: true },
+  5:  { kind: 'gauntlet', pieces: 7, div: true, moving: true },
+  6:  { kind: 'bonus', team: 30, boss: 'bomber', squads: 3 },
+  7:  { kind: 'normal', pieces: 10, div: true, moving: true, split: true },
+  8:  { kind: 'sprint', pieces: 8, speed: 1.5, div: true, moving: true },
+  9:  { kind: 'bonus', team: 35, boss: 'brute', squads: 3 },
+  10: { kind: 'normal', pieces: 12, div: true, moving: true, split: true },
+};
+export const ENDLESS = { kind: 'normal', pieces: 8, div: true, moving: true, split: true };
+export const levelDef = (n) => LEVELS[n] || ENDLESS;
+
+// Piece patterns: g = gate, e = enemy squad.
+export const PATTERNS = { normal: 'gegeggee', gauntlet: 'eeegee', sprint: 'g' };

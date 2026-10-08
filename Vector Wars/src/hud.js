@@ -38,6 +38,8 @@ export class Hud {
     for (const b of this.pauseTabs) b.addEventListener('click', () => this.pauseTab(b.dataset.tab));
     this.stopPauseRecap = null;
     this.toastEl = document.getElementById('toast');
+    this.bossBar = document.getElementById('boss-bar');
+    this.parkedEl = document.getElementById('parked');
     for (const el of document.querySelectorAll('.version')) el.textContent = `v${VERSION} beta`;
     this.gridBtn = document.getElementById('grid-btn');
     this.parallaxBtn = document.getElementById('parallax-btn');
@@ -147,6 +149,22 @@ export class Hud {
     this.parallaxBtn.textContent = `Parallax: ${parallax ? 'deep' : 'classic'}`;
   }
 
+  // Mini-boss health, 0..1 (negative hides the bar).
+  setBoss(frac) {
+    const v = frac < 0 ? -1 : Math.round(frac * 100) / 100;
+    if (v === this.last.boss) return;
+    this.last.boss = v;
+    this.bossBar.classList.toggle('on', v >= 0);
+    if (v >= 0) this.bossBar.firstChild.style.width = `${v * 100}%`;
+  }
+
+  // During a bonus level: your waiting army, small above the count.
+  setParked(n) {
+    if (n === this.last.parked) return;
+    this.last.parked = n;
+    this.parkedEl.textContent = n > 0 ? `Army ${fmt(n)} waiting` : '';
+  }
+
   // A big banner across the upper screen ("LEVEL 1").
   toast(title, sub = '') {
     this.toastEl.querySelector('.t1').textContent = title;
@@ -248,6 +266,7 @@ export function renderRecap(el, stats, label = 'Score') {
     <div class="section">Enemies defeated</div>
     <div class="kills">${rows}</div>
     <div class="row"><span>Distance</span><span>+${commas(stats.distPts)}</span></div>
+    ${stats.bossPts ? `<div class="row"><span>Mini-bosses</span><span>+${commas(stats.bossPts)}</span></div>` : ''}
     <div class="row"><span>Peak swarm</span><span>${fmt(stats.peak)}</span></div>
     <div class="row small"><span>Lost</span><span>${lost}</span></div>`;
 

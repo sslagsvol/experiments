@@ -468,3 +468,35 @@ body.kb .touch-only { display: none; }
   75% { opacity: 1; }
   100% { opacity: 0; translate: 0 -8px; }
 }
+
+/* ---- Bonus levels: mini-boss health bar, waiting army ---- */
+/* Boss bar: thin, across the top under the score, in the enemy's pink. */
+#boss-bar {
+  position: absolute;
+  left: 50%;
+  top: calc(64px + env(safe-area-inset-top));
+  width: min(260px, 60vw);
+  height: 8px;
+  transform: translateX(-50%);
+  border: 1px solid var(--enemy);
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(255, 61, 154, 0.5);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+#boss-bar.on { opacity: 1; }
+#boss-bar .fill { height: 100%; width: 100%; background: var(--enemy); box-shadow: 0 0 8px var(--enemy); transition: width 0.12s; }
+/* Waiting army: small and dim, just above the count. */
+#parked {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(62px + env(safe-area-inset-bottom));
+  text-align: center;
+  font-size: 13px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--you);
+  opacity: .7;
+  text-shadow: 0 0 6px rgba(70, 210, 255, 0.6);
+}

@@ -13,7 +13,7 @@ import { DragInput, KeyInput } from './input.js';
 import { Hud } from './hud.js';
 import { Sfx } from './audio.js';
 import { cachedScores, fetchScores, rankFor, submitScore } from './scores.js';
-import { LEVEL_1 } from './levels.js';
+import { LEVEL_1, levelDef, PATTERNS } from './levels.js';
 
 const params = new URLSearchParams(location.search);
 // ?classic plays the old fully random track from the start (no authored level).
@@ -153,7 +153,10 @@ function newRun() {
     beat: CLASSIC ? -1 : 0,    // next authored beat of LEVEL_1 (-1 = random track)
     rampFrom: CLASSIC ? 0 : -1, // gateIdx where the random track (and its linear ramp) began
     rampArmy: 0,     // army at the level gate: the base of the linear ramp
-    nextLevelSeg: -1, // random track: G.seg at which the next level gate goes in
+    genLevel: 0,     // level the generator is building (it runs ahead of the player)
+    queue: [],       // pieces left to place for genLevel
+    levelSpeed: 1,   // track speed for this level (sprint levels are faster)
+    bonus: null,     // during a bonus level: { parked, killed, failed }
     killcam: 0,      // 0..1, eased: how far the camera has moved in on the army
     killcamT: 0,     // s left of a first-blast / first-stomp killcam
     seenAoe: {},     // enemy type ids whose area attack has already had its killcam
@@ -169,7 +172,7 @@ function newRun() {
     danger: 0,       // incoming enemy strength ÷ army size, smoothed
     timeScale: 1,    // slow motion when the danger is high
     overAt: 0,
-    stats: { peak: START_UNITS, lostEnemy: 0, leaked: 0, lostGate: 0, fell: 0, gateHits: 0, kills: [0, 0, 0, 0] },
+    stats: { peak: START_UNITS, lostEnemy: 0, leaked: 0, lostGate: 0, fell: 0, gateHits: 0, kills: [0, 0, 0, 0], bossPts: 0 },
     ui: 0,                       // real-time clock for HUD fades
     gain: { n: 0, t: -9 },       // running gain total shown left of the count
     loss: { n: 0, t: -9 },       // running loss total shown right of the count
@@ -193,7 +196,7 @@ function startPlay() {
 function runStats() {
   const distPts = Math.floor(G.dist * CFG.SCORE_PER_DIST);
   const killPts = TYPE_LIST.map((t, i) => G.stats.kills[i] * t.hp * CFG.SCORE_PER_HP);
-  const score = distPts + killPts.reduce((a, b) => a + b, 0);
+  const score = distPts + killPts.reduce((a, b) => a + b, 0) + G.stats.bossPts;
   return { ...G.stats, distPts, killPts, score, newBest: false };
 }
 
@@ -201,8 +204,9 @@ function runStats() {
 
 const PATTERN = 'gegeggee';
 
-function makeGateSpec(rng, scale) {
+function makeGateSpec(rng, scale, div = true) {
   const { mult, add, sub } = CFG.GATE_MIX, r = rng();
+  if (!div && r >= mult + add + sub) return { op: '+', v: -Math.round((18 + rng() * 42) * scale), ch: 0, f: 0 };   // no ÷ yet
   if (r < mult) return { op: 'x', m: CFG.MULT_START, ch: 0, f: 0 };
   if (r < mult + add) return { op: '+', v: Math.round((4 + rng() * 14) * scale), ch: 0, f: 0 };
   if (r < mult + add + sub) return { op: '+', v: -Math.round((18 + rng() * 42) * scale), ch: 0, f: 0 };
@@ -232,15 +236,16 @@ function spawnBeat() {
     // Script done: random track from here, ramping up linearly.
     G.beat = -1;
     G.rampFrom = G.gateIdx;
-    G.enemyIdx = 2;   // random squads pick up from here: drones next, then bombers, then brutes
-    G.nextLevelSeg = G.seg + CFG.LEVEL_EVERY;
+    G.enemyIdx = 2;
+    G.genLevel = 2;   // levels 2+ are generated from levels.js
     G.nextW = wz + CFG.LEVEL_QUIET;
   }
 }
 
-// Which enemy types squads may use (squadMix / UNLOCK_AT): by squad count on
-// the classic track, by level otherwise (level 2 drones, 3 bombers, 4 brutes).
-const unlockIdx = () => CLASSIC ? G.enemyIdx : G.level;
+// Which enemy types squads may use (squadMix / UNLOCK_AT): by level, each
+// unleashed by the bonus-level mini-boss before it. The classic track keeps
+// its old pace: drones from the 3rd squad, bombers 4th, brutes 5th.
+const unlockIdx = () => CLASSIC ? [0, 1, 4, 7][Math.min(G.enemyIdx, 3)] + (G.enemyIdx >= 4 ? 3 : 0) : G.level;
 
 // Fire rate for the current level (it grows at each level gate).
 const fireMul = () => CLASSIC ? 1 : CFG.FIRE_LEVELS[Math.min(CFG.FIRE_LEVELS.length - 1, G.level - 1)];
@@ -250,15 +255,81 @@ const fireMul = () => CLASSIC ? 1 : CFG.FIRE_LEVELS[Math.min(CFG.FIRE_LEVELS.len
 const rampK = () => G.gateIdx - G.rampFrom;
 const gateScale = () => CLASSIC ? Math.pow(1.12, G.gateIdx) : 1 + CFG.RAMP_GATE * rampK();
 
+// Levels 2+ (levels.js): each level becomes a queue of pieces, ending in the
+// next level gate. Built when the generator (which runs ahead of the player)
+// reaches it.
+function buildLevel(n) {
+  const def = levelDef(n), q = [];
+  if (def.kind === 'bonus') {
+    // A small + pair to warm up, squads between gates, the mini-boss, the
+    // bonus × gate that multiplies the survivors, and back.
+    q.push('g');
+    for (let k = 0; k < def.squads; k++) q.push('e', k < def.squads - 1 ? 'g' : null);
+    q.push('boss', 'bonusX');
+  } else {
+    const pat = PATTERNS[def.kind];
+    for (let k = 0; k < def.pieces; k++) q.push(pat[k % pat.length]);
+  }
+  q.push('level');
+  G.queue = q.filter(Boolean).map((kind) => ({ kind, n, def }));
+}
+
+const fullWidth = { x: 0, width: 2 * CFG.TW - 0.1 };
+
+function spawnLevelPiece() {
+  if (!G.queue.length) buildLevel(G.genLevel);
+  const { kind, n, def } = G.queue.shift(), wz = G.nextW, bonus = def.kind === 'bonus';
+  let gap = CFG.SEG_GATE;
+  if (kind === 'g') {
+    const scale = gateScale();
+    let g;
+    if (def.moving && !bonus && G.rng() < CFG.MOVING_GATE_CHANCE) {
+      const good = G.rng() < CFG.MOVING_GATE_GOOD;
+      const S = good ? (G.rng() < 0.3 ? { op: 'x', m: CFG.MULT_START, ch: 0, f: 0 } : { op: '+', v: Math.round((10 + G.rng() * 20) * scale), ch: 0, f: 0 })
+        : (def.div && G.rng() < 0.5 ? { op: '/', d: 2, ch: 0, f: 0 } : { op: '+', v: -Math.round((20 + G.rng() * 40) * scale), ch: 0, f: 0 });
+      g = gates.acquire(wz, null, null, S, G.rng() * Math.PI * 2);
+    } else {
+      let L, R;
+      if (bonus) {
+        // The strike team's gates are small and kind: it's a fight, not a math test.
+        L = { op: '+', v: Math.round(4 + G.rng() * 6), ch: 0, f: 0 };
+        R = { op: '+', v: Math.round(2 + G.rng() * 4), ch: 0, f: 0 };
+      } else if (def.split && G.rng() < 0.3) {
+        // Both sides good and close in value: straddle the middle to take both.
+        const v = Math.round((8 + G.rng() * 10) * scale);
+        L = { op: '+', v, ch: 0, f: 0 };
+        R = G.rng() < 0.4 ? { op: 'x', m: CFG.MULT_START, ch: 0, f: 0 } : { op: '+', v: Math.round(v * (0.8 + G.rng() * 0.4)), ch: 0, f: 0 };
+      } else {
+        L = makeGateSpec(G.rng, scale, def.div);
+        R = makeGateSpec(G.rng, scale, def.div);
+        if (isBad(L) && isBad(R)) R = { op: '+', v: Math.round(3 * scale), ch: 0, f: 0 };
+      }
+      if (G.rng() < 0.5) [L, R] = [R, L];
+      g = gates.acquire(wz, L, R);
+    }
+    g.bonus = bonus;
+    G.gateIdx++;
+    if (def.kind === 'sprint') gap = CFG.LEVEL_SPACING_SPRINT;
+  } else if (kind === 'e') {
+    G.pending.push({ wz, bonus });
+    gap = def.kind === 'gauntlet' ? CFG.SEG_GATE + 4 : CFG.SEG_ENEMY;
+  } else if (kind === 'boss') {
+    G.pending.push({ wz, bonus, boss: def.boss });
+    gap = CFG.SEG_ENEMY + 14;
+  } else if (kind === 'bonusX') {
+    // Shoot it up to multiply the survivors before they rejoin your army.
+    gates.acquire(wz, null, null, { op: 'x', m: CFG.MULT_START, ch: 0, f: 0 }, 0, fullWidth).bonus = true;
+  } else if (kind === 'level') {
+    gates.acquire(wz, null, null, { op: 'level', n: n + 1, ch: 0, f: 0 }, 0, fullWidth);
+    G.genLevel = n + 1;
+    gap = CFG.LEVEL_QUIET;
+  }
+  G.nextW = wz + gap;
+}
+
 function spawnNext() {
   if (G.beat >= 0) { spawnBeat(); return; }
-  if (G.nextLevelSeg >= 0 && G.seg >= G.nextLevelSeg) {
-    // Random track: a level gate every LEVEL_EVERY pieces (fire rate goes up).
-    gates.acquire(G.nextW, null, null, { op: 'level', n: G.level + 1 + gates.active.filter((g) => g.S && g.S.op === 'level' && !g.done).length, ch: 0, f: 0 }, 0, { x: 0, width: 2 * CFG.TW - 0.1 });
-    G.nextLevelSeg = G.seg + CFG.LEVEL_EVERY;
-    G.nextW += CFG.LEVEL_QUIET;
-    return;
-  }
+  if (!CLASSIC) { spawnLevelPiece(); return; }
   const kind = PATTERN[G.seg % PATTERN.length];
   const wz = G.nextW;
   if (kind === 'g' && G.gateIdx > 0 && G.rng() < CFG.MOVING_GATE_CHANCE) {
@@ -319,7 +390,13 @@ function projectedArmy(wz) {
 
 // Squad size tracks the projected army plus a "par" curve from gates
 // passed, so battles stay a real threat. Tuned in batch E.
-function spawnSquad({ wz, spec }) {
+function spawnSquad({ wz, spec, boss }) {
+  if (boss) {
+    // A mini-boss: enough hp for about BOSS_HP_SECONDS of the strike team's fire.
+    const shots = Math.min(CFG.FIRE_MAX, CFG.FIRE_BASE + CFG.FIRE_K * Math.sqrt(Math.max(1, army.N))) * fireMul();
+    enemies.spawnBoss(boss, Math.max(12, Math.round(shots * CFG.BOSS_HP_SECONDS * CFG.BOSS_HP_MUL[boss])), 0, wz);
+    return;
+  }
   if (spec) {
     // Authored: grunts only, at a set position; an exact size, or a share of
     // the best-case army (like the random track, by expected damage).
@@ -442,13 +519,63 @@ function levelUp(g) {
   world.addRipple(army.cx, G.dist, ANIM.rippleLevel, time);
   sparks.ring(army.cx, 0.3, G.dist - army.front, 1.6, COLORS.white, 50);
   sfx.play('levelUp', { gain: 0.6 + 0.4 * g.S.ch });
+  if (!G.rampArmy) G.rampArmy = Math.max(30, army.N);   // the ramp starts from the army at the end of level 1
+  if (G.bonus) leaveBonus();
   const fireBefore = fireMul();
   G.level = g.S.n;
+  const def = levelDef(G.level);
+  G.levelSpeed = def.speed || 1;
   const fireUp = fireMul() > fireBefore;
+  if (def.kind === 'bonus') {
+    // Bonus level: your army waits; a small strike team goes in. The banner
+    // shows the mini-boss to come (no words).
+    G.bonus = { parked: army.N, killed: false, failed: false };
+    army.reset();
+    army.spawn(def.team, 0);
+    hud.levelBanner('Bonus level', ENEMY_TYPES[def.boss]);
+    return;
+  }
   // Minimal and direct: what you got, then (no words) the enemy this level adds.
-  const newType = TYPE_LIST.find((t) => UNLOCK_AT[Object.keys(ENEMY_TYPES).find((k) => ENEMY_TYPES[k] === t)] === G.level);
-  hud.levelBanner(fireUp ? 'Attack speed increased' : `Level ${G.level}`, newType || null);
-  if (!G.rampArmy) G.rampArmy = Math.max(30, army.N);   // the ramp starts from the army at the end of level 1
+  const key = Object.keys(UNLOCK_AT).find((k) => UNLOCK_AT[k] === G.level);
+  const title = G.level === 11 ? 'World 1 complete' : fireUp ? 'Attack speed increased' : `Level ${G.level}`;
+  hud.levelBanner(title, key ? ENEMY_TYPES[key] : null);
+}
+
+// Leaving a bonus level: your army comes back. If the mini-boss died, the
+// surviving strike team joins it (after the bonus × gate), capped at
+// BONUS_RETURN_CAP of your army.
+function leaveBonus() {
+  const { parked, killed, failed } = G.bonus;
+  const add = killed && !failed ? Math.min(army.N, Math.round(parked * CFG.BONUS_RETURN_CAP)) : 0;
+  G.bonus = null;
+  army.reset();
+  spill(army.spawn(parked + add, 0));
+  noteGain(add);
+}
+
+// The strike team was wiped out: the bonus is lost (no reward), but the run
+// isn't. Your army comes straight back and the rest of the bonus is cleared.
+function bonusLost() {
+  const parked = G.bonus.parked;
+  G.bonus.failed = true;
+  enemies.reset();
+  G.pending = G.pending.filter((p) => !p.bonus);
+  G.queue = G.queue.filter((p) => p.kind === 'level' || p.n !== G.level);   // drop bonus pieces not placed yet
+  for (const g of [...gates.active]) if (g.bonus) gates.release(g);
+  army.spawn(parked, 0);
+  hud.toast('Strike team lost');
+}
+
+// A mini-boss destroyed: a big burst, a short killcam, and its points.
+function bossDown(s, x, w) {
+  if (G.bonus) G.bonus.killed = true;
+  G.stats.bossPts += s.hpMax * CFG.SCORE_PER_HP;
+  sparks.ring(x, 0.6, w, 2.2, COLORS.white, 60);
+  sparks.emit(x, 0.8, w, COLORS.enemyHot, 120, 7);
+  world.addRipple(x, w, ANIM.rippleWin, time);
+  sfx.play('win');
+  G.killcamT = Math.max(G.killcamT, 1.0);
+  G.shake = Math.max(G.shake, 0.25);
 }
 
 const primarySpec = (g) => g.primary === 'S' ? g.S : g.primary === 'L' ? g.L : g.R;
@@ -520,7 +647,8 @@ function bulletTest(x, oldW, newW) {
   if (hit) {
     sparks.emit(x, 0.2, newW, COLORS.enemy, hit.killed ? 3 : 1, 2);
     if (hit.killed) { G.stats.kills[hit.t.id]++; sfx.play('pop'); } else sfx.play('hit');
-    if (hit.killed && hit.s.n === 0) squadWiped(hit.s);
+    if (hit.killed && hit.boss) bossDown(hit.s, x, newW);
+    else if (hit.killed && hit.s.n === 0) squadWiped(hit.s);
     return true;
   }
   return false;
@@ -543,9 +671,18 @@ function squadWiped(s) {
 // An enemy reached the army (or slipped past and hit the rear): it dies and
 // takes out the units nearest it. Bombers and brutes deal area damage, with
 // a shockwave ring showing its reach.
-function onHit(t, x, z, leaked) {
+function onHit(t, x, z, leaked, boss = false) {
   let killed;
-  if (t.aoe) {
+  if (boss) {
+    // The mini-boss reached the team: one huge area hit, then it's gone.
+    const w = G.dist - z, h = CFG.BOSS_HIT;
+    killed = army.killArea(x, z, h.radius, h.peak, Math.ceil(army.N * h.share), unitLost);
+    sparks.ring(x, 0.3, w, h.radius * 1.3, COLORS[t.color], 60);
+    world.addRipple(x, w, ANIM.rippleDeath, time);
+    sfx.play('stomp');
+    G.shake = 0.35;
+    G.killcamT = Math.max(G.killcamT, ANIM.killcamHold);
+  } else if (t.aoe) {
     // Dense (packed) armies get a slightly smaller radius so kills stay in range.
     const r = t.aoe.radius * Math.max(0.6, army.pack), w = G.dist - z, c = COLORS[t.color];
     killed = army.killArea(x, z, r, t.aoe.peak, t.aoe.max, unitLost);
@@ -663,7 +800,7 @@ function update(dt, realDt) {
     const danger = incoming > 0 ? incoming / Math.max(1, army.N) : 0;
     G.danger += (danger - G.danger) * Math.min(1, realDt * 4);
 
-    G.dist += CFG.SPEED * G.speedMul * dt;
+    G.dist += CFG.SPEED * G.speedMul * G.levelSpeed * dt;
     while (G.nextW < G.dist + CFG.VIEW_AHEAD) spawnNext();
     while (G.pending.length && G.pending[0].wz < G.dist + CFG.ENEMY_SPAWN_AHEAD) spawnSquad(G.pending.shift());
 
@@ -680,7 +817,7 @@ function update(dt, realDt) {
     }
 
     G.stats.peak = Math.max(G.stats.peak, army.N);
-    if (army.N <= 0) endRun();
+    if (army.N <= 0) { if (G.bonus && !G.bonus.failed) bonusLost(); else endRun(); }
   } else {
     G.danger = Math.max(0, G.danger - realDt * 2);
     G.battle = Math.max(0, G.battle - realDt * 2);
@@ -757,6 +894,10 @@ function syncHud(realDt) {
   G.ui += realDt;
   for (const tally of [G.gain, G.loss]) if (tally.n > 0 && G.ui - tally.t > 1.2) tally.n = 0;
   hud.setDeltas(G.gain.n, G.loss.n);
+  // Bonus levels: the mini-boss's health bar, and your waiting army.
+  const boss = G.state === 'play' ? enemies.boss : null;
+  hud.setBoss(boss ? enemies.bossHp(boss) : -1);
+  hud.setParked(G.bonus && !G.bonus.failed ? G.bonus.parked : 0);
 }
 
 // ---------- Loop ----------
