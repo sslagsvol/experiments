@@ -3,7 +3,7 @@
 A crowd-runner in the style of the "army through gates" mobile ads, redesigned around what those games get wrong: fake choices, hidden numbers, no skill expression, and art that buries the numbers. One thumb, thousands of units, 60fps on a mid-range phone.
 
 - **Play:** `index.html`. URL options: `?debug` (overlay plus the `window.vectorWars` test hook), `?units=N` (starting army), `?seed=N` (a different track), `?grid=hex` (a grid pattern), `?classic` (the old fully random track, no level 1).
-- **Version:** **v0.8.0 beta** (`VERSION` in `src/config.js`, shown on the title and pause screens). See section 7.
+- **Version:** **v0.9.0 beta** (`VERSION` in `src/config.js`, shown on the title and pause screens). See section 7.
 - **Style guide:** `style-guide.html`, every color, sprite, formation, animation and sound. Visual or animation changes must update it (rule in `CLAUDE.md`).
 - **Sound lab:** `sound-lab.html`, every sound with detune (lower, same speed) and stretch (longer, same pitch), globally or per sound (`SFX.tune` / `SFX.stretch`).
 - **History:** `CHANGELOG.md`, the round-by-round log of playtest feedback and what changed.
@@ -39,10 +39,11 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 - **Losses** fizzle cyan → red → black where they died.
 
 ### Fire and gates
-- Auto-fire from the army, rate `min(50, 3 + 2√N)`. *(Rework planned: batch B.)*
+- Auto-fire from the army, rate `min(50, 3 + 2√N)` × the level's share (`CFG.FIRE_LEVELS`): **25% in level 1**, then 40%, 55%, 70%, 85% and full from level 6. Faster fire is a reward of progression. *(Rework planned: batch B.)*
 - **Gate mix** (`CFG.GATE_MIX`): × 8%, + 32%, − 35%, ÷ 25%. A pair never has two bad options.
-  - **+ / −** fill a charge bar: 4 hits per step.
-  - **×** starts at ×1.0 (no effect) and climbs 0.1 per step to ×3.0, costing more hits as it climbs (`multHitsForStep()`, about 110 hits). Maxing it plays the "data stream" cascade and bursts gold.
+  - Every gate is `CFG.GATE_DURABILITY` (1.25×) tougher than its base hit counts.
+  - **+ / −** fill a charge bar: 5 hits per step (4 × 1.25).
+  - **×** starts at ×1.0 (no effect) and climbs 0.1 per step to ×3.0, costing more hits as it climbs (`multHitsForStep()` × durability, about 140 hits). Maxing it plays the "data stream" cascade and bursts gold.
   - **÷** starts at ÷2–÷3 and shooting walks it down; at ÷1.0 it flips into a ×1.0 gate and keeps climbing.
 - **Split gates:** each panel applies only to the units that cross it (× multiplies them; + / − scale by their share). The primary panel (where the army's center goes) shatters.
 - **Moving gates** (15% of gate spots): a single 1.5-wide panel sweeping side to side. Mostly good; only the units that pass through it are affected.
@@ -100,7 +101,7 @@ These come from playtests; the order among them and against D / B / E is still t
    - Lessons (mechanics) vs levels (what players see): early levels pack several lessons. Army carries over between main levels.
    - **Bonus levels** every couple of main levels: a forced small strike team (the micro-battles), ending in a **mini-boss** that is a giant version of the next enemy type. Beating it **unleashes** that type into main levels, worth more points; survivors rejoin the main army through a capped bonus × gate.
    - Each world ends with the **world boss** (Batch D, item 3), which earns the bomb.
-   - Builds in three releases: v0.8.0 framework, level gate, level-complete menu, army snapshot, levels 1–2; v0.9.0 bonus levels and mini-bosses; v0.10.0 world boss and bomb.
+   - Built so far: v0.8.0 level 1 playtest; v0.9.0 fire-rate progression, tougher gates, recurring level gates. Next: the level-complete menu and army snapshot, then bonus levels and mini-bosses, then the world boss and bomb.
 
 7. **Fire enemy (new type).**
    - On contact or death it sets the army on fire in a radius. Units caught in it **keep burning for a duration** (about 2–3s): they flicker orange-red and each has a chance to die every tick, so the damage keeps coming after the hit.
@@ -171,4 +172,5 @@ The game is in **beta**, so versions are **0.MINOR.PATCH**.
 | 0.6.0 | 2026-10-07 | PR #8 (`10993c3`) | New gate sounds, slow motion for breaking top-3 scores |
 | 0.6.1 | 2026-10-07 | PR #9 (`803dd97`) | Sound lab (detune and stretch) |
 | 0.7.0 | 2026-10-07 | PR #10 (`ca4c1a7`) | Version numbers, stronger parallax, grid patterns, keyboard controls |
-| 0.8.0 | (this branch) | `vw/v0.8.0` | Level plan; level 1 playtest: authored opening, level gate, banner, linear ramp after |
+| 0.8.0 | 2026-10-08 | PR #11 (`f236537`) | Level plan; level 1 playtest: authored opening, level gate, banner, linear ramp after |
+| 0.9.0 | (this branch) | `vw/v0.9.0` | Fire rate starts at 25% and grows per level; gates 25% tougher; a level gate every 8 pieces after level 1 |

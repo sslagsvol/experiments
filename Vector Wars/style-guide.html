@@ -372,7 +372,7 @@ for (const [title, s, v] of [
   ['Multiply gate', { op: 'x', m: 1.4, ch: 0.55 }, `COLORS.mult · rare (${Math.round(CFG.GATE_MIX.mult * 100)}% of gates)`],
   ['Divide gate', { op: '/', d: 2.5, ch: 0.3 }, `COLORS.div · ${Math.round(CFG.GATE_MIX.div * 100)}% of gates`],
 ]) {
-  elementCard({ title, vars: v, meta: `panel ${(CFG.TW - 0.1).toFixed(2)} × ${CFG.GATE_H} · border, faint fill, value text`, note: s.op === '/' ? `Starts at ÷2.0, ÷2.5 or ÷3.0. Shooting walks it down ${CFG.MULT_STEP} at a time; at ÷1.0 it flips into a ×1.0 gate and keeps climbing. Steps near ÷3 cost the most hits. A pair never has two bad gates.` : s.op === 'x' ? `Starts at ×${CFG.MULT_START.toFixed(1)} (does nothing). Shooting fills the bar; each fill adds ${CFG.MULT_STEP}, up to ×${CFG.MULT_MAX}. Higher steps take more hits.` : `Shooting fills the bar; every ${CFG.ADD_HITS_PER_STEP} hits add +1. Color flips when the value crosses zero.` }, (ctx, w, h) => {
+  elementCard({ title, vars: v, meta: `panel ${(CFG.TW - 0.1).toFixed(2)} × ${CFG.GATE_H} · border, faint fill, value text`, note: s.op === '/' ? `Starts at ÷2.0, ÷2.5 or ÷3.0. Shooting walks it down ${CFG.MULT_STEP} at a time; at ÷1.0 it flips into a ×1.0 gate and keeps climbing. Steps near ÷3 cost the most hits. A pair never has two bad gates.` : s.op === 'x' ? `Starts at ×${CFG.MULT_START.toFixed(1)} (does nothing). Shooting fills the bar; each fill adds ${CFG.MULT_STEP}, up to ×${CFG.MULT_MAX}. Higher steps take more hits.` : `Shooting fills the bar; every ${CFG.ADD_HITS_PER_STEP * CFG.GATE_DURABILITY} hits add +1. Color flips when the value crosses zero.` }, (ctx, w, h) => {
     const gw = Math.min(w * 0.6, 170), gh = gw * CFG.GATE_H / (CFG.TW - 0.1);
     gate(ctx, (w - gw) / 2, (h - gh) / 2, gw, gh, { f: 0, ...s });
   });
@@ -457,7 +457,7 @@ elementCard({ title: 'Background parallax', vars: 'CFG.VOID_DEPTH · VOID_SCROLL
   // Two layers: the track lines move at full speed, the background at VOID_SCROLL and smaller.
   ctx.save(); ctx.globalAlpha = 0.45;
   ctx.scale(0.6, 0.6); drawPattern(ctx, w / 0.6, h / 0.6, t * CFG.VOID_SCROLL, 'grid'); ctx.restore();
-  ctx.fillStyle = css(COLORS.bg); ctx.fillRect(w * 0.3, 0, w * 0.4, h);
+  ctx.fillStyle = '#04051a'; ctx.fillRect(w * 0.3, 0, w * 0.4, h);   // the track (COLORS.bg is a hex number, so no css())
   ctx.save(); ctx.beginPath(); ctx.rect(w * 0.3, 0, w * 0.4, h); ctx.clip(); drawPattern(ctx, w, h, t, 'grid'); ctx.restore();
   vline(ctx, w * 0.3, 0, w * 0.3, h, COLORS.rail, 2); vline(ctx, w * 0.7, 0, w * 0.7, h, COLORS.rail, 2);
 });
@@ -571,15 +571,15 @@ animCard({ title: 'March bob', vars: 'ANIM.bobFreq · bobHeight', meta: `|sin(${
     for (let i = 0; i < 14; i++) { const y = base - Math.abs(Math.sin(t * ANIM.bobFreq + i * 1.7)) * ANIM.bobHeight * PX * 8; dot(ctx, 20 + i * (w - 40) / 13, y, 22, COLORS.you); }
   });
 
-animCard({ title: 'Gate hit flash and charge', vars: 'ANIM.gateFlashDecay · CFG.ADD_HITS_PER_STEP · MULT_STEP · multHitsForStep()', meta: `flash 1 → 0 at ${ANIM.gateFlashDecay}/s · + / −: 1 per ${CFG.ADD_HITS_PER_STEP} hits · ×: +${CFG.MULT_STEP} per ${CFG.MULT_HITS_BASE}–${multHitsForStep(CFG.MULT_MAX - 0.1)} hits (more as it climbs), ×${CFG.MULT_START.toFixed(1)} → ×${CFG.MULT_MAX}`, note: 'Bullets fill each gate bar; the − gate climbs until it flips to +.', tall: true },
+animCard({ title: 'Gate hit flash and charge', vars: 'ANIM.gateFlashDecay · CFG.ADD_HITS_PER_STEP · MULT_STEP · multHitsForStep()', meta: `flash 1 → 0 at ${ANIM.gateFlashDecay}/s · + / −: 1 per ${CFG.ADD_HITS_PER_STEP * CFG.GATE_DURABILITY} hits · ×: +${CFG.MULT_STEP} per ${CFG.MULT_HITS_BASE * CFG.GATE_DURABILITY}–${multHitsForStep(CFG.MULT_MAX - 0.1) * CFG.GATE_DURABILITY} hits (more as it climbs; all × CFG.GATE_DURABILITY ${CFG.GATE_DURABILITY}), ×${CFG.MULT_START.toFixed(1)} → ×${CFG.MULT_MAX}`, note: 'Bullets fill each gate bar; the − gate climbs until it flips to +.', tall: true },
   (ctx, w, h, t, dt, st) => {
     if (!st.a) { st.a = { op: '+', v: -4, ch: 0, f: 0 }; st.b = { op: 'x', m: CFG.MULT_START, ch: 0, f: 0 }; st.acc = 0; st.hold = 0; }
     st.acc += dt;
     while (st.acc > 0.06) {
       st.acc -= 0.06;
-      st.a.ch = (st.a.ch || 0) + 1 / CFG.ADD_HITS_PER_STEP; st.a.f = 1;
+      st.a.ch = (st.a.ch || 0) + 1 / (CFG.ADD_HITS_PER_STEP * CFG.GATE_DURABILITY); st.a.f = 1;
       if (st.a.ch >= 0.999) { st.a.ch = 0; st.a.v++; if (st.a.v > 6) st.a.v = -4; }
-      if (st.b.m < CFG.MULT_MAX - 1e-6) { st.b.ch += 1 / multHitsForStep(st.b.m); st.b.f = 1; if (st.b.ch >= 0.999) { st.b.ch = 0; st.b.m = Math.round((st.b.m + CFG.MULT_STEP) * 10) / 10; } }
+      if (st.b.m < CFG.MULT_MAX - 1e-6) { st.b.ch += 1 / (multHitsForStep(st.b.m) * CFG.GATE_DURABILITY); st.b.f = 1; if (st.b.ch >= 0.999) { st.b.ch = 0; st.b.m = Math.round((st.b.m + CFG.MULT_STEP) * 10) / 10; } }
       else if ((st.hold += 0.06) > 1.5) { st.b.m = CFG.MULT_START; st.b.ch = 0; st.hold = 0; }
     }
     for (const g of [st.a, st.b]) g.f = Math.max(0, g.f - dt * ANIM.gateFlashDecay);

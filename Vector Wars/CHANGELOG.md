@@ -14,7 +14,8 @@ Round-by-round history of playtest feedback and what changed, grouped by release
 | 0.6.0 | rounds 18–21 | PR #8 |
 | 0.6.1 | rounds 22–23 | PR #9 |
 | 0.7.0 | round 24 | PR #10 |
-| 0.8.0 | rounds 25–26 | `vw/v0.8.0` |
+| 0.8.0 | rounds 25–26 | PR #11 |
+| 0.9.0 | round 27 | `vw/v0.9.0` |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
@@ -276,4 +277,12 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - Gates: fixed single panels of any width (`acquire(..., { x, width, slow })`), level gates (`op: 'level'`).
 - Bot runs (careful / worse side / no steering): 207 / 74 / 37 units at the level gate, about 70s.
 - Style guide: fixed single gate, level gate and level banner cards. Version 0.8.0.
+
+## Round 27 — v0.9.0: slower fire, tougher gates (2026-10-08)
+- User: the fire rate is near its maximum from the start, so gates fill and numbers climb too fast. Start at about a quarter and make faster fire part of progression; make gates 20–30% more durable. Playtest locally before going live.
+- **Fire rate by level** (`CFG.FIRE_LEVELS`): 25% of the full rate in level 1, then 40%, 55%, 70%, 85%, full from level 6. The level banner says "fire rate up". `?classic` keeps full fire.
+- **Gate durability** (`CFG.GATE_DURABILITY` 1.25): every gate needs 25% more hits (+ / −: 5 per step; ×1→×3 about 140 hits).
+- **Level gates keep coming:** after level 1, one every `CFG.LEVEL_EVERY` (8) track pieces, so the fire-rate progression continues. The random track's ramp now keeps the level 1 army as its base.
+- Level 1 retuned for the slower fire: squads 0.3–0.6 of the best-case army. Bots: careful 55 at the level 2 gate, worse-side dies, no steering finishes with 6; careful survives 5 minutes, growing as fire rises.
+- Fixed a style guide error (since v0.7.0): the background-parallax card passed a hex number to `css()`, stopping its animation.
 

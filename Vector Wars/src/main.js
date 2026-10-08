@@ -153,6 +153,7 @@ function newRun() {
     beat: CLASSIC ? -1 : 0,    // next authored beat of LEVEL_1 (-1 = random track)
     rampFrom: CLASSIC ? 0 : -1, // gateIdx where the random track (and its linear ramp) began
     rampArmy: 0,     // army at the level gate: the base of the linear ramp
+    nextLevelSeg: -1, // random track: G.seg at which the next level gate goes in
     rng: mulberry32(SEED),
     fireAcc: 0,
     shake: 0,
@@ -229,9 +230,13 @@ function spawnBeat() {
     G.beat = -1;
     G.rampFrom = G.gateIdx;
     G.enemyIdx = 2;   // random squads pick up from here: drones next, then bombers, then brutes
+    G.nextLevelSeg = G.seg + CFG.LEVEL_EVERY;
     G.nextW = wz + CFG.SEG_ENEMY;
   }
 }
+
+// Fire rate for the current level (it grows at each level gate).
+const fireMul = () => CLASSIC ? 1 : CFG.FIRE_LEVELS[Math.min(CFG.FIRE_LEVELS.length - 1, G.level - 1)];
 
 // Gate values and squad par: the original exponential curve for the classic
 // track, or a linear ramp from the end of the authored level.
@@ -240,6 +245,13 @@ const gateScale = () => CLASSIC ? Math.pow(1.12, G.gateIdx) : 1 + CFG.RAMP_GATE 
 
 function spawnNext() {
   if (G.beat >= 0) { spawnBeat(); return; }
+  if (G.nextLevelSeg >= 0 && G.seg >= G.nextLevelSeg) {
+    // Random track: a level gate every LEVEL_EVERY pieces (fire rate goes up).
+    gates.acquire(G.nextW, null, null, { op: 'level', n: G.level + 1 + gates.active.filter((g) => g.S && g.S.op === 'level' && !g.done).length, ch: 0, f: 0 }, 0, { x: 0, width: 2 * CFG.TW - 0.1 });
+    G.nextLevelSeg = G.seg + CFG.LEVEL_EVERY;
+    G.nextW += CFG.SEG_GATE;
+    return;
+  }
   const kind = PATTERN[G.seg % PATTERN.length];
   const wz = G.nextW;
   if (kind === 'g' && G.gateIdx > 0 && G.rng() < CFG.MOVING_GATE_CHANCE) {
@@ -423,9 +435,11 @@ function levelUp(g) {
   world.addRipple(army.cx, G.dist, ANIM.rippleLevel, time);
   sparks.ring(army.cx, 0.3, G.dist - army.front, 1.6, COLORS.white, 50);
   sfx.play('maxMult');
-  hud.toast(`Level ${G.level} complete`, `${army.N.toLocaleString('en-US')} units · on to level ${g.S.n}`);
+  const fireBefore = fireMul();
   G.level = g.S.n;
-  G.rampArmy = Math.max(30, army.N);
+  const fireUp = fireMul() > fireBefore;
+  hud.toast(`Level ${g.S.n - 1} complete`, `${army.N.toLocaleString('en-US')} units${fireUp ? ' · fire rate up' : ''} · on to level ${g.S.n}`);
+  if (!G.rampArmy) G.rampArmy = Math.max(30, army.N);   // the ramp starts from the army at the end of level 1
 }
 
 const primarySpec = (g) => g.primary === 'S' ? g.S : g.primary === 'L' ? g.L : g.R;
@@ -448,7 +462,7 @@ function hitGate(s) {
   if (s.op === 'x') {
     if (s.m < CFG.MULT_MAX - 1e-6) {
       // Climbs in 0.1 steps; higher steps cost more hits.
-      s.ch += 1 / multHitsForStep(s.m);
+      s.ch += 1 / (multHitsForStep(s.m) * CFG.GATE_DURABILITY);
       if (s.ch >= 0.999) {
         s.ch = 0;
         s.m = Math.round((s.m + CFG.MULT_STEP) * 10) / 10;
@@ -457,7 +471,7 @@ function hitGate(s) {
     }
   } else if (s.op === '/') {
     // ÷ gates walk down toward ÷1.0 (no effect); steps near ÷3 cost the most.
-    s.ch += 1 / multHitsForStep(s.d - CFG.MULT_STEP);
+    s.ch += 1 / (multHitsForStep(s.d - CFG.MULT_STEP) * CFG.GATE_DURABILITY);
     if (s.ch >= 0.999) { s.ch = 0; s.d = Math.round((s.d - CFG.MULT_STEP) * 10) / 10; }
     if (s.d <= 1 + 1e-6) {
       // Shot down to ÷1.0: it flips into a ×1.0 gate and keeps climbing.
@@ -466,7 +480,7 @@ function hitGate(s) {
     }
   } else {
     // + / − gates fill a charge bar too: ADD_HITS_PER_STEP bullets per +1.
-    s.ch += 1 / CFG.ADD_HITS_PER_STEP;
+    s.ch += 1 / (CFG.ADD_HITS_PER_STEP * CFG.GATE_DURABILITY);
     if (s.ch >= 0.999) { s.ch = 0; s.v += 1; }
   }
   s.f = 1;
@@ -638,7 +652,7 @@ function update(dt, realDt) {
       }
     }
 
-    G.fireAcc += dt * Math.min(CFG.FIRE_MAX, CFG.FIRE_BASE + CFG.FIRE_K * Math.sqrt(army.N));
+    G.fireAcc += dt * Math.min(CFG.FIRE_MAX, CFG.FIRE_BASE + CFG.FIRE_K * Math.sqrt(army.N)) * fireMul();
     while (G.fireAcc >= 1) {
       G.fireAcc -= 1;
       bullets.fire(army.cx + (Math.random() * 2 - 1) * army.halfW * 0.8, G.dist - army.front);

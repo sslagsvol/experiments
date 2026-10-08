@@ -30,15 +30,15 @@ export const LEVEL_1 = {
     { gap: 22, single: add(1), width: CFG.TW, slow: true },           // +1, half the road, dead center
     { gap: 24, squad: { kind: 'blob', n: 8, x: 0 } },                 // easy wave
     { gap: 24, pair: [add(-10), add(-1)], mirror: true },             // −10 / −1: take (or fix) the small one
-    { gap: 22, squad: { kind: 'wall', threat: 0.7, x: 0 } },
+    { gap: 22, squad: { kind: 'wall', threat: 0.3, x: 0 } },
     { gap: 24, pair: [add(5), add(12)], mirror: true },               // where you stand is what you pump
-    { gap: 22, squad: { kind: 'skirmish', threat: 1.0, x: 0 } },
+    { gap: 22, squad: { kind: 'skirmish', threat: 0.4, x: 0 } },
     { gap: 24, pair: [add(8), add(-6)], mirror: true },               // a real choice
-    { gap: 22, squad: { kind: 'wedge', threat: 1.2, x: 0 } },
+    { gap: 22, squad: { kind: 'wedge', threat: 0.5, x: 0 } },
     { gap: 24, pair: [mult(), add(10)], mirror: true },               // first × gate
-    { gap: 22, squad: { kind: 'blob', threat: 1.3, x: 0 } },
+    { gap: 22, squad: { kind: 'blob', threat: 0.55, x: 0 } },
     { gap: 24, pair: [add(15), add(-20)], mirror: true },
-    { gap: 22, squad: { kind: 'waves', threat: 1.4, x: 0 } },        // not a breeze
+    { gap: 22, squad: { kind: 'waves', threat: 0.6, x: 0 } },        // not a breeze
     { gap: 26, levelGate: 2 },
   ],
 };

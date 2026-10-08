@@ -8,7 +8,7 @@
 
 // The game's version: 0.MINOR.PATCH while in beta. Bump it on the release
 // branch (vw/vX.Y.Z) and add a matching heading in CHANGELOG.md. See PLAN.md.
-export const VERSION = '0.8.0';
+export const VERSION = '0.9.0';
 
 export const CFG = {
   TW: 2.0,                 // track half-width (world units)
@@ -43,9 +43,15 @@ export const CFG = {
   BULLET_SPEED: 26,
   BULLET_RANGE: 34,
   MAX_BULLETS: 600,
-  FIRE_BASE: 3,            // shots/s = min(FIRE_MAX, FIRE_BASE + FIRE_K * sqrt(N))
+  FIRE_BASE: 3,            // shots/s = min(FIRE_MAX, FIRE_BASE + FIRE_K * sqrt(N)) × the level's FIRE_LEVELS
   FIRE_K: 2,
   FIRE_MAX: 50,
+  // Fire rate grows with progression: level 1 fires at FIRE_LEVELS[0] of the
+  // full rate, and each level gate moves one step up (?classic always 1).
+  FIRE_LEVELS: [0.25, 0.4, 0.55, 0.7, 0.85, 1],
+  // Every gate takes this many times its listed hits to step (+ / − per +1,
+  // × and ÷ per 0.1).
+  GATE_DURABILITY: 1.25,
 
   DRAG_SPAN: 0.6,          // fraction of screen width that sweeps the full track
   STEER_RESPONSE: 14,      // higher = snappier follow
@@ -85,6 +91,7 @@ export const CFG = {
   // linearly per gate: gate values ×(1 + RAMP_GATE·k), squad "par" ×(1 + RAMP_PAR·k).
   RAMP_GATE: 0.12,
   RAMP_PAR: 0.15,
+  LEVEL_EVERY: 8,          // after level 1, a level gate every this many track pieces
   // Keyboard steering: units/s across the track at full hold (after a short
   // ramp from KEY_STEER_START of that), ×KEY_STEER_FAST with Shift.
   KEY_STEER_SPEED: 5,

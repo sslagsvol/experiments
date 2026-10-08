@@ -1,6 +1,6 @@
 # Vector Wars: level progression
 
-The plan for levels: how the game teaches its mechanics, how levels are structured, and what World 1 looks like. Status: **level 1 is built as a playtest (v0.8.0)**: the authored opening, then the random track ramping up linearly. The rest is planned. The roadmap entry is item 6 in `PLAN.md`; history is in `CHANGELOG.md`.
+The plan for levels: how the game teaches its mechanics, how levels are structured, and what World 1 looks like. Status: **level 1 is built as a playtest (v0.8.0, retuned in v0.9.0)**: the authored opening, then the random track ramping up linearly with a level gate every 8 pieces. The rest is planned. The roadmap entry is item 6 in `PLAN.md`; history is in `CHANGELOG.md`.
 
 ---
 
@@ -70,6 +70,8 @@ The order is fixed. The numbers are drafts, to be tuned by bot play (see section
 
 **As built (v0.8.0 playtest, `src/levels.js`):** start 20 · 5 grunts · +1 slow gate · 8 grunts · −10 / −1 · then squads sized as a share of the best-case army (0.7, 1.0, 1.2, 1.3, 1.4) between gate pairs (+5 / +12, +8 / −6, × / +10, +15 / −20) · "LEVEL 2" gate. About 70s for a bot; a person will be slower. Bot results: careful 207 units at the gate, always taking the worse side 74 (standing behind a red gate shoots it green, so the lesson works), never steering 37. After the gate the random track ramps linearly (`CFG.RAMP_*`), with drones, bombers and brutes arriving in turn. `?classic` plays the old fully random track.
 
+**Retuned in v0.9.0:** fire rate now starts at 25% and each level gate raises it (40%, 55%, 70%, 85%, then full from level 6; `CFG.FIRE_LEVELS`), and gates are 1.25× tougher (`CFG.GATE_DURABILITY`). Level 1 squads are now 0.3, 0.4, 0.5, 0.55, 0.6 of the best-case army. Bot results: careful 55 units at the level 2 gate (+1 gate reaches about +7); always taking the worse side dies at about 68s; never steering finishes with 6. The careful bot then grows with each fire-rate step (66 at level 4, about 1,000 at level 6) and was still alive at 5 minutes. After level 1 a level gate comes every `CFG.LEVEL_EVERY` (8) track pieces, about every 40s.
+
 **The math we want:**
 - **Careful play** (pumped gates, took the −1, shot squads before contact) ends with a substantial army, about 100–150.
 - **One big mistake** (the −10 gate, or a wave that got through) still finishes, smaller.
@@ -98,6 +100,7 @@ The order is fixed. The numbers are drafts, to be tuned by bot play (see section
 **Bot tuning.** The `?debug` hook can play levels headlessly with simple strategies (careful, sloppy, one mistake, two mistakes) and report the army at each beat. That's how the level 1 math gets tuned instead of guessed.
 
 **In order:**
-1. **v0.8.0: levels, first pass.** The level framework and authored chunks; the level gate; the level-complete menu with "Go to Level N" and the army snapshot; levels 1 and 2; the slow gate approach; the "NEW" card.
-2. **v0.9.0: bonus levels.** The strike team, mini-bosses (giant drone first), "unleashed" enemies and their scoring, the bonus × gate, levels 3–4 and bonus 1–2.
-3. **v0.10.0: world boss and bomb** (Batch D), levels 5–7 and bonus 3. World 1 complete.
+1. **Faster fire as a level reward** (v0.9.0): built. Later it could become a choice at the level-complete menu (fire rate, or something else).
+2. **v0.8.0: levels, first pass.** The level framework and authored chunks; the level gate; the level-complete menu with "Go to Level N" and the army snapshot; levels 1 and 2; the slow gate approach; the "NEW" card.
+3. **Next: bonus levels.** The strike team, mini-bosses (giant drone first), "unleashed" enemies and their scoring, the bonus × gate, levels 3–4 and bonus 1–2.
+4. **Then: world boss and bomb** (Batch D), levels 5–7 and bonus 3. World 1 complete.
