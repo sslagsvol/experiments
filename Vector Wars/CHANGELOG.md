@@ -13,7 +13,8 @@ Round-by-round history of playtest feedback and what changed, grouped by release
 | 0.5.0 | round 17 | PR #7 |
 | 0.6.0 | rounds 18–21 | PR #8 |
 | 0.6.1 | rounds 22–23 | PR #9 |
-| 0.7.0 | round 24 | `vw/v0.7.0` |
+| 0.7.0 | round 24 | PR #10 |
+| 0.8.0 | rounds 25–26 | `vw/v0.8.0` |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
@@ -266,4 +267,13 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 ## Round 25: level progression plan (2026-10-08)
 - Planning only. New `LEVELS.md`: lessons vs levels; level 1 packs the first four lessons in the user's order (a few grunts, a centered half-width +1 gate, an easy wave, −10 / −1 reds, harder waves); army carries over; **bonus levels** with a forced small strike team end in a mini-boss (a giant next-enemy-type) that unleashes that type, worth more points, with survivors rejoining through a capped bonus × gate; a world boss earns the bomb. World 1 laid out as 7 levels + 3 bonus levels. Open questions: merging units at level-up, failing a level or bonus, leaderboard, stars, unleashed scoring.
 - `PLAN.md` item 6 now points to it.
+
+## Round 26 — v0.8.0: level 1 playtest build (2026-10-08)
+- User: build just level 1, script the first ~90 seconds, then scale linearly, to playtest before building the rest.
+- **`src/levels.js`:** `LEVEL_1`, a list of beats: 5 grunts, a centered half-width **+1 gate with a slow approach** (the track eases to ×0.35 so the value climbs; players reach about +30), 8 grunts, −10 / −1, then squads sized as a share of the best-case army between gate pairs, a first × gate, and a full-width **"LEVEL 2" gate**.
+- **Level gate:** can't be shot or dodged; crossing it gives the biggest ripple (2.8), a white spark ring, the maxMult sound and a **"Level 1 complete" banner** (`hud.toast`, `#toast`). A "Level 1" banner opens each run.
+- **After level 1:** the random track resumes with a **linear ramp** (`CFG.RAMP_GATE` 0.12, `RAMP_PAR` 0.15 per gate) from the army you finished with, instead of the old exponential curve; drones, bombers and brutes arrive in turn. `?classic` plays the old track.
+- Gates: fixed single panels of any width (`acquire(..., { x, width, slow })`), level gates (`op: 'level'`).
+- Bot runs (careful / worse side / no steering): 207 / 74 / 37 units at the level gate, about 70s.
+- Style guide: fixed single gate, level gate and level banner cards. Version 0.8.0.
 

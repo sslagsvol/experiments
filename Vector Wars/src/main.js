@@ -13,9 +13,12 @@ import { DragInput, KeyInput } from './input.js';
 import { Hud } from './hud.js';
 import { Sfx } from './audio.js';
 import { cachedScores, fetchScores, rankFor, submitScore } from './scores.js';
+import { LEVEL_1 } from './levels.js';
 
 const params = new URLSearchParams(location.search);
-const START_UNITS = Math.min(CFG.CAPACITY, Math.max(1, parseInt(params.get('units'), 10) || CFG.START_UNITS));
+// ?classic plays the old fully random track from the start (no authored level).
+const CLASSIC = params.has('classic');
+const START_UNITS = Math.min(CFG.CAPACITY, Math.max(1, parseInt(params.get('units'), 10) || (CLASSIC ? CFG.START_UNITS : LEVEL_1.start)));
 const SEED = parseInt(params.get('seed'), 10) || CFG.SEED;
 const DEBUG = params.has('debug');
 
@@ -145,7 +148,11 @@ function newRun() {
     ax: 0, tx: 0,
     dist: 0, nextW: 0,
     seg: 0, gateIdx: 0, enemyIdx: 0,
-    pending: [],
+    pending: [],     // squads waiting to come out of the fog: { wz, spec? }
+    level: 1,
+    beat: CLASSIC ? -1 : 0,    // next authored beat of LEVEL_1 (-1 = random track)
+    rampFrom: CLASSIC ? 0 : -1, // gateIdx where the random track (and its linear ramp) began
+    rampArmy: 0,     // army at the level gate: the base of the linear ramp
     rng: mulberry32(SEED),
     fireAcc: 0,
     shake: 0,
@@ -175,6 +182,7 @@ function startPlay() {
   G.nextW = G.dist + CFG.FIRST;
   hud.showTitle(false);
   hud.setPauseButton(true);
+  if (!CLASSIC) hud.toast(`Level ${G.level}`, 'Shoot the enemies · shoot the gates up');
 }
 
 // Score = distance + enemies defeated, each worth its hit points.
@@ -199,12 +207,44 @@ function makeGateSpec(rng, scale) {
 
 const isBad = (s) => s.op === '/' || (s.op === '+' && s.v < 0);
 
+// One authored beat (levels.js), placed `gap` after the previous one.
+function spawnBeat() {
+  const b = LEVEL_1.beats[G.beat++];
+  const wz = G.nextW + b.gap;
+  if (b.squad) G.pending.push({ wz, spec: b.squad });
+  else if (b.pair) {
+    let [L, R] = b.pair.map((s) => ({ ...s }));
+    if (b.mirror && G.rng() < 0.5) [L, R] = [R, L];
+    gates.acquire(wz, L, R);
+    G.gateIdx++;
+  } else if (b.single) {
+    gates.acquire(wz, null, null, { ...b.single }, 0, { x: 0, width: b.width, slow: b.slow });
+    G.gateIdx++;
+  } else if (b.levelGate) {
+    gates.acquire(wz, null, null, { op: 'level', n: b.levelGate, ch: 0, f: 0 }, 0, { x: 0, width: 2 * CFG.TW - 0.1 });
+  }
+  G.nextW = wz;
+  if (G.beat >= LEVEL_1.beats.length) {
+    // Script done: random track from here, ramping up linearly.
+    G.beat = -1;
+    G.rampFrom = G.gateIdx;
+    G.enemyIdx = 2;   // random squads pick up from here: drones next, then bombers, then brutes
+    G.nextW = wz + CFG.SEG_ENEMY;
+  }
+}
+
+// Gate values and squad par: the original exponential curve for the classic
+// track, or a linear ramp from the end of the authored level.
+const rampK = () => G.gateIdx - G.rampFrom;
+const gateScale = () => CLASSIC ? Math.pow(1.12, G.gateIdx) : 1 + CFG.RAMP_GATE * rampK();
+
 function spawnNext() {
+  if (G.beat >= 0) { spawnBeat(); return; }
   const kind = PATTERN[G.seg % PATTERN.length];
   const wz = G.nextW;
   if (kind === 'g' && G.gateIdx > 0 && G.rng() < CFG.MOVING_GATE_CHANCE) {
     // Uncommon: a single gate swaying side to side. Mostly worth chasing.
-    const scale = Math.pow(1.12, G.gateIdx);
+    const scale = gateScale();
     let S;
     if (G.rng() < CFG.MOVING_GATE_GOOD) {
       S = G.rng() < 0.3 ? { op: 'x', m: CFG.MULT_START, ch: 0, f: 0 } : { op: '+', v: Math.round((10 + G.rng() * 20) * scale), ch: 0, f: 0 };
@@ -219,7 +259,7 @@ function spawnNext() {
       L = { op: '+', v: 10, ch: 0, f: 0 };
       R = { op: 'x', m: CFG.MULT_START, ch: 0, f: 0 };
     } else {
-      const scale = Math.pow(1.12, G.gateIdx);
+      const scale = gateScale();
       L = makeGateSpec(G.rng, scale);
       R = makeGateSpec(G.rng, scale);
       // Never two dead ends: if both sides hurt, make one a small add.
@@ -229,7 +269,7 @@ function spawnNext() {
     gates.acquire(wz, L, R);
     G.gateIdx++;
   } else {
-    G.pending.push(wz);   // sized later, when it comes out of the fog
+    G.pending.push({ wz });   // sized later, when it comes out of the fog
   }
   G.seg++;
   G.nextW += kind === 'g' ? CFG.SEG_GATE : CFG.SEG_ENEMY;
@@ -248,7 +288,7 @@ function pickKind() {
 // Squads are sized against this, so taking the weaker gate makes the next
 // fight harder, and back-to-back squads don't stack into a wall of death.
 function projectedArmy(wz) {
-  const gain = (s, n) => s.op === 'x' ? n * s.m : s.op === '/' ? n / s.d : Math.max(0, n + s.v);
+  const gain = (s, n) => s.op === 'level' ? n : s.op === 'x' ? n * s.m : s.op === '/' ? n / s.d : Math.max(0, n + s.v);
   const events = [
     ...gates.active.filter((g) => !g.done && g.wz < wz).map((g) => [g.wz, (n) => g.S ? Math.max(n, gain(g.S, n)) : Math.max(gain(g.L, n), gain(g.R, n))]),
     ...enemies.squads.filter((s) => s.n > 0 && s.cw < wz).map((s) => [s.cw, (n) => n - enemies.squadStrength(s) * 0.7]),
@@ -260,11 +300,20 @@ function projectedArmy(wz) {
 
 // Squad size tracks the projected army plus a "par" curve from gates
 // passed, so battles stay a real threat. Tuned in batch E.
-function spawnSquad(wz) {
+function spawnSquad({ wz, spec }) {
+  if (spec) {
+    // Authored: grunts only, at a set position; an exact size, or a share of
+    // the best-case army (like the random track, by expected damage).
+    const n = spec.threat ? Math.max(8, Math.round(projectedArmy(wz) * spec.threat / mixEst(squadMix(spec.kind, 0)))) : spec.n;
+    enemies.spawnSquad(spec.kind, n, spec.x || 0, wz, G.rng, 0);
+    return;
+  }
   let kind = 'blob', n = 10;
   if (G.enemyIdx > 0) {
     kind = pickKind();
-    const par = Math.min(CFG.CAPACITY, 30 * Math.pow(1.3, G.gateIdx));
+    // Classic: exponential par. After an authored level: the army it ended
+    // with, ramping up linearly.
+    const par = Math.min(CFG.CAPACITY, CLASSIC ? 30 * Math.pow(1.3, G.gateIdx) : (G.rampArmy || projectedArmy(wz)) * (1 + CFG.RAMP_PAR * rampK()));
     const ref = 0.8 * projectedArmy(wz) + 0.2 * par;
     const threat = CFG.ENEMY_THREAT_MIN + G.rng() * (CFG.ENEMY_THREAT_MAX - CFG.ENEMY_THREAT_MIN);
     // Size by strength, not headcount: a squad with brutes or bombers has fewer units.
@@ -317,8 +366,9 @@ function spill(n) {
 // A moving gate works the same way over just its span: only the units that
 // pass through it are affected, and it only shatters if someone did.
 function crossGate(g) {
+  if (g.S && g.S.op === 'level') { levelUp(g); return; }
   const total = army.N, before = army.N;
-  const half = CFG.MOVING_GATE_WIDTH / 2;
+  const half = g.sw / 2;
   const regions = g.S
     ? [[g.S, g.sx - half, g.sx + half, 'S']]
     : [[g.L, -Infinity, 0, 'L'], [g.R, 0, Infinity, 'R']];
@@ -363,13 +413,28 @@ function crossGate(g) {
   }
 }
 
+// Crossing a level gate: the biggest ripple, a burst along the line, and a
+// banner. The random track (with its linear ramp) starts from this army.
+function levelUp(g) {
+  g.done = true;
+  g.doneAt = time;
+  g.primary = 'S';
+  shatterSparks(g);
+  world.addRipple(army.cx, G.dist, ANIM.rippleLevel, time);
+  sparks.ring(army.cx, 0.3, G.dist - army.front, 1.6, COLORS.white, 50);
+  sfx.play('maxMult');
+  hud.toast(`Level ${G.level} complete`, `${army.N.toLocaleString('en-US')} units · on to level ${g.S.n}`);
+  G.level = g.S.n;
+  G.rampArmy = Math.max(30, army.N);
+}
+
 const primarySpec = (g) => g.primary === 'S' ? g.S : g.primary === 'L' ? g.L : g.R;
 
 // Burst of sparks along the primary panel's outline.
 function shatterSparks(g) {
   const s = primarySpec(g), c = gateColor(s);
-  const x0 = g.primary === 'S' ? g.sx - CFG.MOVING_GATE_WIDTH / 2 : g.primary === 'L' ? -CFG.TW + 0.05 : 0.05;
-  const x1 = x0 + (g.primary === 'S' ? CFG.MOVING_GATE_WIDTH : CFG.TW - 0.1);
+  const x0 = g.primary === 'S' ? g.sx - g.sw / 2 : g.primary === 'L' ? -CFG.TW + 0.05 : 0.05;
+  const x1 = x0 + (g.primary === 'S' ? g.sw : CFG.TW - 0.1);
   for (let k = 0; k < 28; k++) {
     const t = k / 28, onTop = k % 2;
     sparks.emit(x0 + (x1 - x0) * t, onTop ? CFG.GATE_H : 0.1 + Math.random() * CFG.GATE_H, g.wz, c, 1, 3);
@@ -411,7 +476,7 @@ function hitGate(s) {
 function bulletTest(x, oldW, newW) {
   for (const g of gates.active) {
     if (g.done || oldW >= g.wz || newW < g.wz || Math.abs(x) >= CFG.TW) continue;
-    if (g.S && Math.abs(x - g.sx) > CFG.MOVING_GATE_WIDTH / 2) continue;   // missed the moving gate
+    if (g.S && (g.S.op === 'level' || Math.abs(x - g.sx) > g.sw / 2)) continue;   // missed a single gate (level gates let bullets through)
     const side = g.S || (x < 0 ? g.L : g.R);
     if (hitGate(side)) {
       if (side.maxed) { side.maxed = false; maxedOut(g, side); }
@@ -432,7 +497,7 @@ function bulletTest(x, oldW, newW) {
 // A × gate hit its ×3.0 cap: the data-stream sound, a gold burst and a ripple.
 function maxedOut(g, s) {
   sfx.play('maxMult');
-  const x = g.S ? g.sx : s === g.L ? -CFG.TW / 2 : CFG.TW / 2;
+  const x = g.S ? g.sx : s === g.L ? -CFG.TW / 2 : CFG.TW / 2;   // (fixed singles sit at sx too)
   sparks.emit(x, CFG.GATE_H * 0.6, g.wz, COLORS.mult, 60, 5);
   sparks.ring(x, CFG.GATE_H * 0.5, g.wz, 0.9, COLORS.mult, 30);
   world.addRipple(x, g.wz, ANIM.rippleGate, time);
@@ -549,7 +614,12 @@ function update(dt, realDt) {
     }
     G.engaged = engaged;
     G.surge = Math.max(0, G.surge - dt * ANIM.surgeDecay);
-    const targetSpeed = close ? 0 : engaged ? ANIM.approachSpeed : 1 + ANIM.surgeBoost * G.surge;
+    let targetSpeed = close ? 0 : engaged ? ANIM.approachSpeed : 1 + ANIM.surgeBoost * G.surge;
+    // Authored "slow" gates: crawl up to them so the value visibly climbs.
+    for (const g of gates.active) {
+      const ahead = g.wz - G.dist;
+      if (g.slow && !g.done && ahead < ANIM.gateSlowFrom && ahead > ANIM.gateSlowTo) targetSpeed = Math.min(targetSpeed, ANIM.gateSlowSpeed);
+    }
     G.speedMul += (targetSpeed - G.speedMul) * Math.min(1, dt * ANIM.battleBrake);
     G.battle += ((close ? 1 : engaged ? 0.4 : 0) - G.battle) * Math.min(1, dt * 3);
 
@@ -560,7 +630,7 @@ function update(dt, realDt) {
 
     G.dist += CFG.SPEED * G.speedMul * dt;
     while (G.nextW < G.dist + CFG.VIEW_AHEAD) spawnNext();
-    while (G.pending.length && G.pending[0] < G.dist + CFG.ENEMY_SPAWN_AHEAD) spawnSquad(G.pending.shift());
+    while (G.pending.length && G.pending[0].wz < G.dist + CFG.ENEMY_SPAWN_AHEAD) spawnSquad(G.pending.shift());
 
     for (const g of gates.active) {
       if (!g.done && g.wz <= G.dist) {

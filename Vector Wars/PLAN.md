@@ -2,8 +2,8 @@
 
 A crowd-runner in the style of the "army through gates" mobile ads, redesigned around what those games get wrong: fake choices, hidden numbers, no skill expression, and art that buries the numbers. One thumb, thousands of units, 60fps on a mid-range phone.
 
-- **Play:** `index.html`. URL options: `?debug` (overlay plus the `window.vectorWars` test hook), `?units=N` (starting army), `?seed=N` (a different track), `?grid=hex` (a grid pattern).
-- **Version:** **v0.7.0 beta** (`VERSION` in `src/config.js`, shown on the title and pause screens). See section 7.
+- **Play:** `index.html`. URL options: `?debug` (overlay plus the `window.vectorWars` test hook), `?units=N` (starting army), `?seed=N` (a different track), `?grid=hex` (a grid pattern), `?classic` (the old fully random track, no level 1).
+- **Version:** **v0.8.0 beta** (`VERSION` in `src/config.js`, shown on the title and pause screens). See section 7.
 - **Style guide:** `style-guide.html`, every color, sprite, formation, animation and sound. Visual or animation changes must update it (rule in `CLAUDE.md`).
 - **Sound lab:** `sound-lab.html`, every sound with detune (lower, same speed) and stretch (longer, same pitch), globally or per sound (`SFX.tune` / `SFX.stretch`).
 - **History:** `CHANGELOG.md`, the round-by-round log of playtest feedback and what changed.
@@ -96,7 +96,7 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 ### Proposed next (not yet prioritized)
 These come from playtests; the order among them and against D / B / E is still to decide.
 
-6. **Batch F: levels.** *Next up; full plan in `LEVELS.md`.*
+6. **Batch F: levels.** *In progress: level 1 playtest build in v0.8.0. Full plan in `LEVELS.md`.*
    - Lessons (mechanics) vs levels (what players see): early levels pack several lessons. Army carries over between main levels.
    - **Bonus levels** every couple of main levels: a forced small strike team (the micro-battles), ending in a **mini-boss** that is a giant version of the next enemy type. Beating it **unleashes** that type into main levels, worth more points; survivors rejoin the main army through a capped bonus × gate.
    - Each world ends with the **world boss** (Batch D, item 3), which earns the bomb.
@@ -170,4 +170,5 @@ The game is in **beta**, so versions are **0.MINOR.PATCH**.
 | 0.5.0 | 2026-10-07 | PR #7 (`26736dd`) | Pause menu, live score with top-3 badge |
 | 0.6.0 | 2026-10-07 | PR #8 (`10993c3`) | New gate sounds, slow motion for breaking top-3 scores |
 | 0.6.1 | 2026-10-07 | PR #9 (`803dd97`) | Sound lab (detune and stretch) |
-| 0.7.0 | (this branch) | `vw/v0.7.0` | Version numbers, stronger parallax, grid patterns, keyboard controls |
+| 0.7.0 | 2026-10-07 | PR #10 (`ca4c1a7`) | Version numbers, stronger parallax, grid patterns, keyboard controls |
+| 0.8.0 | (this branch) | `vw/v0.8.0` | Level plan; level 1 playtest: authored opening, level gate, banner, linear ramp after |

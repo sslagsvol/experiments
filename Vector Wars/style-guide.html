@@ -137,6 +137,12 @@
       <div class="meta">Opened by the pause button, Esc / P, or leaving the tab mid-run · the recap so far ("Score so far") and the board, with where this score would place · phones switch between them with tabs; 680px+ shows both side by side · "Paused" breathes over 2.4s · Continue is the big lime CTA, Restart starts a fresh run at once · keyboard hints (.kb-hint) appear only after a key press (body.kb) · beta experiments (.pause-lab, dashed): grid pattern and parallax · version along the bottom, 11px at 40%</div>
     </div>
     <div class="card">
+      <div class="stage hud-stage"><div id="hud"><div id="toast" class="sg-toast"><div class="t1">Level 1 complete</div><div class="t2">150 units · on to level 2</div></div></div></div>
+      <div class="controls"><button type="button" id="sg-toast-replay">Replay</button></div>
+      <h3>Level banner</h3><div class="var">hud.toast() · #toast .t1 · .t2 · @keyframes toast</div>
+      <div class="meta">Audiowide clamp(30px, 10vw, 54px) white with --you glow, 24% down the screen · sub line 15px · sweeps in (letter-spacing .3em → 0) and fades over 2.4s (ANIM.toastLife) · "Level 1" at the start of a run, "Level 1 complete" at a level gate</div>
+    </div>
+    <div class="card">
       <div class="stage danger-stage"><div id="danger" style="opacity:1"></div><div id="hud"><div id="army-hud"><div id="count" class="danger">68</div><div id="loss" class="delta live">−214</div></div></div></div>
       <h3>Danger state</h3><div class="var">#danger · #count.danger · @keyframes heartbeat</div>
       <div class="meta">Vignette opacity follows danger from 0.4 up to ANIM.slowMoThreshold, and pulses when enemies slip past to the rear · count turns pink and beats every 0.9s</div>
@@ -238,8 +244,8 @@ function vline(ctx, x1, y1, x2, y2, c, w = 1.5) {
 }
 
 // Mirrors gateColor / gateLabel in src/gates.js (kept here to avoid loading three.js).
-const gateColor = (s) => s.op === 'x' ? COLORS.mult : s.op === '/' ? COLORS.div : s.v >= 0 ? COLORS.add : COLORS.sub;
-const gateLabel = (s) => s.op === 'x' ? '×' + s.m.toFixed(1) : s.op === '/' ? '÷' + s.d.toFixed(1) : (s.v >= 0 ? '+' : '−') + Math.abs(s.v);
+const gateColor = (s) => s.op === 'level' ? COLORS.white : s.op === 'x' ? COLORS.mult : s.op === '/' ? COLORS.div : s.v >= 0 ? COLORS.add : COLORS.sub;
+const gateLabel = (s) => s.op === 'level' ? 'LEVEL ' + s.n : s.op === 'x' ? '×' + s.m.toFixed(1) : s.op === '/' ? '÷' + s.d.toFixed(1) : (s.v >= 0 ? '+' : '−') + Math.abs(s.v);
 function gate(ctx, x, y, w, h, s) {
   const c = gateColor(s);
   ctx.fillStyle = css(c, 0.07 + (s.f || 0) * 0.3); ctx.fillRect(x, y, w, h);
@@ -390,6 +396,18 @@ elementCard({ title: 'Track', vars: 'COLORS.grid · rail · horizon', meta: `hal
   for (let k = -2; k <= 2; k++) { ctx.beginPath(); ctx.moveTo(vx + k * 2, hy); ctx.lineTo(vx + k * 24, h); ctx.stroke(); }
   for (let i = 0; i < 9; i++) { const f = ((i + t * 1.2) % 9) / 9, y = hy + (h - hy) * f * f; const hw = 6 + (60 - 6) * f * f; ctx.beginPath(); ctx.moveTo(vx - hw, y); ctx.lineTo(vx + hw, y); ctx.stroke(); }
   vline(ctx, vx - 6, hy, vx - 60, h, COLORS.rail, 2); vline(ctx, vx + 6, hy, vx + 60, h, COLORS.rail, 2);
+});
+
+// Authored-level gates (levels.js): a fixed single panel, and the level gate.
+elementCard({ title: 'Fixed single gate', vars: 'levels.js single · width · slow', meta: `one panel at the center, ${CFG.TW} wide (half the road) in level 1 · slow: the track eases to ×${ANIM.gateSlowSpeed} from ${ANIM.gateSlowFrom} to ${ANIM.gateSlowTo} units out, so the value visibly climbs as you shoot it`, note: 'Level 1\'s first gate: +1, dead center. Players reach about +30 on the slow approach.' }, (ctx, w, h) => {
+  const tw = w * 0.8, x0 = (w - tw) / 2, gw = tw / 2, gh = gw * CFG.GATE_H / CFG.TW;
+  vline(ctx, x0, h - 10, x0, 10, COLORS.rail, 2); vline(ctx, x0 + tw, h - 10, x0 + tw, 10, COLORS.rail, 2);
+  gate(ctx, x0 + (tw - gw) / 2, h / 2 - gh / 2, gw, gh, { op: '+', v: 23, ch: 0.5, f: 0 });
+});
+elementCard({ title: 'Level gate', vars: "levels.js levelGate · gate op 'level' · COLORS.white", meta: `full width, can't be shot (bullets pass through) or dodged · crossing: ripple ${ANIM.rippleLevel} (the biggest), white spark ring, the maxMult sound, and the "Level complete" banner`, note: 'Ends a level. After level 1 the track goes back to random, ramping up linearly from the army you finished with (CFG.RAMP_GATE, RAMP_PAR).' }, (ctx, w, h) => {
+  const tw = w * 0.8, x0 = (w - tw) / 2, gh = tw * 0.5 * CFG.GATE_H / CFG.TW;
+  vline(ctx, x0, h - 10, x0, 10, COLORS.rail, 2); vline(ctx, x0 + tw, h - 10, x0 + tw, 10, COLORS.rail, 2);
+  gate(ctx, x0 + 2, h / 2 - gh / 2, tw - 4, gh, { op: 'level', n: 2, ch: 0, f: 0 });
 });
 
 // Grid patterns (world.js floorFS): 2D versions, scrolling like the track.
@@ -811,6 +829,10 @@ const startEntry = () => {
 startEntry();
 
 for (const el of document.querySelectorAll('.version')) el.textContent = `v${VERSION} beta`;
+// Level banner: shown at rest; Replay runs the real animation.
+const sgToast = document.querySelector('.sg-toast');
+sgToast.style.opacity = 1; sgToast.style.top = '20px';
+document.getElementById('sg-toast-replay').addEventListener('click', () => { sgToast.style.opacity = ''; sgToast.classList.remove('show'); void sgToast.offsetWidth; sgToast.classList.add('show'); });
 
 // Pause menu: the real recap and board, tabs live.
 renderRecap(document.getElementById('sg-pause-recap'), {

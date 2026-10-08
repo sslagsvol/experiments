@@ -1,6 +1,6 @@
 # Vector Wars: level progression
 
-The plan for levels: how the game teaches its mechanics, how levels are structured, and what World 1 looks like. Status: **planned, not built.** The roadmap entry is item 6 in `PLAN.md`; history is in `CHANGELOG.md`.
+The plan for levels: how the game teaches its mechanics, how levels are structured, and what World 1 looks like. Status: **level 1 is built as a playtest (v0.8.0)**: the authored opening, then the random track ramping up linearly. The rest is planned. The roadmap entry is item 6 in `PLAN.md`; history is in `CHANGELOG.md`.
 
 ---
 
@@ -67,6 +67,8 @@ The order is fixed. The numbers are drafts, to be tuned by bot play (see section
 4. **Two red gates: −10 and −1.** The obvious lesson: take the −1. The hidden one: shoot the −1 and it climbs past zero, turning green.
 5. **Two or three more waves,** easy enough to beat but not a breeze (about 12, 16 and 22 grunts), with a **+ pair** between them so a good player keeps growing.
 6. **Level gate.**
+
+**As built (v0.8.0 playtest, `src/levels.js`):** start 20 · 5 grunts · +1 slow gate · 8 grunts · −10 / −1 · then squads sized as a share of the best-case army (0.7, 1.0, 1.2, 1.3, 1.4) between gate pairs (+5 / +12, +8 / −6, × / +10, +15 / −20) · "LEVEL 2" gate. About 70s for a bot; a person will be slower. Bot results: careful 207 units at the gate, always taking the worse side 74 (standing behind a red gate shoots it green, so the lesson works), never steering 37. After the gate the random track ramps linearly (`CFG.RAMP_*`), with drones, bombers and brutes arriving in turn. `?classic` plays the old fully random track.
 
 **The math we want:**
 - **Careful play** (pumped gates, took the −1, shot squads before contact) ends with a substantial army, about 100–150.

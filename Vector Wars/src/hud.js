@@ -37,6 +37,7 @@ export class Hud {
     this.pauseTabs = [...this.pauseEl.querySelectorAll('.pause-tabs button')];
     for (const b of this.pauseTabs) b.addEventListener('click', () => this.pauseTab(b.dataset.tab));
     this.stopPauseRecap = null;
+    this.toastEl = document.getElementById('toast');
     for (const el of document.querySelectorAll('.version')) el.textContent = `v${VERSION} beta`;
     this.gridBtn = document.getElementById('grid-btn');
     this.parallaxBtn = document.getElementById('parallax-btn');
@@ -144,6 +145,13 @@ export class Hud {
   setLab(pattern, parallax) {
     this.gridBtn.textContent = `Grid: ${pattern}`;
     this.parallaxBtn.textContent = `Parallax: ${parallax ? 'deep' : 'classic'}`;
+  }
+
+  // A big banner across the upper screen: "LEVEL 1", "LEVEL 1 COMPLETE".
+  toast(title, sub = '') {
+    this.toastEl.querySelector('.t1').textContent = title;
+    this.toastEl.querySelector('.t2').textContent = sub;
+    restart(this.toastEl, 'show');
   }
 
   setPauseButton(on) { this.pauseBtn.classList.toggle('show', on); }
