@@ -320,3 +320,11 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Clusters:** every bonus squad brings a small cluster of the boss's type (`CFG.CLUSTER_SHARE`; 2–9 units) on one side, so its power shows (the first blast or stomp gets the killcam).
 - `enemies.spawnSquad` takes a type override. Style guide mini-boss card and `LEVELS.md` updated.
 
+## Round 32 — v0.9.0 (cont.): faster start, Story / Challenge (2026-10-08)
+- User: levels 1 and 2 should be one level (too slow); bigger enemies earlier; massive battles by level 5–6; more grunts in front of the new enemies so they get close enough to show their powers; two title buttons, Story mode and Challenge mode (the classic mode: fast, nearly all enemies, for high scores).
+- **Levels 1 + 2 merged:** level 1 now has a first ÷ gate (+8 / ÷2) in place of +8 / −6, and the first bonus level follows it. New order: bonus at 2 / 4 / 6 (teams 30 / 35 / 40), drones from 3, bombers from 5, brutes from 7, gauntlet 7, sprint 8, finale 9, "World 1 complete" at 10 (`WORLD_END`).
+- **Bigger battles:** gate values ramp ×(1 + 0.7k) (was 0.35) and fire rate climbs over 6 levels (25% → full at 6). Bot: army 56 → 224 in level 3, squads up to 83; a careful bot dies in level 5's bomber battles.
+- **Grunt screens:** a wall of grunts walks in front of every cluster and boss escort (`CFG.SCREEN_SHARE` 0.25). Bonus regular squads × 0.45 (`BONUS_SQUAD_SCALE`) and a gate before the boss, so the fight is about the new type; bosses: killed 6–11 units out when the team aims.
+- **Title: Story mode / Challenge mode** (`#title-modes`). Challenge = the classic random track, every enemy type from the 2nd squad, full fire, track ×1.15 (`CFG.CHALLENGE_SPEED`); Space = Story, C = Challenge; `?classic` preselects Challenge. One shared leaderboard for now.
+- Style guide: title card with the buttons; mini-boss card mentions the grunt screens.
+

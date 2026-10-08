@@ -18,10 +18,11 @@ import { CFG } from './config.js';
 
 const add = (v) => ({ op: '+', v, ch: 0, f: 0 });
 const mult = () => ({ op: 'x', m: CFG.MULT_START, ch: 0, f: 0 });
+const div = (d) => ({ op: '/', d, ch: 0, f: 0 });
 
-// Level 1: the first four lessons, fast. Shooting kills enemies; shooting
-// raises gates; red gates hurt (and the small one can be shot green);
-// battles; then where you stand is what you pump, choices, and a first ×.
+// Level 1: the first lessons, fast. Shooting kills enemies; shooting raises
+// gates; red gates hurt (and the small one can be shot green); battles; where
+// you stand is what you pump; a first ÷ (shoot it down) and a first ×.
 // Draft numbers, tuned by bot runs (see LEVELS.md section 3).
 export const LEVEL_1 = {
   start: 20,
@@ -33,7 +34,7 @@ export const LEVEL_1 = {
     { gap: 22, squad: { kind: 'wall', threat: 0.3, x: 0 } },
     { gap: 24, pair: [add(5), add(12)], mirror: true },               // where you stand is what you pump
     { gap: 22, squad: { kind: 'skirmish', threat: 0.4, x: 0 } },
-    { gap: 24, pair: [add(8), add(-6)], mirror: true },               // a real choice
+    { gap: 24, pair: [add(8), div(2)], mirror: true },                // first ÷ gate: shoot it down and it flips to ×
     { gap: 22, squad: { kind: 'wedge', threat: 0.5, x: 0 } },
     { gap: 24, pair: [mult(), add(10)], mirror: true },               // first × gate
     { gap: 22, squad: { kind: 'blob', threat: 0.55, x: 0 } },
@@ -53,17 +54,19 @@ export const LEVEL_1 = {
 //   div / moving / split: gate types allowed (÷ gates, moving gates, pairs
 //   where both sides are good). Enemy types join by level (UNLOCK_AT).
 // After the last entry, levels repeat ENDLESS.
+// A mini-boss every other level, so the big enemies arrive early and the
+// battles are massive by levels 5–7.
 export const LEVELS = {
-  2:  { kind: 'normal', pieces: 8, div: true },
-  3:  { kind: 'bonus', team: 25, boss: 'drone', squads: 3 },
-  4:  { kind: 'normal', pieces: 8, div: true, moving: true },
-  5:  { kind: 'gauntlet', pieces: 7, div: true, moving: true },
-  6:  { kind: 'bonus', team: 30, boss: 'bomber', squads: 3 },
-  7:  { kind: 'normal', pieces: 10, div: true, moving: true, split: true },
-  8:  { kind: 'sprint', pieces: 8, speed: 1.5, div: true, moving: true },
-  9:  { kind: 'bonus', team: 35, boss: 'brute', squads: 3 },
-  10: { kind: 'normal', pieces: 12, div: true, moving: true, split: true },
+  2: { kind: 'bonus', team: 30, boss: 'drone', squads: 3 },
+  3: { kind: 'normal', pieces: 8, div: true, moving: true },
+  4: { kind: 'bonus', team: 35, boss: 'bomber', squads: 3 },
+  5: { kind: 'normal', pieces: 10, div: true, moving: true, split: true },
+  6: { kind: 'bonus', team: 40, boss: 'brute', squads: 3 },
+  7: { kind: 'gauntlet', pieces: 7, div: true, moving: true, split: true },
+  8: { kind: 'sprint', pieces: 8, speed: 1.5, div: true, moving: true },
+  9: { kind: 'normal', pieces: 12, div: true, moving: true, split: true },
 };
+export const WORLD_END = 10;   // reaching this level: "World 1 complete", then endless
 export const ENDLESS = { kind: 'normal', pieces: 8, div: true, moving: true, split: true };
 export const levelDef = (n) => LEVELS[n] || ENDLESS;
 

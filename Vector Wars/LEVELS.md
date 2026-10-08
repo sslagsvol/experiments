@@ -113,21 +113,20 @@ The order is fixed. The numbers are drafts, to be tuned by bot play (see section
   - *Smoke trail:* a full trail per unit is expensive. Cheap version: each burner draws one extra, dimmer, larger grey point a short way behind it (two points per unit, still one draw call), plus a few embers from the spark system sampled from 1 in ~8 burners.
   - *On your army:* burning units flicker orange in the crowd shader (the fizzle shader's cyan → red already exists) until they die or the burn ends.
 
-**World 1 as built (v0.9.0):** each bonus mini-boss is the next enemy type, unleashed on the following main level.
+**World 1 as built (v0.9.0, round 32):** levels 1 and 2 merged (level 1 now also teaches ÷); a mini-boss every other level, so the big enemies come early; each bonus mini-boss is the next enemy type, unleashed on the following main level.
 
 | Level | Shape | New |
 |---|---|---|
-| 1 | authored | grunts; + / − / × gates |
-| 2 | normal (8 pieces) | ÷ gates |
-| 3 | **bonus** (team 25) | giant drone mini-boss |
-| 4 | normal (8) | **drones**; moving gates |
-| 5 | gauntlet (7, back-to-back squads) | |
-| 6 | **bonus** (team 30) | giant bomber mini-boss |
-| 7 | normal, longer (10) | **bombers**; split setups (both sides good) |
+| 1 | authored | grunts; + / − / ÷ / × gates |
+| 2 | **bonus** (team 30) | giant drone mini-boss |
+| 3 | normal (8) | **drones**; moving gates |
+| 4 | **bonus** (team 35) | giant bomber mini-boss |
+| 5 | normal, longer (10) | **bombers**; split setups — big battles |
+| 6 | **bonus** (team 40) | giant brute mini-boss |
+| 7 | gauntlet (7) | **brutes** — massive battles |
 | 8 | sprint (8 gates, track ×1.5) | |
-| 9 | **bonus** (team 35) | giant brute mini-boss |
-| 10 | finale (12) | **brutes** |
-| 11+ | endless | "World 1 complete" |
+| 9 | finale (12) | |
+| 10+ | endless | "World 1 complete" |
 
 - **Bonus levels:** your army waits ("Army N waiting" above the count); a strike team plays small squads between kind + gates, each squad joined by a small **cluster of the coming boss's type** (showing its power: drones weave, bombers blast, brutes stomp). Then the mini-boss arrives behind an **escort of small units of its own type**; it hangs back, **shielded**, until the escort is gone, then the track stops and it advances slowly (health bar at the top). A team in good shape kills it before it arrives; if it reaches the team, one big area hit. Then a full-width bonus × gate, then the level gate. Kill the boss and the survivors rejoin your army (capped at 25% of it). Lose the whole team and the bonus ends at once: no reward, your army comes back, the run goes on.
 - **Fire rate** rises at every level gate (`CFG.FIRE_LEVELS`, 25% → full by level 10).

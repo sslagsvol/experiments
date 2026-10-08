@@ -13,12 +13,15 @@ import { DragInput, KeyInput } from './input.js';
 import { Hud } from './hud.js';
 import { Sfx } from './audio.js';
 import { cachedScores, fetchScores, rankFor, submitScore } from './scores.js';
-import { LEVEL_1, levelDef, PATTERNS } from './levels.js';
+import { LEVEL_1, levelDef, PATTERNS, WORLD_END } from './levels.js';
 
 const params = new URLSearchParams(location.search);
-// ?classic plays the old fully random track from the start (no authored level).
-const CLASSIC = params.has('classic');
-const START_UNITS = Math.min(CFG.CAPACITY, Math.max(1, parseInt(params.get('units'), 10) || (CLASSIC ? CFG.START_UNITS : LEVEL_1.start)));
+// Two modes, picked on the title screen: Story (the levels) and Challenge
+// (the classic fast, fully random track with nearly every enemy unlocked, for
+// high-score runs). ?classic preselects Challenge.
+let mode = params.has('classic') ? 'challenge' : 'story';
+const CLASSIC = () => G.mode === 'challenge';
+const startUnits = (m) => Math.min(CFG.CAPACITY, Math.max(1, parseInt(params.get('units'), 10) || (m === 'challenge' ? CFG.START_UNITS : LEVEL_1.start)));
 const SEED = parseInt(params.get('seed'), 10) || CFG.SEED;
 const DEBUG = params.has('debug');
 
@@ -62,9 +65,12 @@ window.addEventListener('keydown', (e) => {
   } else if (k === ' ' || k === 'Enter') {
     e.preventDefault();
     sfx.unlock();
-    if (G.state === 'title') startPlay();
+    if (G.state === 'title') startPlay('story');
     else if (G.paused) setPaused(false);
     else if (G.state === 'over' && time - G.overAt > 0.6 && hud.canRetry()) newRun();
+  } else if (k === 'c' && G.state === 'title') {
+    sfx.unlock();
+    startPlay('challenge');
   } else if (k === 'r') {
     if (G.paused) restartRun();
   } else if (k === 'm') {
@@ -73,6 +79,11 @@ window.addEventListener('keydown', (e) => {
     cyclePattern();
   }
 });
+// Title: pick a mode.
+const titleModes = document.getElementById('title-modes');
+titleModes.addEventListener('pointerdown', (e) => e.stopPropagation());
+for (const b of titleModes.querySelectorAll('button')) b.addEventListener('click', () => { sfx.unlock(); if (G.state === 'title') startPlay(b.dataset.mode); });
+
 // Touch hides the keyboard hints again.
 window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') document.body.classList.remove('kb'); }, { capture: true });
 
@@ -137,9 +148,10 @@ function newRun() {
   fallers.clear();
   fizzles.clear();
   army.reset();
-  army.spawn(START_UNITS, 0);
+  army.spawn(startUnits(mode), 0);
   G = {
     state: 'title',
+    mode,            // 'story' or 'challenge'
     paused: false,
     keyHold: 0,      // s the steer key has been held
     record: -1,      // s into the breaking-a-top-3-score slow motion (-1 = not running)
@@ -150,8 +162,8 @@ function newRun() {
     seg: 0, gateIdx: 0, enemyIdx: 0,
     pending: [],     // squads waiting to come out of the fog: { wz, spec? }
     level: 1,
-    beat: CLASSIC ? -1 : 0,    // next authored beat of LEVEL_1 (-1 = random track)
-    rampFrom: CLASSIC ? 0 : -1, // gateIdx where the random track (and its linear ramp) began
+    beat: mode === 'challenge' ? -1 : 0,    // next authored beat of LEVEL_1 (-1 = random track)
+    rampFrom: mode === 'challenge' ? 0 : -1, // gateIdx where the random track (and its linear ramp) began
     rampArmy: 0,     // army at the level gate: the base of the linear ramp
     genLevel: 0,     // level the generator is building (it runs ahead of the player)
     queue: [],       // pieces left to place for genLevel
@@ -172,7 +184,7 @@ function newRun() {
     danger: 0,       // incoming enemy strength ÷ army size, smoothed
     timeScale: 1,    // slow motion when the danger is high
     overAt: 0,
-    stats: { peak: START_UNITS, lostEnemy: 0, leaked: 0, lostGate: 0, fell: 0, gateHits: 0, kills: [0, 0, 0, 0], bossPts: 0 },
+    stats: { peak: startUnits(mode), lostEnemy: 0, leaked: 0, lostGate: 0, fell: 0, gateHits: 0, kills: [0, 0, 0, 0], bossPts: 0 },
     ui: 0,                       // real-time clock for HUD fades
     gain: { n: 0, t: -9 },       // running gain total shown left of the count
     loss: { n: 0, t: -9 },       // running loss total shown right of the count
@@ -184,12 +196,18 @@ function newRun() {
   hud.showTitle(true, cachedScores());
 }
 
-function startPlay() {
+function startPlay(m = mode) {
+  if (m !== G.mode) {
+    // The title showed the other mode's army: rebuild the run for this one.
+    mode = m;
+    newRun();
+  }
   G.state = 'play';
+  if (CLASSIC()) G.levelSpeed = CFG.CHALLENGE_SPEED;
   G.nextW = G.dist + CFG.FIRST;
   hud.showTitle(false);
   hud.setPauseButton(true);
-  if (!CLASSIC) hud.toast(`Level ${G.level}`, 'Shoot the enemies · shoot the gates up');
+  if (!CLASSIC()) hud.toast(`Level ${G.level}`, 'Shoot the enemies · shoot the gates up');
 }
 
 // Score = distance + enemies defeated, each worth its hit points.
@@ -243,17 +261,16 @@ function spawnBeat() {
 }
 
 // Which enemy types squads may use (squadMix / UNLOCK_AT): by level, each
-// unleashed by the bonus-level mini-boss before it. The classic track keeps
-// its old pace: drones from the 3rd squad, bombers 4th, brutes 5th.
-const unlockIdx = () => CLASSIC ? [0, 1, 4, 7][Math.min(G.enemyIdx, 3)] + (G.enemyIdx >= 4 ? 3 : 0) : G.level;
+// unleashed by the bonus-level mini-boss before it.
+const unlockIdx = () => CLASSIC() ? (G.enemyIdx >= 1 ? 99 : 0) : G.level;   // Challenge: everything after the first squad
 
 // Fire rate for the current level (it grows at each level gate).
-const fireMul = () => CLASSIC ? 1 : CFG.FIRE_LEVELS[Math.min(CFG.FIRE_LEVELS.length - 1, G.level - 1)];
+const fireMul = () => CLASSIC() ? 1 : CFG.FIRE_LEVELS[Math.min(CFG.FIRE_LEVELS.length - 1, G.level - 1)];
 
 // Gate values and squad par: the original exponential curve for the classic
 // track, or a linear ramp from the end of the authored level.
 const rampK = () => G.gateIdx - G.rampFrom;
-const gateScale = () => CLASSIC ? Math.pow(1.12, G.gateIdx) : 1 + CFG.RAMP_GATE * rampK();
+const gateScale = () => CLASSIC() ? Math.pow(1.12, G.gateIdx) : 1 + CFG.RAMP_GATE * rampK();
 
 // Levels 2+ (levels.js): each level becomes a queue of pieces, ending in the
 // next level gate. Built when the generator (which runs ahead of the player)
@@ -264,7 +281,7 @@ function buildLevel(n) {
     // A small + pair to warm up, squads between gates, the mini-boss, the
     // bonus × gate that multiplies the survivors, and back.
     q.push('g');
-    for (let k = 0; k < def.squads; k++) q.push('e', k < def.squads - 1 ? 'g' : null);
+    for (let k = 0; k < def.squads; k++) q.push('e', 'g');   // a gate after each squad, including before the boss
     q.push('boss', 'bonusX');
   } else {
     const pat = PATTERNS[def.kind];
@@ -330,7 +347,7 @@ function spawnLevelPiece() {
 
 function spawnNext() {
   if (G.beat >= 0) { spawnBeat(); return; }
-  if (!CLASSIC) { spawnLevelPiece(); return; }
+  if (!CLASSIC()) { spawnLevelPiece(); return; }
   const kind = PATTERN[G.seg % PATTERN.length];
   const wz = G.nextW;
   if (kind === 'g' && G.gateIdx > 0 && G.rng() < CFG.MOVING_GATE_CHANCE) {
@@ -395,12 +412,13 @@ function projectedArmy(wz) {
 const typeCount = (share, lo, hi) => Math.max(lo, Math.min(hi, Math.round(army.N * share * CFG.DIFFICULTY)));
 const only = (key) => ({ back: [], mix: [[key, 1]] });
 
-function spawnSquad({ wz, spec, boss, cluster }) {
+function spawnSquad({ wz, spec, boss, cluster, bonus }) {
   if (boss) {
     // A mini-boss behind an escort of small units of its own type. It hangs
     // back, shielded, until the escort is gone; then it advances slowly with
     // the track stopped: a team in good shape shoots it down before it arrives.
     const shots = Math.min(CFG.FIRE_MAX, CFG.FIRE_BASE + CFG.FIRE_K * Math.sqrt(Math.max(1, army.N))) * fireMul();
+    enemies.spawnSquad('wall', typeCount(CFG.SCREEN_SHARE, 6, 45), 0, wz - 9, G.rng, G.level, only('grunt'));   // grunts in front take the first shots
     const escort = enemies.spawnSquad('wall', typeCount(CFG.ESCORT_SHARE[boss], 3, 18), 0, wz - 4, G.rng, G.level, only(boss));
     const s = enemies.spawnBoss(boss, Math.max(12, Math.round(shots * CFG.BOSS_HP_SECONDS * CFG.BOSS_HP_MUL[boss] * CFG.DIFFICULTY)), 0, wz + 2);
     s.escort = escort;
@@ -409,7 +427,9 @@ function spawnSquad({ wz, spec, boss, cluster }) {
   if (cluster) {
     // A small cluster of the coming boss's type riding with a bonus squad,
     // to show what it does before the boss arrives.
-    enemies.spawnSquad('blob', typeCount(CFG.CLUSTER_SHARE[cluster], 2, 9), (G.rng() < 0.5 ? -1 : 1) * CFG.TW * 0.5, wz, G.rng, G.level, only(cluster));
+    const x = (G.rng() < 0.5 ? -1 : 1) * CFG.TW * 0.5;
+    enemies.spawnSquad('wall', typeCount(CFG.SCREEN_SHARE * 0.6, 5, 30), x, wz - 2.5, G.rng, G.level, only('grunt'));   // a grunt screen in front
+    enemies.spawnSquad('blob', typeCount(CFG.CLUSTER_SHARE[cluster], 2, 9), x, wz, G.rng, G.level, only(cluster));
     return;
   }
   if (spec) {
@@ -424,11 +444,11 @@ function spawnSquad({ wz, spec, boss, cluster }) {
     kind = pickKind();
     // Classic: exponential par. After an authored level: the army it ended
     // with, ramping up linearly.
-    const par = Math.min(CFG.CAPACITY, CLASSIC ? 30 * Math.pow(1.3, G.gateIdx) : (G.rampArmy || projectedArmy(wz)) * (1 + CFG.RAMP_PAR * rampK()));
+    const par = Math.min(CFG.CAPACITY, CLASSIC() ? 30 * Math.pow(1.3, G.gateIdx) : (G.rampArmy || projectedArmy(wz)) * (1 + CFG.RAMP_PAR * rampK()));
     const ref = 0.8 * projectedArmy(wz) + 0.2 * par;
     const threat = CFG.ENEMY_THREAT_MIN + G.rng() * (CFG.ENEMY_THREAT_MAX - CFG.ENEMY_THREAT_MIN);
     // Size by strength, not headcount: a squad with brutes or bombers has fewer units.
-    n = Math.round(Math.max(8, ref * threat / mixEst(squadMix(kind, unlockIdx()))) * (CLASSIC ? 1 : CFG.DIFFICULTY));
+    n = Math.round(Math.max(8, ref * threat / mixEst(squadMix(kind, unlockIdx()))) * (CLASSIC() ? 1 : CFG.DIFFICULTY) * (bonus ? CFG.BONUS_SQUAD_SCALE : 1));
   }
   enemies.spawnSquad(kind, n, (G.rng() * 2 - 1) * CFG.TW, wz, G.rng, unlockIdx());
   G.enemyIdx++;
@@ -553,7 +573,7 @@ function levelUp(g) {
   }
   // Minimal and direct: what you got, then (no words) the enemy this level adds.
   const key = Object.keys(UNLOCK_AT).find((k) => UNLOCK_AT[k] === G.level);
-  const title = G.level === 11 ? 'World 1 complete' : fireUp ? 'Attack speed increased' : `Level ${G.level}`;
+  const title = G.level === WORLD_END ? 'World 1 complete' : fireUp ? 'Attack speed increased' : `Level ${G.level}`;
   hud.levelBanner(title, key ? ENEMY_TYPES[key] : null);
 }
 
@@ -768,7 +788,7 @@ function update(dt, realDt) {
 
   if (G.state === 'title') {
     G.dist += CFG.SPEED * 0.35 * dt;
-    if (tapped) startPlay();
+    // Title: the Story / Challenge buttons start a run (taps elsewhere don't).
   } else if (G.state === 'over') {
     // No restart while typing initials, or in the instant after the board appears.
     if (tapped && time - G.overAt > 0.6 && hud.canRetry()) newRun();
@@ -904,7 +924,7 @@ function recordSlowMo(realDt) {
 
 function syncHud(realDt) {
   hud.setDanger(Math.min(1, Math.max((G.danger - 0.4) / (ANIM.slowMoThreshold - 0.4), G.leakFlash * 0.7, 0)));
-  hud.setCount(army.N, G.state !== 'over' && army.N > 0);
+  hud.setCount(army.N, G.state === 'play' && army.N > 0);   // hidden on the title and game-over screens
   // Live score; a medal badge while it's on pace for the top 3 of the board.
   const score = G.state === 'title' ? 0 : runStats().score;
   const rank = G.state === 'play' ? rankFor(score, board) : -1;

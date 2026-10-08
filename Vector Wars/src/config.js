@@ -48,7 +48,8 @@ export const CFG = {
   FIRE_MAX: 50,
   // Fire rate grows with progression: level 1 fires at FIRE_LEVELS[0] of the
   // full rate, and each level gate moves one step up (?classic always 1).
-  FIRE_LEVELS: [0.25, 0.33, 0.41, 0.5, 0.58, 0.66, 0.75, 0.83, 0.91, 1],
+  FIRE_LEVELS: [0.25, 0.4, 0.55, 0.7, 0.85, 1],
+  CHALLENGE_SPEED: 1.15,   // Challenge mode: track speed ×
   // Difficulty: squad sizes (random and authored) and mini-boss hp × this.
   DIFFICULTY: 1.4,
   // Small armies: below SMALL_ARMY_FROM units the dots (and their spacing)
@@ -96,8 +97,8 @@ export const CFG = {
   GRID_PATTERN: 'grid',
   // After the authored levels the track goes back to random, ramping up
   // linearly per gate: gate values ×(1 + RAMP_GATE·k), squad "par" ×(1 + RAMP_PAR·k).
-  RAMP_GATE: 0.12,
-  RAMP_PAR: 0.15,
+  RAMP_GATE: 0.7,
+  RAMP_PAR: 0.4,
   LEVEL_SPACING_SPRINT: 14, // gap between gates in a sprint level
   // Bonus levels: a mini-boss is one giant unit of the next enemy type.
   BOSS_SIZE: 4,            // × its type's size
@@ -110,8 +111,10 @@ export const CFG = {
   // Escort of small boss-type units in front of the boss (it's shielded until
   // they're gone), and clusters of that type riding with each bonus squad:
   // this share of the team's headcount, by type.
-  ESCORT_SHARE: { drone: 0.5, bomber: 0.2, brute: 0.12 },
+  ESCORT_SHARE: { drone: 0.3, bomber: 0.15, brute: 0.1 },
   CLUSTER_SHARE: { drone: 0.25, bomber: 0.08, brute: 0.06 },
+  SCREEN_SHARE: 0.25,
+  BONUS_SQUAD_SCALE: 0.45, // bonus levels' regular grunt squads × this: the fight is about the new type and the boss       // a wall of grunts in front of each cluster and escort, soaking up shots so the new type gets close
   BONUS_RETURN_CAP: 0.25,  // survivors rejoin your army, at most this share of it (only if the boss died)…
   BONUS_RETURN_MIN: 20,    // …or this many, whichever is more (a good bonus can rescue a small army)
   LEVEL_QUIET: 52,         // empty track after a level gate, so the banner shows with no enemies on screen
