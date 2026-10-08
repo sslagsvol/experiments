@@ -51,8 +51,9 @@ pauseBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); setPaused
 // Taps on the menu never reach the game (no steering, no stray taps on resume).
 pauseEl.addEventListener('pointerdown', (e) => e.stopPropagation());
 document.getElementById('resume').addEventListener('click', () => setPaused(false));
-document.getElementById('restart').addEventListener('click', () => restartRun());
-function restartRun() { setPaused(false); newRun(); startPlay(); }
+document.getElementById('quit').addEventListener('click', () => quitRun());
+// Quit: abandon the run and go back to the title screen (pick a mode again).
+function quitRun() { setPaused(false); newRun(); }
 // Keyboard: steering is read each frame (keys); everything else is here.
 // The initials entry handles its own keys while it's open.
 const keys = new KeyInput(window);
@@ -71,8 +72,8 @@ window.addEventListener('keydown', (e) => {
   } else if (k === 'c' && G.state === 'title') {
     sfx.unlock();
     startPlay('challenge');
-  } else if (k === 'r') {
-    if (G.paused) restartRun();
+  } else if (k === 'q') {
+    if (G.paused) quitRun();
   } else if (k === 'm') {
     sfx.unlock(); sfx.setMuted(!sfx.muted); syncMute();
   } else if (k === 'g') {

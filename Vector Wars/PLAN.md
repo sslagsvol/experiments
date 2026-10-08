@@ -68,7 +68,7 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 - **HUD:** live score (top left; while it's on pace for 1st–3rd on the board it doubles in size with a gold / pink / lime medal badge, and moving up a place plays the max-multiplier sound), "Hi" score, pause and mute (top right), army count at the bottom center with gains (green, left) and losses (red, right) as running totals. The camera is lens-shifted up for thumb room.
 - **Score** = distance × 10 + each enemy defeated × its hp × 5.
 - **Recap:** a big count-up score, each enemy type's idle sprite with kills and points, then distance, peak army and losses.
-- **Pause:** the pause button, Esc / P, or leaving the tab mid-run. A big "Paused" over the recap so far ("Score so far") and the board with where this run would place (tabs on phones, side by side on wide screens). Continue is the main button; Restart starts a fresh run at once.
+- **Pause:** the pause button, Esc / P, or leaving the tab mid-run. A big "Paused" over the recap so far ("Score so far") and the board with where this run would place (tabs on phones, side by side on wide screens). Continue is the main button; Quit goes back to the title screen.
 - **High scores:** an 80s top-10 board with initials entry (▲▼ or typing, specials allowed), and a title attract mode. Global via Supabase (project `uxwcslorwepzrmpbqmjd`), cached locally with an offline queue.
 
 ### Feel
@@ -83,7 +83,7 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
    - **Built:** the background grid dropped from 4 to 9 below the track, scrolls at 0.45× the track's speed and follows the camera sideways (0.6), so the road reads as raised (`CFG.VOID_*`). Six grid patterns on the track and background: grid, hexagons, oblique grid, triangles, dot grid, outlined polka dots (`GRID_PATTERNS`, one shader). Beta toggles on the pause menu (Grid, Parallax deep / classic), the G key and `?grid=`; remembered per device.
    - **Still to do:** play it on a phone (depth, not motion sickness); pick the patterns to keep and tune their spacing and brightness; give each level its own pattern once levels exist (item 6); maybe a far layer (stars or a horizon skyline) moving slower still. Keep the background dimmer than anything interactive.
 2. **Keyboard controls.** *Shipped in v0.7.0.*
-   - ← → or A / D steer (a tap nudges, a hold ramps to a sweep in 0.25s; Shift is ×1.8), feeding the same target as the drag (`G.tx`). Space / Enter start, continue and retry; R restarts from pause; M mutes; G cycles the grid; Esc / P pause. Hints appear on the title and pause screens only after a key press. Settings `CFG.KEY_STEER_*`.
+   - ← → or A / D steer (a tap nudges, a hold ramps to a sweep in 0.25s; Shift is ×1.8), feeding the same target as the drag (`G.tx`). Space / Enter start, continue and retry; Q quits from pause (back to the title); M mutes; G cycles the grid; Esc / P pause. Hints appear on the title and pause screens only after a key press. Settings `CFG.KEY_STEER_*`.
    - **Still to do:** tune the sweep speed after playing.
 3. **Batch D: mini-boss plus the bomb it awards.**
    - **Mini-boss:** a large wireframe shape with a health bar, about one every 8 segments from the second loop on. The track stops when it's in range. It advances slowly and **slams** every few seconds: a telegraphed pulsing ring, then a radius kill with a grid shockwave. Spread out or dodge. If it reaches the army it eats units each second. On death it shatters into tumbling segments (voxel-style).

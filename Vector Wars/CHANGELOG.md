@@ -328,3 +328,7 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Title: Story mode / Challenge mode** (`#title-modes`). Challenge = the classic random track, every enemy type from the 2nd squad, full fire, track ×1.15 (`CFG.CHALLENGE_SPEED`); Space = Story, C = Challenge; `?classic` preselects Challenge. One shared leaderboard for now.
 - Style guide: title card with the buttons; mini-boss card mentions the grunt screens.
 
+## Round 33 — v0.9.0 (cont.): Quit instead of Restart (2026-10-08)
+- User: wherever there's a Restart button, make it Quit, back to the title screen.
+- Pause menu: **Quit** (was Restart) ends the run and returns to the title, where you pick Story or Challenge; key **Q** (was R). Style guide and docs updated.
+

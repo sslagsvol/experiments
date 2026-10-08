@@ -330,7 +330,7 @@ html, body {
 #title.show-board #title-logo { opacity: 0; }
 #title.show-board #title-board { opacity: 1; }
 
-/* ---- Pause menu: the recap so far plus the board, Continue / Restart ---- */
+/* ---- Pause menu: the recap so far plus the board, Continue / Quit ---- */
 #pause {
   pointer-events: auto;
   justify-content: flex-start;
