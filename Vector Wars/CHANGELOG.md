@@ -387,3 +387,12 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Shields:** 6 → 18 hp, and they now hold in front of a level guard's grunt screen too (they guard the frontmost squad of the group). Checked: shields in front of every other unit of their group in 182 of 182 samples.
 - Style guide: title card shows the locked Challenge button.
 - Bots: story alive in level 7 at 7:00; boss fights 26s (drone), 47s (bomber, 9 left), 56s (brute, 15 left).
+
+## Round 42 — v0.11.0 (cont.): shorter level 1, boss reinforcements, shield rows, gentler slow motion (2026-10-09)
+- **Level 1 about 40% shorter** (bot: 55s → 32s; the rest is fighting): no slow approach on the first gate, and the gaps are tight where they can be. A gate now sits 5 behind each squad, but a squad stays 14 past the gate before it: halving every gap put gates in front of charging squads, soaking up all the bullets, and the bot died 14s in.
+- **Level 2 boss gentler:** the drone boss spews 4 drones (was 9) every 3.2s (was 2.6) with half the grunts (`BOSS_SPAWN` now has per-type `grunts`: drone 0.15, bomber and brute 0.3).
+- **Boss-fight reinforcements:** a skinny green + gate rushes at the team (the track is stopped) in a random lane each time the boss loses another 25% of its hp (worth 30% of the team as the boss arrived) and whenever a spew wave is shot down (12%), at least 6. Shoot it up, then catch it (`BOSS_GIFT_*`). Based on the team at the boss's arrival so they don't compound (the first try snowballed a 35-unit team to 751).
+- **Shields in rows:** 2 staggered rows in front (`SHIELD_ROWS`), plus a row through the middle of squads at least 1.5 deep (`SHIELD_MID_DEPTH`).
+- **Slow motion 10–15% less slow:** `killcamScale` 0.35 → 0.45, `slowMoScale` 0.3 → 0.4.
+- Style guide: mini-boss card (reinforcements, per-type spew), combos card (shield rows).
+- Bots: drone boss beaten with the team growing 42 → 46 (4 gifts); bomber boss beaten from 15 units with 7 gifts (11 left); the brute boss beat the bot once (Regroup), as before it's the hardest.

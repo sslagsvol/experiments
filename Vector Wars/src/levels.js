@@ -23,22 +23,25 @@ const div = (d) => ({ op: '/', d, ch: 0, f: 0 });
 // Level 1: the first lessons, fast. Shooting kills enemies; shooting raises
 // gates; red gates hurt (and the small one can be shot green); battles; where
 // you stand is what you pump; a first ÷ (shoot it down) and a first ×.
+// Round 42 halved its length: a gate sits just behind each squad (5), but a
+// squad stays 14 past the gate before it, so the gate is passed before the
+// squad charges (gates soak up bullets).
 // Draft numbers, tuned by bot runs (see LEVELS.md section 3).
 export const LEVEL_1 = {
   start: 20,
   beats: [
     { gap: 0,  squad: { kind: 'blob', n: 5, x: 0 } },                 // a couple of opponents
-    { gap: 20, single: add(1), width: CFG.TW, slow: true },           // +1, half the road, dead center
-    { gap: 22, squad: { kind: 'blob', n: 8, x: 0 } },                 // easy wave
-    { gap: 22, pair: [add(-10), add(-1)], mirror: true },             // −10 / −1: take (or fix) the small one
-    { gap: 20, squad: { kind: 'wall', threat: 0.35, x: 0 } },
-    { gap: 22, pair: [add(5), add(12)], mirror: true },               // where you stand is what you pump
-    { gap: 20, squad: { kind: 'skirmish', threat: 0.45, x: 0 } },
-    { gap: 22, pair: [add(8), div(2)], mirror: true },                // first ÷ gate: shoot it down and it flips to ×
-    { gap: 20, squad: { kind: 'wedge', threat: 0.55, x: 0 } },
-    { gap: 22, pair: [mult(), add(10)], mirror: true },               // first × gate
-    { gap: 22, squad: { kind: 'waves', threat: 0.8, x: 0 } },         // end-of-level challenge: a real skill check
-    { gap: 24, levelGate: 2 },
+    { gap: 5, single: add(1), width: CFG.TW },                       // +1, half the road, dead center
+    { gap: 14, squad: { kind: 'blob', n: 8, x: 0 } },                 // easy wave
+    { gap: 5, pair: [add(-10), add(-1)], mirror: true },             // −10 / −1: take (or fix) the small one
+    { gap: 14, squad: { kind: 'wall', threat: 0.35, x: 0 } },
+    { gap: 5, pair: [add(5), add(12)], mirror: true },               // where you stand is what you pump
+    { gap: 14, squad: { kind: 'skirmish', threat: 0.45, x: 0 } },
+    { gap: 5, pair: [add(8), div(2)], mirror: true },                // first ÷ gate: shoot it down and it flips to ×
+    { gap: 14, squad: { kind: 'wedge', threat: 0.55, x: 0 } },
+    { gap: 5, pair: [mult(), add(10)], mirror: true },               // first × gate
+    { gap: 14, squad: { kind: 'waves', threat: 0.8, x: 0 } },         // end-of-level challenge: a real skill check
+    { gap: 6, levelGate: 2 },
   ],
 };
 

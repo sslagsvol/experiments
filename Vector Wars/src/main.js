@@ -512,9 +512,12 @@ function spawnSquad({ wz, spec, boss, cluster, bonus, challenge }) {
   G.enemyIdx++;
 }
 
+// Staggered rows in front (CFG.SHIELD_ROWS), and a row through the middle of a deep squad.
 function addShields(sq) {
-  const n = Math.max(2, Math.min(7, Math.round((sq.maxX - sq.minX) / CFG.SHIELD_SPACING) + 1));
-  return enemies.spawnShields(sq, n, G.rng);
+  const per = Math.max(2, Math.min(7, Math.round((sq.maxX - sq.minX) / CFG.SHIELD_SPACING) + 1));
+  const s = enemies.spawnShields(sq, per * CFG.SHIELD_ROWS, G.rng);
+  if (sq.maxW - sq.minW >= CFG.SHIELD_MID_DEPTH) enemies.spawnShields(sq, per, G.rng, true);
+  return s;
 }
 
 // Formation combos, worth `strength` (expected damage) like the squad they
@@ -544,10 +547,36 @@ function bossSpew(dt) {
   b.spewT = (b.spewT ?? sp.every * 0.5) - dt;
   if (b.spewT > 0 || bw - G.dist + army.front < 5) return;   // not when it's nearly on the team
   b.spewT = sp.every;
-  enemies.spawnSquad('blob', typeCount(CFG.BOSS_SPAWN_GRUNTS, 6, 30), bx, bw - 2.2, G.rng, G.level, only('grunt')).charging = true;
-  enemies.spawnSquad('blob', sp.own, bx, bw - 1.2, G.rng, G.level, only(b.bossType)).charging = true;
+  const wave = { left: 2 };
+  for (const sq of [enemies.spawnSquad('blob', typeCount(sp.grunts, 4, 30), bx, bw - 2.2, G.rng, G.level, only('grunt')), enemies.spawnSquad('blob', sp.own, bx, bw - 1.2, G.rng, G.level, only(b.bossType))]) {
+    sq.charging = true;
+    sq.wave = wave;
+  }
   sparks.ring(bx, 0.5, bw, 0.9, COLORS[ENEMY_TYPES[b.bossType].color], 24);
   sfx.play('pop', { pitch: 0.5 });
+}
+
+// Boss-fight reinforcements: a skinny green + gate rushes at the team (the
+// track is stopped) in a random lane. Shoot it up, then catch it.
+function bossGift(share) {
+  const b = enemies.boss;
+  if (G.state !== 'play' || army.N <= 0 || !b) return;
+  const v = Math.max(CFG.BOSS_GIFT_MIN, Math.round((b.baseN || army.N) * share));
+  const lim = CFG.TW - CFG.BOSS_GIFT_WIDTH / 2 - 0.05, x = (Math.random() * 2 - 1) * lim;
+  const g = gates.acquire(G.dist + CFG.BOSS_GIFT_AHEAD, null, null, { op: '+', v, ch: 0, f: 0 }, 0, { x, width: CFG.BOSS_GIFT_WIDTH });
+  g.rush = CFG.BOSS_GIFT_SPEED;
+  g.bonus = !!G.bonus;
+  sfx.play('levelCharge', { pitch: 1.6, gain: 1 });
+}
+
+// Gifts for damage dealt: one each time the boss crosses another BOSS_GIFT_STEP of hp.
+function bossGifts() {
+  const b = enemies.boss;
+  if (!b) return;
+  b.baseN = b.baseN || army.N;   // the team as the boss arrived
+  const lost = Math.floor((1 - enemies.bossHp(b)) / CFG.BOSS_GIFT_STEP + 1e-6);
+  b.gifts = b.gifts || 0;
+  if (lost > b.gifts && enemies.bossHp(b) > 0) { b.gifts = lost; bossGift(CFG.BOSS_GIFT_SHARE); }
 }
 
 // Bullet enemies: a volley every CFG.BOLT_EVERY s once they're unlocked (not
@@ -877,6 +906,8 @@ function maxedOut(g, s) {
 }
 
 function squadWiped(s) {
+  // A boss's spew wave shot down completely: reinforcements.
+  if (s.wave && --s.wave.left <= 0) bossGift(CFG.BOSS_GIFT_WAVE);
   world.addRipple(s.cx, s.cw, ANIM.rippleWipe, time);
   sparks.emit(s.cx, 0.3, s.cw, COLORS.enemy, 40, 4);
 }
@@ -999,6 +1030,8 @@ function update(dt, realDt) {
     enemies.update(dt, G.dist, army, time, onHit);
     for (const e of enemies.events.splice(0)) enemyEvent(e);
     bossSpew(dt);
+    bossGifts();
+    for (const g of gates.active) if (g.rush && !g.done) g.wz -= g.rush * dt;
     boltVolleys(dt);
 
     // Battles: the track rolls forward at reduced speed to meet a charging
