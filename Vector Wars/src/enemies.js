@@ -4,7 +4,7 @@
 // army, or slip past it to the rear, die and take player units with them.
 
 import * as THREE from 'three';
-import { CFG, COLORS } from './config.js';
+import { CFG, COLORS, ANIM } from './config.js';
 import { enemyFormation, ENEMY_KINDS, ENEMY_TYPES, TYPE_LIST, squadMix, unitType } from './enemyFormations.js';
 
 const enemyVS = /* glsl */ `
@@ -203,7 +203,10 @@ export class EnemyForce {
         // drones weave.
         const rz = -(this.w[i] - dist);
         const close = rz > army.front - 1.2;
-        let tx = close || t.converge ? army.cx : army.cx + this.ox[i] * s.spread;
+        // Grunts close ranks as they near (ANIM.gruntConverge): the holes in
+        // their formation shut, screening the stronger units behind them.
+        const closeRanks = t.id === 0 ? Math.min(1, Math.max(0, 1 - gap / ANIM.gruntConverge)) : 0;
+        let tx = close || t.converge ? army.cx : army.cx + this.ox[i] * s.spread * (1 - 0.8 * closeRanks);
         // A mini-boss sways less and turns slower, so it can be tracked and shot.
         const bossK = s.boss ? CFG.BOSS_SWAY : 1;
         if (t.strafe && !close) tx += Math.sin(time * 2.5 * bossK + i * 1.3) * t.strafe * bossK;

@@ -8,11 +8,11 @@
 
 // The game's version: 0.MINOR.PATCH while in beta. Bump it on the release
 // branch (vw/vX.Y.Z) and add a matching heading in CHANGELOG.md. See PLAN.md.
-export const VERSION = '0.9.0';
+export const VERSION = '0.10.0';
 
 export const CFG = {
   TW: 2.0,                 // track half-width (world units)
-  SPEED: 6.5,              // forward speed (units/s)
+  SPEED: 7.2,              // forward speed (units/s)
   FIRST: 22,               // distance to the first track element
   SEG_GATE: 18,            // gap after a gate before the next element
   SEG_ENEMY: 28,           // gap after a squad (room to breathe after a battle)
@@ -49,7 +49,13 @@ export const CFG = {
   // Fire rate grows with progression: level 1 fires at FIRE_LEVELS[0] of the
   // full rate, and each level gate moves one step up (?classic always 1).
   FIRE_LEVELS: [0.25, 0.4, 0.55, 0.7, 0.85, 1],
-  CHALLENGE_SPEED: 1.15,   // Challenge mode: track speed ×
+  CHALLENGE_SPEED: 1.15,   // Challenge mode: track speed × at the start…
+  CHALLENGE_SPEED_STEP: 0.01, // …+ this per gate passed…
+  CHALLENGE_SPEED_MAX: 1.6, // …up to this
+  CHALLENGE_GATE_SCALE_MAX: 10, // Challenge: gate values stop growing here (no more +7,000 gates)
+  CHALLENGE_SQUAD_GROWTH: 0.04, // Challenge: squads × (1 + this × gates past the 15th)
+  LEVEL_CHALLENGE_THREAT: 1.3,  // story: the squad guarding each level gate, × the best-case army
+  OVERFLOW_SQUADS: 3,      // a squad bigger than MAX_PER_SQUAD comes as up to this many waves
   // Past World 1 (story): each level's squads are ENDLESS_GROWTH× bigger than
   // the last, and the track speeds up ENDLESS_SPEED per level (up to
   // ENDLESS_SPEED_MAX). Nobody should be able to go on forever.
@@ -57,7 +63,8 @@ export const CFG = {
   ENDLESS_SPEED: 0.05,
   ENDLESS_SPEED_MAX: 1.4,
   // Difficulty: squad sizes (random and authored) and mini-boss hp × this.
-  DIFFICULTY: 1.4,
+  DIFFICULTY: 1.7,
+  DIFFICULTY_LEVEL_1: 1.4, // level 1's authored squads: still a skill check, but most people should pass
   // Small armies: below SMALL_ARMY_FROM units the dots (and their spacing)
   // grow, reaching SMALL_ARMY_SCALE× at SMALL_ARMY_FULL units or fewer.
   SMALL_ARMY_FROM: 80,
@@ -181,6 +188,9 @@ export const ANIM = {
   blastReach: 2.5,         // × the attack radius that gets pushed
   blastRecover: 1.6,       // s of slow recovery (no regrouping meanwhile)
   blastRecoverRate: 0.12,  // × the normal follow speed at the start of recovery
+  bossGateBreak: 1.0,      // s after a mini-boss appears: the gates between it and you shatter
+  spawnFlash: 0.6,         // s new units flash white before settling to cyan
+  gruntConverge: 10,       // grunts start closing ranks this far out (units), screening what's behind them
   killcamHold: 1.4,        // s (real time) of the first-blast / first-stomp killcam
   killcamScale: 0.35,      // time scale during it
   killcamIn: 0.25,         // s to ease the camera in

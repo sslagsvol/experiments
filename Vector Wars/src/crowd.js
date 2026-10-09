@@ -8,10 +8,19 @@ import { FORMATIONS, UNIT_SPACING, packing } from './formations.js';
 
 const HIDDEN = -100;   // y for unused point slots (drawn off-screen)
 
+// FLASH (the army only): a per-unit aFlash 0..1 mixes the color toward white,
+// so new units arrive bright and settle to cyan.
 const pointVS = /* glsl */ `
 uniform float uSize;
 uniform float uScale;
+#ifdef FLASH
+attribute float aFlash;
+varying float vFlash;
+#endif
 void main() {
+#ifdef FLASH
+  vFlash = aFlash;
+#endif
   vec4 mv = modelViewMatrix * vec4(position, 1.0);
   gl_PointSize = uSize * uScale / -mv.z;
   gl_Position = projectionMatrix * mv;
@@ -21,6 +30,9 @@ void main() {
 const pointFS = /* glsl */ `
 uniform vec3 uColor;
 uniform float uShape;
+#ifdef FLASH
+varying float vFlash;
+#endif
 void main() {
   vec2 p = gl_PointCoord * 2.0 - 1.0;
   float a;
@@ -32,11 +44,16 @@ void main() {
     a = smoothstep(0.95, 0.8, d) * smoothstep(0.45, 0.6, d) + smoothstep(1.0, 0.2, d) * 0.12;
   }
   if (a < 0.01) discard;
-  gl_FragColor = vec4(uColor * a, a);
+  vec3 c = uColor;
+#ifdef FLASH
+  c = mix(c, vec3(2.4), vFlash);
+#endif
+  gl_FragColor = vec4(c * a, a);
 }`;
 
-export function pointMaterial(color, shape, scaleUniform, size) {
+export function pointMaterial(color, shape, scaleUniform, size, flash = false) {
   return new THREE.ShaderMaterial({
+    defines: flash ? { FLASH: 1 } : {},
     vertexShader: pointVS,
     fragmentShader: pointFS,
     uniforms: {
@@ -70,8 +87,12 @@ function dynamicPoints(scene, max, material) {
 export class Army {
   constructor(scene, scaleUniform) {
     this.cap = CFG.CAPACITY;
-    this.mat = pointMaterial(COLORS.you, 0, scaleUniform, UNIT_SPACING * 1.3);
+    this.mat = pointMaterial(COLORS.you, 0, scaleUniform, UNIT_SPACING * 1.3, true);
     Object.assign(this, dynamicPoints(scene, this.cap, this.mat));
+    // New units flash white, then settle to cyan (ANIM.spawnFlash).
+    this.flash = new Float32Array(this.cap);
+    this.flashAttr = new THREE.BufferAttribute(this.flash, 1).setUsage(THREE.DynamicDrawUsage);
+    this.geo.setAttribute('aFlash', this.flashAttr);
     this.alive = new Uint8Array(this.cap);
     this.reset();
   }
@@ -116,6 +137,7 @@ export class Army {
     for (let i = 0; i < this.cap && left > 0; i++) {
       if (this.alive[i] || !this.inBounds(i)) continue;
       this.alive[i] = 1;
+      this.flash[i] = 1;
       p[i * 3] = x + (Math.random() - 0.5) * 0.2;
       p[i * 3 + 1] = 0.12;
       p[i * 3 + 2] = (Math.random() - 0.5) * 0.2;
@@ -290,7 +312,7 @@ export class Army {
       while (h < t && (alive[h] || !this.inBounds(h))) h++;
       while (t > h && !alive[t]) t--;
       if (h >= t) break;
-      p[h * 3] = p[t * 3]; p[h * 3 + 1] = p[t * 3 + 1]; p[h * 3 + 2] = p[t * 3 + 2];
+      p[h * 3] = p[t * 3]; p[h * 3 + 1] = p[t * 3 + 1]; p[h * 3 + 2] = p[t * 3 + 2]; this.flash[h] = this.flash[t];
       alive[h] = 1; alive[t] = 0; p[t * 3 + 1] = HIDDEN;
       h++; t--;
     }
@@ -306,6 +328,9 @@ export class Army {
       this.halfW = this.front = this.back = this.radius = 0;
     }
     this.attr.needsUpdate = true;
+    const fd = dt / ANIM.spawnFlash;
+    for (let i = 0; i < this.L; i++) if (this.flash[i] > 0) this.flash[i] = Math.max(0, this.flash[i] - fd);
+    this.flashAttr.needsUpdate = true;
     this.geo.setDrawRange(0, this.L);
   }
 }

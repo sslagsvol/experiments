@@ -274,7 +274,7 @@ const fireMul = () => CLASSIC() ? 1 : CFG.FIRE_LEVELS[Math.min(CFG.FIRE_LEVELS.l
 // Gate values and squad par: the original exponential curve for the classic
 // track, or a linear ramp from the end of the authored level.
 const rampK = () => G.gateIdx - G.rampFrom;
-const gateScale = () => CLASSIC() ? Math.pow(1.12, G.gateIdx) : 1 + CFG.RAMP_GATE * rampK();
+const gateScale = () => CLASSIC() ? Math.min(CFG.CHALLENGE_GATE_SCALE_MAX, Math.pow(1.12, G.gateIdx)) : 1 + CFG.RAMP_GATE * rampK();
 
 // Levels 2+ (levels.js): each level becomes a queue of pieces, ending in the
 // next level gate. Built when the generator (which runs ahead of the player)
@@ -290,6 +290,7 @@ function buildLevel(n) {
   } else {
     const pat = PATTERNS[def.kind];
     for (let k = 0; k < def.pieces; k++) q.push(pat[k % pat.length]);
+    if (def.kind !== 'sprint') q.push('c');   // the squad guarding the level gate
   }
   q.push('level');
   G.queue = q.filter(Boolean).map((kind) => ({ kind, n, def }));
@@ -335,6 +336,9 @@ function spawnLevelPiece() {
     G.pending.push({ wz, bonus });
     if (bonus) G.pending.push({ wz: wz + 3, bonus, cluster: def.boss });
     gap = def.kind === 'gauntlet' ? CFG.SEG_GATE + 4 : CFG.SEG_ENEMY;
+  } else if (kind === 'c') {
+    G.pending.push({ wz, challenge: true });
+    gap = CFG.SEG_ENEMY;
   } else if (kind === 'boss') {
     G.pending.push({ wz, bonus, boss: def.boss });
     gap = CFG.SEG_ENEMY + 14;
@@ -416,7 +420,7 @@ function projectedArmy(wz) {
 const typeCount = (share, lo, hi) => Math.max(lo, Math.min(hi, Math.round(army.N * share * CFG.DIFFICULTY)));
 const only = (key) => ({ back: [], mix: [[key, 1]] });
 
-function spawnSquad({ wz, spec, boss, cluster, bonus }) {
+function spawnSquad({ wz, spec, boss, cluster, bonus, challenge }) {
   if (boss) {
     // A mini-boss behind an escort of small units of its own type. It hangs
     // back, shielded, until the escort is gone; then it advances slowly with
@@ -439,22 +443,30 @@ function spawnSquad({ wz, spec, boss, cluster, bonus }) {
   if (spec) {
     // Authored: grunts only, at a set position; an exact size, or a share of
     // the best-case army (like the random track, by expected damage).
-    const n = Math.round(CFG.DIFFICULTY * (spec.threat ? Math.max(8, projectedArmy(wz) * spec.threat / mixEst(squadMix(spec.kind, 0))) : spec.n));
+    const n = Math.round(CFG.DIFFICULTY_LEVEL_1 * (spec.threat ? Math.max(8, projectedArmy(wz) * spec.threat / mixEst(squadMix(spec.kind, 0))) : spec.n));
     enemies.spawnSquad(spec.kind, n, spec.x || 0, wz, G.rng, 0);
     return;
   }
   let kind = 'blob', n = 10;
   if (G.enemyIdx > 0) {
-    kind = pickKind();
+    kind = challenge ? (G.rng() < 0.5 ? 'wall' : 'wedge') : pickKind();
     // Classic: exponential par. After an authored level: the army it ended
     // with, ramping up linearly.
     const par = Math.min(CFG.CAPACITY, CLASSIC() ? 30 * Math.pow(1.3, G.gateIdx) : (G.rampArmy || projectedArmy(wz)) * (1 + CFG.RAMP_PAR * rampK()));
     const ref = 0.8 * projectedArmy(wz) + 0.2 * par;
-    const threat = CFG.ENEMY_THREAT_MIN + G.rng() * (CFG.ENEMY_THREAT_MAX - CFG.ENEMY_THREAT_MIN);
+    // The squad guarding a level gate is a skill check: full strength.
+    const threat = challenge ? CFG.LEVEL_CHALLENGE_THREAT : CFG.ENEMY_THREAT_MIN + G.rng() * (CFG.ENEMY_THREAT_MAX - CFG.ENEMY_THREAT_MIN);
     // Size by strength, not headcount: a squad with brutes or bombers has fewer units.
-    n = Math.round(Math.max(8, ref * threat / mixEst(squadMix(kind, unlockIdx()))) * (CLASSIC() ? 1 : CFG.DIFFICULTY * endlessMul()) * (bonus ? CFG.BONUS_SQUAD_SCALE : 1));
+    const grow = CLASSIC() ? 1 + CFG.CHALLENGE_SQUAD_GROWTH * Math.max(0, G.gateIdx - 15) : CFG.DIFFICULTY * endlessMul();
+    n = Math.round(Math.max(8, ref * threat / mixEst(squadMix(kind, unlockIdx()))) * grow * (bonus ? CFG.BONUS_SQUAD_SCALE : 1));
   }
-  enemies.spawnSquad(kind, n, (G.rng() * 2 - 1) * CFG.TW, wz, G.rng, unlockIdx());
+  const x = challenge ? 0 : (G.rng() * 2 - 1) * CFG.TW;
+  if (challenge) enemies.spawnSquad('wall', typeCount(CFG.SCREEN_SHARE, 6, 200), x, wz - 3, G.rng, G.level, only('grunt'));   // grunts screen the guard
+  // Bigger than one squad can hold: it comes as several waves, one behind another.
+  for (let k = 0; k < CFG.OVERFLOW_SQUADS && n > 0; k++) {
+    enemies.spawnSquad(kind, Math.min(n, CFG.MAX_PER_SQUAD), x, wz + k * 5, G.rng, unlockIdx());
+    n -= CFG.MAX_PER_SQUAD;
+  }
   G.enemyIdx++;
 }
 
@@ -605,6 +617,22 @@ function bonusLost() {
   for (const g of [...gates.active]) if (g.bonus) gates.release(g);
   army.spawn(parked, 0);
   hud.toast('Strike team lost');
+}
+
+// Shatter every gate between the army and world distance w (they never arrive).
+function breakGatesBefore(w) {
+  let broke = false;
+  for (const g of [...gates.active]) {
+    if (g.done || g.wz <= G.dist || g.wz >= w || (g.S && g.S.op === 'level')) continue;
+    const parts = g.S ? [[g.S, g.sx - g.sw / 2, g.sx + g.sw / 2]] : [[g.L, -CFG.TW + 0.05, -0.05], [g.R, 0.05, CFG.TW - 0.05]];
+    for (const [s, x0, x1] of parts) {
+      for (let k = 0; k < 24; k++) sparks.emit(x0 + (x1 - x0) * Math.random(), Math.random() * CFG.GATE_H, g.wz, gateColor(s), 1, 4);
+    }
+    world.addRipple(0, g.wz, ANIM.rippleGate, time);
+    gates.release(g);
+    broke = true;
+  }
+  if (broke) { sfx.play('gateDown'); G.shake = Math.max(G.shake, 0.12); }
 }
 
 // A mini-boss destroyed: a big burst, a short killcam, and its points.
@@ -849,6 +877,16 @@ function update(dt, realDt) {
     G.dist += CFG.SPEED * G.speedMul * G.levelSpeed * dt;
     while (G.nextW < G.dist + CFG.VIEW_AHEAD) spawnNext();
     while (G.pending.length && G.pending[0].wz < G.dist + CFG.ENEMY_SPAWN_AHEAD) spawnSquad(G.pending.shift());
+
+    // Challenge: the track keeps speeding up with every gate.
+    if (CLASSIC()) G.levelSpeed = Math.min(CFG.CHALLENGE_SPEED_MAX, CFG.CHALLENGE_SPEED + CFG.CHALLENGE_SPEED_STEP * G.gateIdx);
+    // A mini-boss arrives: a moment after its health bar fills in, every gate
+    // between it and you shatters. No help is coming.
+    const boss = enemies.boss;
+    if (boss && !boss.gatesBroken) {
+      if (boss.seenAt === undefined) boss.seenAt = G.ui;
+      if (G.ui - boss.seenAt > ANIM.bossGateBreak) { boss.gatesBroken = true; breakGatesBefore(boss.cw); }
+    }
 
     for (const g of gates.active) {
       if (!g.done && g.wz <= G.dist) {

@@ -134,6 +134,27 @@ The order is fixed. The numbers are drafts, to be tuned by bot play (see section
 - **Bot run (careful), before the difficulty raise:** all 11 transitions; bosses killed at levels 3, 6 and 9; army 52 → 66 → 174 → 329 → 908 → 870 by level 10.
 - **After `CFG.DIFFICULTY` 1.4 (round 30):** careful runs end level 1 at 30–36 and reach about 230 by level 7; one died in the level 5 gauntlet. Bonus reward: up to 25% of the army or 20 units, whichever is more.
 
+## 9. Playtest notes (round 36) and the next batches
+
+**Biggest note: still too slow and too easy.** "I can easily play for over 10 minutes with little effort." A really good run should last 3–4 minutes.
+
+**Built in v0.10.0:**
+- **Faster and shorter:** track speed 7.2 (was 6.5); level 1 gaps about 20% shorter (now about 52s); main levels 6–8 pieces (were 8–12); bonus levels 2 squads (were 3).
+- **End-of-level skill checks:** every normal and gauntlet level ends with a full-strength squad guarding the level gate (`CFG.LEVEL_CHALLENGE_THREAT` 1.3 × the best-case army) behind a grunt screen; level 1 ends with a 0.9 one. Difficulty 1.7 after level 1 (level 1 keeps 1.4).
+- **Grunts close ranks** from about 10 units out, screening the bombers and brutes behind them.
+- **Boss arrival:** the health bar fills in over a second, then every gate between the boss and the team shatters.
+- **New units flash white** and settle to cyan.
+- **Challenge mode no longer runs forever:** gate values stop growing at 10× (no more +7,000), the track speeds up 1% per gate to 1.6×, squads grow 4% per gate after the 15th, and a squad too big for one formation comes as up to three waves.
+- **Bot results:** story: a so-so bot dies in level 3 at about 2:30 (it was lasting 7+ minutes); challenge: dead at about 2:25 after 20 gates.
+
+**Next batch (v0.11.0): skill-gate bosses and new enemies.** In priority order:
+1. **Mini-boss personalities and spawning.** Each boss gets its own movement, loosely from its base unit: the drone boss orbits and darts, the bomber boss bounces (jumps and lands with a shockwave), the brute boss sways and stomps forward in steps. And they spew small versions of themselves plus grunts while alive, so the fight is a real skill gate to the next level, not just an introduction.
+2. **Shield enemy.** Moves fast to the front, then slows and holds a stiff formation to block shots instead of attacking, so stronger units get close behind it. Lots of hit points; used strategically. Look: a wide flat outline (a bar or chevron) in a cool steel color.
+3. **Bullet enemy** (later levels and Challenge): immune to fire, moves as fast as a player bullet, kills small groups. Answers "a huge army deletes everything before it gets close". Telegraph it (a streak or warning line) so dodging is a skill.
+4. **Formation combos:** small set pieces (a few shields guarding a bomber; grunts screening a brute) and larger groupings that combine powers (burn, then explode: flaming units everywhere, once the burn enemy exists).
+
+**Also noted:** level 8 (the sprint) is a lot of fun; keep that shape around.
+
 ## 8. How to build it
 
 **Authored chunks.** A level is a list of short, hand-made pieces: "squad of 6 grunts, centered", "+1 gate, half width, slow approach", "red pair −10 / −1", "level gate". The game already builds the track from gates and squads; levels replace the random choices with these lists (`src/levels.js`). After the last level, the track can go back to random.

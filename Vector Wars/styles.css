@@ -489,7 +489,9 @@ body.kb .touch-only { display: none; }
   opacity: 0;
   transition: opacity 0.3s;
 }
-#boss-bar.on { opacity: 1; }
+#boss-bar.on { opacity: 1; animation: boss-in 1s ease-out; }
+/* The bar fills in slowly as the mini-boss appears (then the gates shatter). */
+@keyframes boss-in { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 #boss-bar .fill { height: 100%; width: 100%; background: var(--enemy); box-shadow: 0 0 8px var(--enemy); transition: width 0.12s; }
 /* Waiting army: small and dim, just above the count. */
 #parked {
