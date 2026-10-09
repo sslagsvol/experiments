@@ -8,7 +8,7 @@
 
 // The game's version: 0.MINOR.PATCH while in beta. Bump it on the release
 // branch (vw/vX.Y.Z) and add a matching heading in CHANGELOG.md. See PLAN.md.
-export const VERSION = '0.11.1';
+export const VERSION = '0.11.2';
 
 export const CFG = {
   TW: 2.0,                 // track half-width (world units)
@@ -118,6 +118,8 @@ export const CFG = {
   RAMP_GATE: 0.7,
   RAMP_PAR: 0.4,
   LEVEL_SPACING_SPRINT: 14, // gap between gates in a sprint level
+  FINALE_CALM: 30,         // a sprint's finale: empty track after the last gate (the speed drops back)…
+  FINALE_GAP: 12,          // …then a wave every this many units
   // New-enemy levels (internally "bonus"): the army condenses ("Army level up")
   // to a small team for a fight against a mini-boss, one giant unit of the
   // next enemy type.
@@ -125,7 +127,7 @@ export const CFG = {
   BOSS_SPEED: 0.3,         // × ENEMY_CHARGE_SPEED: it advances slowly
   BOSS_HP_SECONDS: 4,      // hp = the strike team's shots per second × this
   BOSS_SWAY: 0.45,         // × its type's side-to-side sway and turning
-  BOSS_HP_MUL: { drone: 0.8, bomber: 1.25, brute: 1.15 },
+  BOSS_HP_MUL: { drone: 0.8, bomber: 1.25, brute: 1.0 },
   BOSS_HIT: { radius: 1.5, peak: 0.75, share: 0.5 },   // if it reaches the team: area hit, up to half of it
   BOSS_HOLD: 12,           // the boss hangs back this far ahead of the team while its escort lives
   // Once its escort is gone, each mini-boss moves its own way (a little like
@@ -138,7 +140,7 @@ export const CFG = {
   },
   // Spew: every `every` s, `own` small units of its type plus `grunts` × the
   // team in grunts, in front. (The drone boss is the first one: gentler.)
-  BOSS_SPAWN: { drone: { every: 3.2, own: 4, grunts: 0.15 }, bomber: { every: 3.0, own: 3, grunts: 0.3 }, brute: { every: 3.2, own: 3, grunts: 0.3 } },
+  BOSS_SPAWN: { drone: { every: 3.2, own: 4, grunts: 0.15 }, bomber: { every: 3.0, own: 3, grunts: 0.3 }, brute: { every: 3.2, own: 2, grunts: 0.3 } },
   // Reinforcements during a boss fight: a skinny green + gate rushes at the
   // team each time the boss loses another BOSS_GIFT_STEP of its hp, and when a
   // spew wave is shot down. Worth a share of the team as the boss arrived
@@ -163,10 +165,22 @@ export const CFG = {
   // a squad and holds there, soaking shots. They don't attack.
   SHIELD_SPACING: 0.75,    // between shields in a line
   SHIELD_LEAD: 0.9,        // how far in front of their squad they hold
-  SHIELD_ROWS: 2,          // staggered rows in front…
-  SHIELD_MID_DEPTH: 1.5,   // …plus a row through the middle of squads at least this deep
+  SHIELD_PER_ROW: 4,       // shields in a row, at most (fewer for narrow squads)
+  SHIELD_ROWS: 2,          // staggered rows in front from level SHIELD_FULL_AT (one row before)…
+  SHIELD_FULL_AT: 5,
+  SHIELD_MID_DEPTH: 1.5,   // …plus a row through the middle of squads at least this deep, from level SHIELD_MID_AT
+  SHIELD_MID_AT: 7,
+  SHIELD_HOVER: 2.5,       // shields never come closer than this in front of the army: they hover there, blocking
+  SHIELD_LINGER: 4,        // s they keep hovering after their squad is gone, then break off
   SHIELD_RUSH: 5,          // units/s while rushing to the front
   SHIELD_CHANCE: 0.35,     // a regular squad brings a shield line (level guards always do)
+  // Burning: a brute with its outer shell (hp above BURN.shell × its hp) sets
+  // fire to units within `radius` of it once it's within `range` of the army,
+  // every `every` s (chance `peak` at its center, up to `max` units). Mini-bosses
+  // burn too (BOSS_BURN), and touching the army ends the run.
+  BURN: { range: 3, radius: 1.3, peak: 0.35, max: 5, every: 0.35, shell: 0.5 },
+  BOSS_BURN: { range: 6, radius: 2.4, peak: 0.3, max: 6, every: 0.3 },
+  EDGE_WARN: { share: 0.1, window: 1.5 },   // "Watch the edges!" the first time this share of the army falls off within window s
   COMBO_CHANCE: 0.25,      // a regular squad is a set piece instead: shields guarding bombers, or grunts screening brutes
   // Bullet enemies (v0.11.0): immune to fire. A warning line marks the lane,
   // then it crosses at player-bullet speed and cuts through a small group.
@@ -214,6 +228,7 @@ export const SFX = {
   lose:    { volume: 0.6 },                // army wiped out
   warn:    { volume: 0.35, maxRate: 4 },   // a bullet enemy's warning line appears
   zap:     { volume: 0.4,  maxRate: 8 },   // a bullet enemy flies (and the drone boss darts)
+  burn:    { volume: 0.3,  maxRate: 6 },   // a brute or mini-boss burning units: a crackle
 };
 
 // Animation timings. The style guide (style-guide.html) renders these live,
@@ -312,6 +327,7 @@ export const COLORS = {
   white: [1.6, 1.6, 1.6],
   steel: [0.75, 0.85, 1.25],  // shield enemies: a cool steel, bluer-grey than any red enemy, dimmer than your cyan
   bolt: [2.0, 1.1, 1.9],      // bullet enemies and their warning line: a hot white-violet
+  burn: [2.0, 0.6, 0.08],     // burning brutes and mini-bosses, and their fire sparks
 };
 
 // Bullets needed for a × gate's next 0.1 step at multiplier m.

@@ -28,7 +28,7 @@ void main() {
 // Outlined shapes, Geometry Wars style: 0 diamond, 1 triangle (pointing at
 // the player), 2 ring with a pulsing core, 3 heavy hexagon, 4 wide flat
 // chevron (shield), 5 streak with a hot core (bullet enemy), 6 soft dot (the
-// bullet's warning line).
+// bullet's warning line), 7 a brute's inner hexagon once its shell is shot off.
 const enemyFS = /* glsl */ `
 varying float vShape;
 varying vec3 vColor;
@@ -61,8 +61,13 @@ void main() {
     vec2 e = abs(p) - vec2(0.12, 0.85);
     float d = length(max(e, 0.0)) + min(max(e.x, e.y), 0.0) + 0.6;
     a = outline(d, 0.6, 0.06) + exp(-p.x * p.x * 90.0) * smoothstep(0.95, 0.1, abs(p.y)) * 1.2;
-  } else {
+  } else if (vShape < 6.5) {
     a = exp(-dot(p, p) * 5.0);
+  } else {
+    // A brute that lost its outer shell: the inner hexagon alone.
+    vec2 q = abs(p);
+    float d = max(q.x * 0.866 + q.y * 0.5, q.y);
+    a = outline(d, 0.42, 0.08) + smoothstep(0.6, 0.1, d) * 0.06;
   }
   if (a < 0.01) discard;
   gl_FragColor = vec4(vColor * a, a);
@@ -75,6 +80,7 @@ const EDGE = CFG.TW - CFG.ENEMY_EDGE_MARGIN;
 const clampX = (x) => Math.max(-EDGE, Math.min(EDGE, x));
 
 const TYPE_COLORS = TYPE_LIST.map((t) => COLORS[t.color].map((v) => v * 0.55));
+const BURN_COLOR = COLORS.burn.map((v) => v * 0.7);
 
 export class EnemyForce {
   constructor(scene, scaleUniform) {
@@ -88,6 +94,8 @@ export class EnemyForce {
     this.flash = new Float32Array(max);
     this.lift = new Float32Array(max); // height above the floor (a hopping or stomping mini-boss)
     this.oz = new Float32Array(max);   // formation z offset (shield rows)
+    this.burning = new Uint8Array(max); // on fire this frame (a brute or mini-boss close to the army)
+    this.burnT = new Float32Array(max); // s to its next burn tick
     this.type = new Uint8Array(max);
     this.alive = new Uint8Array(max);
     this.owner = new Int32Array(max);  // id of the squad a slot belongs to (slots get recycled)
@@ -122,7 +130,6 @@ export class EnemyForce {
     for (let i = this.max - 1; i >= 0; i--) this.free.push(i);
     this.squads = [];
     this.events = [];
-    this.lastBoss = null;   // a mini-boss that died crashing into the team: { type, hp, hpMax }
     this.count = 0;
     this.geo.setDrawRange(0, 0);
   }
@@ -144,6 +151,7 @@ export class EnemyForce {
       this.oz[i] = pz;
       s.depth = Math.max(s.depth, pz);
       this.lift[i] = 0;
+      this.burning[i] = 0; this.burnT[i] = 0;
       this.type[i] = t.id;
       this.hp[i] = t.hp;
       this.big[i] = 1;
@@ -187,7 +195,7 @@ export class EnemyForce {
     const t = ENEMY_TYPES[typeKey], i = this.free.pop();
     const s = { id: this.nextId++, ax: x, spread: 0, units: [i], n: 1, charging: false, depth: 0,
       minX: x, maxX: x, minW: w, maxW: w, cx: x, cw: w, ...extra };
-    this.x[i] = x; this.w[i] = w; this.ox[i] = 0; this.oz[i] = 0; this.lift[i] = 0;
+    this.x[i] = x; this.w[i] = w; this.ox[i] = 0; this.oz[i] = 0; this.lift[i] = 0; this.burning[i] = 0; this.burnT[i] = 0;
     this.type[i] = t.id; this.hp[i] = hp; this.big[i] = big; this.flash[i] = 0;
     this.alive[i] = 1; this.owner[i] = s.id;
     this.squads.push(s);
@@ -280,9 +288,14 @@ export class EnemyForce {
       // Distance from the army's front row to the squad's nearest unit.
       if (s.bolt) { this.flyBolt(s, dt, dist, army, onHit); continue; }
       if (!s.charging && army.N > 0 && s.minW - dist + army.front < CFG.ENEMY_TRIGGER) s.charging = true;
-      // Shields hold a stiff line in front of the squad they guard; once it's
-      // gone they charge like anything else.
+      // Shields hold a stiff line in front of the squad they guard, but never
+      // closer than CFG.SHIELD_HOVER in front of the army: there they hover,
+      // still blocking. Once their squad is gone they hover for
+      // CFG.SHIELD_LINGER s, then break off and charge (harmlessly).
       const guard = s.guards && s.guards.n > 0 ? s.guards : null;
+      if (s.guards && !guard) s.linger = (s.linger ?? CFG.SHIELD_LINGER) - dt;
+      const shielding = !!guard || (!!s.guards && s.linger > 0);
+      const hoverW = dist - army.front + CFG.SHIELD_HOVER;
       // A mini-boss hangs back, BOSS_HOLD ahead of the team, while its escort
       // still has units; then it advances (slowly) like any charge.
       const holding = s.boss && s.escort && s.escort.n > 0 && army.N > 0;
@@ -296,11 +309,13 @@ export class EnemyForce {
           if (t.strafe || t.converge) this.x[i] = clampX(this.x[i] + (army.cx + Math.sin(time * 1.2) * 0.4 - this.x[i]) * Math.min(1, dt * 1.5));
           continue;
         }
-        if (guard) {
-          const target = s.mid ? (guard.minW + guard.maxW) / 2 - s.depth / 2 + this.oz[i] : guard.minW - CFG.SHIELD_LEAD - s.depth + this.oz[i];
+        if (shielding) {
+          const hold = hoverW + this.oz[i];
+          let target = !guard ? hold : s.mid ? (guard.minW + guard.maxW) / 2 - s.depth / 2 + this.oz[i] : guard.minW - CFG.SHIELD_LEAD - s.depth + this.oz[i];
+          target = Math.max(target, hold);
           this.w[i] = this.w[i] > target ? Math.max(target, this.w[i] - CFG.SHIELD_RUSH * dt) : target;
-          const step = CFG.ENEMY_HOMING * 1.5 * dt;
-          this.x[i] = clampX(this.x[i] + Math.max(-step, Math.min(step, guard.cx + this.ox[i] - this.x[i])));
+          const step = CFG.ENEMY_HOMING * 1.5 * dt, cx = guard ? guard.cx : army.cx;
+          this.x[i] = clampX(this.x[i] + Math.max(-step, Math.min(step, cx + this.ox[i] - this.x[i])));
           if (!s.charging) continue;
         } else if (!s.charging) {
           // Drones hover side to side even while waiting.
@@ -312,8 +327,16 @@ export class EnemyForce {
         // Stragglers far from the fight run faster so battles don't drag.
         // A mini-boss advances slowly and never hurries.
         const gap = this.w[i] - dist + army.front;
-        if (!guard && !s.boss) this.w[i] -= (CFG.ENEMY_CHARGE_SPEED * t.speed + Math.max(0, gap - 6) * CFG.ENEMY_CATCHUP) * dt;
+        if (!shielding && !s.boss) this.w[i] -= (CFG.ENEMY_CHARGE_SPEED * t.speed + Math.max(0, gap - 6) * CFG.ENEMY_CATCHUP) * dt;
         if (s.boss) this.moveBoss(s, i, dt, army);
+        // Burning (brutes with their outer shell, and mini-bosses): close to
+        // the army, a fire event every `every` s for main.js to play out.
+        const burn = s.boss ? CFG.BOSS_BURN : t.burns && this.hp[i] > t.hp * CFG.BURN.shell ? CFG.BURN : null;
+        this.burning[i] = burn && army.N > 0 && gap < burn.range ? 1 : 0;
+        if (this.burning[i] && (this.burnT[i] -= dt) <= 0) {
+          this.burnT[i] = burn.every;
+          this.events.push({ kind: 'burn', s, x: this.x[i], w: this.w[i], burn });
+        }
         // Hold formation on the approach; once level with the army, turn
         // inward and hit its flank. Bombers always home on the center;
         // drones weave.
@@ -322,7 +345,7 @@ export class EnemyForce {
         // Grunts close ranks as they near (ANIM.gruntConverge): the holes in
         // their formation shut, screening the stronger units behind them.
         const closeRanks = t.id === 0 ? Math.min(1, Math.max(0, 1 - gap / ANIM.gruntConverge)) : 0;
-        if (!guard && !s.boss) {
+        if (!shielding && !s.boss) {
           let tx = close || t.converge ? army.cx : army.cx + this.ox[i] * s.spread * (1 - 0.8 * closeRanks);
           if (t.strafe && !close) tx += Math.sin(time * 2.5 + i * 1.3) * t.strafe;
           const step = CFG.ENEMY_HOMING * t.homing * (close ? 3 : 1) * dt;
@@ -331,7 +354,6 @@ export class EnemyForce {
         }
         if (army.N <= 0) continue;
         if (rz >= army.front - 0.05 && rz <= army.back + 0.3 && Math.abs(this.x[i] - army.cx) <= army.halfW + 0.12) {
-          if (s.boss) this.lastBoss = { type: s.bossType, hp: this.hp[i], hpMax: s.hpMax };
           this.kill(i, s);
           onHit(t, this.x[i], rz, false, s.boss);
         } else if (rz > army.back + CFG.ENEMY_LEAK_MARGIN) {
@@ -361,11 +383,15 @@ export class EnemyForce {
         // and pulses slowly.
         if (s.boss) f = s.escort && s.escort.n > 0 ? 0.55 + 0.25 * Math.sin(time * 2) + this.flash[i] : f + 0.4 + 0.3 * Math.sin(time * 5);
         if (s.bolt) f = s.bolt.warn > 0 ? 1.8 : 3;   // flying: blazing
+        // On fire: flickers in COLORS.burn, kept below white so the orange reads.
+        const fire = this.burning[i] ? 0.8 + 0.2 * Math.sin(time * 23 + i * 3.1) : 0;
+        if (fire) f = Math.min(f, 1.1 + 0.5 * fire);
         p[c * 3 + 1] = 0.14 * size + this.lift[i] + (s.charging && !s.boss ? Math.abs(Math.sin(time * 13 + i)) * 0.05 * this.big[i] : 0);
         p[c * 3 + 2] = -(this.w[i] - dist);
-        sh[c] = t.shape;
+        // A brute shot down to half loses its outer hexagon (shape 7).
+        sh[c] = t.burns && this.hp[i] <= t.hp * CFG.BURN.shell && !s.boss ? 7 : t.shape;
         sz[c] = 0.18 * size;
-        col[c * 3] = k[0] * f; col[c * 3 + 1] = k[1] * f; col[c * 3 + 2] = k[2] * f;
+        col[c * 3] = (k[0] + (BURN_COLOR[0] - k[0]) * fire) * f; col[c * 3 + 1] = (k[1] + (BURN_COLOR[1] - k[1]) * fire) * f; col[c * 3 + 2] = (k[2] + (BURN_COLOR[2] - k[2]) * fire) * f;
         c++;
         // A waiting bullet's warning line: dots down its lane to the army,
         // blinking faster as it's about to fly.
