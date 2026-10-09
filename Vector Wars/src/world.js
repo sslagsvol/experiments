@@ -217,6 +217,12 @@ export function createWorld(canvas) {
     renderer, scene, camera, pointScale,
     get pixelRatio() { return pixelRatio; },
     setPixelRatio(pr) { pixelRatio = pr; resize(); },
+    // Low graphics (debug panel): no bloom, render at 0.75× resolution.
+    setLowGfx(on) {
+      bloom.enabled = !on;
+      pixelRatio = on ? 0.75 : Math.min(window.devicePixelRatio || 1, 2);
+      resize();
+    },
     resize,
     addRipple(x, wz, amp, time) {
       ripples[ripI].set(x, wz, time, amp);

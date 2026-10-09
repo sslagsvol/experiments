@@ -375,3 +375,7 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - Debug: `?debug&level=N` starts just before level N's gate.
 - Style guide: Shield and Bullet cards (live), Mini-boss card (moves, spew, levels 2/4/6), Formation combos and Bullet warning line cards, palette roles for steel and bolt, the 'Shield line' formation.
 - Bots: story reaches level 7 at 5:19 (boss fights 13–33s; all moves fire); challenge dies at 2:06 after 20 gates with shields, bullets and dodges; endless from level 10 is still a cliff (it was before v0.11.0 too: tested with shields and combos off).
+
+## Round 40 — v0.11.0 (cont.): debug panel (2026-10-09)
+- With `?debug`, a gear button top-right (or the ` key) opens a **debug panel** (`src/debugPanel.js`): game speed 0.1–3× (faster runs in substeps, one render a frame), slow motion / killcam on or off, **Next level** and **Go to level N** (story), +100 / +1,000 units, **low graphics** (no bloom, 0.75× resolution, no adaptive changes), and live sliders for the difficulty values we've been tuning (speed, difficulty, threat range, level guard, grunt screens and convergence, endless growth, shields, combos, bullet warning, boss hp and speed, gate durability). Changed values show in green, stay in this browser until **Reset**, and **Copy values** puts a config.js snippet on the clipboard. Panel input never steers the army.
+- Style guide: debug panel card.

@@ -14,6 +14,7 @@ import { Hud } from './hud.js';
 import { Sfx } from './audio.js';
 import { cachedScores, fetchScores, rankFor, submitScore } from './scores.js';
 import { LEVEL_1, levelDef, PATTERNS, WORLD_END } from './levels.js';
+import { createDebugPanel } from './debugPanel.js';
 
 const params = new URLSearchParams(location.search);
 // Two modes, picked on the title screen: Story (the levels) and Challenge
@@ -211,12 +212,18 @@ function startPlay(m = mode) {
   hud.setPauseButton(true);
   if (!CLASSIC()) hud.toast(`Level ${G.level}`, 'Shoot the enemies · shoot the gates up');
   // Debug: ?level=N starts just before level N's gate (skipping level 1).
-  const jump = DEBUG && !CLASSIC() && parseInt(params.get('level'), 10);
-  if (jump > 1) {
-    Object.assign(G, { beat: -1, rampFrom: 0, enemyIdx: 2, genLevel: jump, queue: [], rampArmy: army.N });
-    gates.acquire(G.dist + 6, null, null, { op: 'level', n: jump, ch: 0, f: 0 }, 0, fullWidth);
-    G.nextW = G.dist + 6 + CFG.LEVEL_QUIET;
-  }
+  const jump = DEBUG && parseInt(params.get('level'), 10);
+  if (jump > 1) jumpToLevel(jump);
+}
+
+// Debug: clear the track and put level n's gate just ahead (story only).
+function jumpToLevel(n) {
+  if (CLASSIC() || G.state !== 'play') return;
+  enemies.reset();
+  for (const g of [...gates.active]) gates.release(g);
+  Object.assign(G, { beat: -1, rampFrom: G.rampFrom < 0 ? G.gateIdx : G.rampFrom, enemyIdx: Math.max(2, G.enemyIdx), genLevel: n, queue: [], pending: [], rampArmy: G.rampArmy || army.N });
+  gates.acquire(G.dist + 6, null, null, { op: 'level', n, ch: 0, f: 0 }, 0, fullWidth);
+  G.nextW = G.dist + 6 + CFG.LEVEL_QUIET;
 }
 
 // Score = distance + enemies defeated, each worth its hit points.
@@ -1038,7 +1045,7 @@ function update(dt, realDt) {
   const recordMoment = G.state === 'play' && recordSlowMo(realDt);
   G.killcamT = Math.max(0, G.killcamT - realDt);
   const cam = G.state === 'play' && G.killcamT > 0;
-  const targetScale = Math.min(slow ? ANIM.slowMoScale : 1, recordMoment ? ANIM.recordScale : 1, cam ? ANIM.killcamScale : 1);
+  const targetScale = !dbg.slowMo ? 1 : Math.min(slow ? ANIM.slowMoScale : 1, recordMoment ? ANIM.recordScale : 1, cam ? ANIM.killcamScale : 1);
   const ease = targetScale < G.timeScale ? (cam ? ANIM.killcamIn : recordMoment && !slow ? ANIM.recordIn : ANIM.slowMoIn) : ANIM.slowMoOut;
   G.timeScale += (targetScale - G.timeScale) * Math.min(1, realDt / ease);
   sfx.rate = G.timeScale;
@@ -1114,12 +1121,14 @@ function syncHud(realDt) {
 let time = 0;
 let last = performance.now();
 let perfAcc = 0, perfFrames = 0, perfWindow = 0, fps = 60;
+const dbg = { speed: 1, slowMo: true, low: false };   // debug panel settings (?debug)
 
-function step(realDt) {
+function step(realDt, render = true) {
   if (G.paused) return;
   const dt = realDt * G.timeScale;
   time += dt;
   update(dt, realDt);
+  if (!render) return;
   world.update(time, G.dist, G.ax, G.shake, G.battle, G.killcam);
   syncHud(realDt);
   world.renderer.info.reset();
@@ -1131,7 +1140,9 @@ function frame(now) {
   if (document.hidden) { last = now; return; }
   const raw = (now - last) / 1000;
   last = now;
-  step(Math.min(raw, 1 / 30));
+  // Debug game speed: faster runs in substeps (one render per frame).
+  const sim = Math.min(raw, 1 / 30) * dbg.speed, sub = Math.ceil(dbg.speed - 1e-6);
+  for (let k = 1; k <= sub; k++) step(sim / sub, k === sub);
 
   // Adaptive quality: drop render resolution if frames run long.
   // Ignore long gaps (tab switches, throttled background frames).
@@ -1139,14 +1150,32 @@ function frame(now) {
   if (perfWindow > 2) {
     const avg = perfAcc / perfFrames;
     fps = Math.round(1 / avg);
-    if (avg > 0.019 && world.pixelRatio > 1) world.setPixelRatio(Math.max(1, world.pixelRatio - 0.25));
+    if (avg > 0.019 && world.pixelRatio > 1 && !dbg.low) world.setPixelRatio(Math.max(1, world.pixelRatio - 0.25));
     perfAcc = perfFrames = perfWindow = 0;
   }
   if (DEBUG) {
     const info = world.renderer.info.render;
+    panel.update();
     hud.debug(`${fps} fps · pr ${world.pixelRatio.toFixed(2)} · units ${army.N}/${CFG.CAPACITY} · ${army.formation} · fell ${G.stats.fell} · enemies ${enemies.count} · danger ${G.danger.toFixed(2)} · time ×${G.timeScale.toFixed(2)} · bullets ${bullets.n} · calls ${info.calls}`);
   }
 }
+
+// Debug panel (` or the gear button): game speed, level skip, low graphics,
+// army size, difficulty sliders.
+const panel = DEBUG ? createDebugPanel({ cfg: CFG, anim: ANIM }, {
+  getState: () => ({ level: G.level, timeScale: G.timeScale * dbg.speed, N: army.N, mode: G.mode }),
+  setSpeed: (x) => { dbg.speed = x; },
+  setSlowMo: (on) => { dbg.slowMo = on; },
+  gotoLevel: (n) => {
+    if (G.state === 'play') { G.paused = false; hud.showPause(null); }
+    newRun();
+    startPlay('story');
+    if (n > 1) jumpToLevel(n);
+  },
+  nextLevel: () => jumpToLevel(G.level + 1),
+  addUnits: (n) => { if (G.state === 'play') { spill(army.spawn(n, army.cx)); noteGain(n); } },
+  setLowGfx: (on) => { dbg.low = on; world.setLowGfx(on); },
+}) : null;
 
 // Test hook: drive the sim without relying on requestAnimationFrame.
 if (DEBUG) {
