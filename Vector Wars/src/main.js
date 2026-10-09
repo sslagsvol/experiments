@@ -554,17 +554,18 @@ function spawnSquad({ wz, spec, boss, cluster, bonus, challenge, wave }) {
   const x = challenge ? 0 : (G.rng() * 2 - 1) * CFG.TW;
   // Now and then a set piece instead, with the same strength.
   if (G.enemyIdx > 0 && !bonus && !challenge && G.rng() < CFG.COMBO_CHANCE && spawnCombo(n * mixEst(squadMix(kind, unlockIdx())), x, wz)) { G.enemyIdx++; return; }
-  // Grunts screen the guard (and the shields hold in front of them).
-  let front = challenge ? enemies.spawnSquad('wall', typeCount(CFG.SCREEN_SHARE, 6, 200), x, wz - 3, G.rng, G.level, only('grunt')) : null;
+  // Grunts screen the guard.
+  if (challenge) enemies.spawnSquad('wall', typeCount(CFG.SCREEN_SHARE, 6, 200), x, wz - 3, G.rng, G.level, only('grunt'));
+  let front = null;
   // Bigger than one squad can hold: it comes as several waves, one behind another.
   for (let k = 0; k < CFG.OVERFLOW_SQUADS && n > 0; k++) {
     const sq = enemies.spawnSquad(kind, Math.min(n, CFG.MAX_PER_SQUAD), x, wz + k * 5, G.rng, unlockIdx());
     front = front || sq;
     n -= CFG.MAX_PER_SQUAD;
   }
-  // Shields: level guards always bring a line, other squads sometimes. They
-  // guard the frontmost squad of the group, so they're always in front.
-  if (front && G.enemyIdx > 0 && !bonus && shieldsOn() && (challenge || G.rng() < CFG.SHIELD_CHANCE)) addShields(front);
+  // Shields guard specialists (drones, bombers, brutes), never grunts: level
+  // guards with specialists always bring a line, other such squads sometimes.
+  if (front && front.sp && front.sp.n > 0 && G.enemyIdx > 0 && !bonus && shieldsOn() && (challenge || G.rng() < CFG.SHIELD_CHANCE)) addShields(front);
   G.enemyIdx++;
 }
 
@@ -692,6 +693,9 @@ function enemyEvent(e) {
     world.addRipple(e.x, e.w, ANIM.rippleStomp * 0.5, time);
     sparks.ring(e.x, 0.1, e.w, 1.0, COLORS.enemyHeavy, 30);
     G.shake = Math.max(G.shake, 0.12);
+  } else if (e.kind === 'jump') {
+    sfx.play('zap', { pitch: 1.6, gain: 0.2 });
+    sparks.emit(e.x, 0.1, e.w, COLORS.enemyHot, 3, 1.5);
   } else if (e.kind === 'burn') {
     // A brute or mini-boss burning: units around it catch fire and die.
     const b = e.burn, z = G.dist - e.w;

@@ -19,7 +19,8 @@ Round-by-round history of playtest feedback and what changed, grouped by release
 | 0.10.0 | round 36 | PR #13 |
 | 0.11.0 | rounds 37–43 | PR #16 |
 | 0.11.1 | round 44 | PR #17 |
-| 0.11.2 | round 45 | `vw/v0.11.2` |
+| 0.11.2 | round 45 | PR #18 |
+| 0.11.3 | round 46 | `vw/v0.11.3` |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
@@ -420,3 +421,8 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Mini-bosses burn** within 6 units (`BOSS_BURN`, radius 2.4), and **touching the team is game over** (no extra life; the crash-restore from round 43 is gone). The boss's own brutes arrive shell-less (no fire). Brute boss spews 2 brutes (was 3, user call) and its hp × 1.15 → 1.0: with touch = game over it beat the bot twice; now beaten in 45s, 49 → 53 units.
 - New `COLORS.burn`, `burn` sound; style guide: palette, brute and shield cards (live), mini-boss and combos cards.
 - Bots: full story run beat the drone and bomber bosses and cleared the level 5 finale; level 3 passed from 60 units (7 shields shot down).
+
+## Round 46 — v0.11.3: jumping bombers, shields guard specialists (2026-10-09)
+- **Bombers jump** (`CFG.BOMBER_JUMP`): once charging, a hop of 3 units toward the army (0.45s, an arc), ghosted and untouchable mid-air (bullets pass through), the first within 0.5s of charging and then about every 1.2s, until they're within 8 units (`stop` + `dist`). Bot, level 5 finale: 8 jumps from 9 bombers, first jumps 14–17 units out; all 9 still shot down. (The first try, first jump 0.5–2.1s in, saw 2 jumps from 9: most were shot before their first.)
+- **Shields guard specialists, never grunts:** they hold in front of a squad's drones, bombers and brutes (`s.sp` in `enemies.bounds`), and only squads with specialists get them; a level guard's shields now guard the guard squad, not its grunt screen. Checked: in front of the specialists in 128 of 133 samples (the rest: the rush forward from the back of the squad).
+- Style guide: bomber and shield notes (live), combos card.

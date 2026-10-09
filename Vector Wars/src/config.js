@@ -8,7 +8,7 @@
 
 // The game's version: 0.MINOR.PATCH while in beta. Bump it on the release
 // branch (vw/vX.Y.Z) and add a matching heading in CHANGELOG.md. See PLAN.md.
-export const VERSION = '0.11.2';
+export const VERSION = '0.11.3';
 
 export const CFG = {
   TW: 2.0,                 // track half-width (world units)
@@ -180,6 +180,9 @@ export const CFG = {
   // burn too (BOSS_BURN), and touching the army ends the run.
   BURN: { range: 3, radius: 1.3, peak: 0.35, max: 5, every: 0.35, shell: 0.5 },
   BOSS_BURN: { range: 6, radius: 2.4, peak: 0.3, max: 6, every: 0.3 },
+  // Bombers jump: every ~`every` s (charging, more than `stop` from the army)
+  // a hop of `dist` units over `time` s, `height` high, untouchable mid-air.
+  BOMBER_JUMP: { every: 1.2, first: 0.5, time: 0.45, dist: 3, height: 0.9, stop: 5 },   // first: the first jump comes within this many s of charging
   EDGE_WARN: { share: 0.1, window: 1.5 },   // "Watch the edges!" the first time this share of the army falls off within window s
   COMBO_CHANCE: 0.25,      // a regular squad is a set piece instead: shields guarding bombers, or grunts screening brutes
   // Bullet enemies (v0.11.0): immune to fire. A warning line marks the lane,

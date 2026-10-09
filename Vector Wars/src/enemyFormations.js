@@ -26,13 +26,13 @@ export const ENEMY_TYPES = {
             label: 'Grunt', note: 'Diamond. Marches in formation, then closes ranks from about 7 units out (ANIM.gruntConverge), screening the stronger units behind it.' },
   drone:  { id: 1, shape: 1, size: 1.1, hp: 1, damage: 1, est: 1, speed: 1.2, homing: 2.5, strafe: 0.9, color: 'enemy',
             label: 'Drone', note: 'Triangle. Strafes side to side; hard to dodge.' },
-  bomber: { id: 2, shape: 2, size: 1.4, hp: 2, damage: 0, aoe: { radius: 0.7, peak: 0.95, max: 45 }, est: 35, speed: 1.35, homing: 3.5, converge: true, color: 'enemyHot',
-            label: 'Bomber', note: 'Pulsing ring. Homes in on the center and explodes: a tight, deadly blast.' },
+  bomber: { id: 2, shape: 2, size: 1.4, hp: 2, damage: 0, aoe: { radius: 0.7, peak: 0.95, max: 45 }, est: 35, speed: 1.35, homing: 3.5, converge: true, jumps: true, color: 'enemyHot',
+            label: 'Bomber', note: 'Pulsing ring. Jumps toward the army every second or two, ghosted and untouchable mid-air (CFG.BOMBER_JUMP), until it is close; then homes in on the center and explodes: a tight, deadly blast.' },
   brute:  { id: 3, shape: 3, size: 2.3, hp: 14, damage: 0, aoe: { radius: 1.2, peak: 0.5, max: 60 }, est: 45, speed: 0.7, homing: 0.8, burns: true, color: 'enemyHeavy',
             label: 'Brute', note: 'Big double hexagon, 14 hit points. Close to the army it burns (orange flicker), setting fire to units around it (CFG.BURN). Shot down to half, it loses its outer hexagon and stops burning. Stomps a wide area on contact: half the units near it, fewer at the edge.' },
   // Placed by main.js, never mixed into squads (squadMix):
   shield: { id: 4, shape: 4, size: 2.0, hp: 30, damage: 0, est: 0.4, speed: 1.0, homing: 0.6, hitW: 1.0, color: 'steel',
-            label: 'Shield', note: 'Wide steel chevron, 30 hit points, a wide hitbox. Rushes to the front of the squad it guards (in front of its grunt screen too) and holds a stiff line there; near the army it hovers just in front of it instead of charging, still blocking shots (CFG.SHIELD_HOVER), and breaks off a few seconds after its squad is gone. Never attacks.' },
+            label: 'Shield', note: 'Wide steel chevron, 30 hit points. Guards the specialists (drones, bombers, brutes), never grunts: rushes in front of them and holds a stiff line there; near the army it hovers just in front of it instead of charging, still blocking shots (CFG.SHIELD_HOVER), and breaks off a few seconds after its squad is gone. Never attacks.' },
   bolt:   { id: 5, shape: 5, size: 2.0, hp: 3, damage: 0, lane: { radius: 0.3, peak: 0.85, max: 10 }, est: 6, speed: 1.0, homing: 0, immune: true, color: 'bolt',
             label: 'Bullet', note: 'A white-violet streak, immune to fire. A blinking warning line marks its lane for a second, then it crosses the track at bullet speed and cuts through a small group. Dodge it (a dodge scores like a kill).' },
 };

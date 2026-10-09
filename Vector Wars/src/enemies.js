@@ -96,6 +96,8 @@ export class EnemyForce {
     this.oz = new Float32Array(max);   // formation z offset (shield rows)
     this.burning = new Uint8Array(max); // on fire this frame (a brute or mini-boss close to the army)
     this.burnT = new Float32Array(max); // s to its next burn tick
+    this.jumpU = new Float32Array(max); // a jumping bomber's progress 0..1 (-1 = on the ground)
+    this.jumpT = new Float32Array(max); // s to its next jump
     this.type = new Uint8Array(max);
     this.alive = new Uint8Array(max);
     this.owner = new Int32Array(max);  // id of the squad a slot belongs to (slots get recycled)
@@ -152,6 +154,7 @@ export class EnemyForce {
       s.depth = Math.max(s.depth, pz);
       this.lift[i] = 0;
       this.burning[i] = 0; this.burnT[i] = 0;
+      this.jumpU[i] = -1; this.jumpT[i] = CFG.BOMBER_JUMP.first * rng();
       this.type[i] = t.id;
       this.hp[i] = t.hp;
       this.big[i] = 1;
@@ -195,7 +198,7 @@ export class EnemyForce {
     const t = ENEMY_TYPES[typeKey], i = this.free.pop();
     const s = { id: this.nextId++, ax: x, spread: 0, units: [i], n: 1, charging: false, depth: 0,
       minX: x, maxX: x, minW: w, maxW: w, cx: x, cw: w, ...extra };
-    this.x[i] = x; this.w[i] = w; this.ox[i] = 0; this.oz[i] = 0; this.lift[i] = 0; this.burning[i] = 0; this.burnT[i] = 0;
+    this.x[i] = x; this.w[i] = w; this.ox[i] = 0; this.oz[i] = 0; this.lift[i] = 0; this.burning[i] = 0; this.burnT[i] = 0; this.jumpU[i] = -1;
     this.type[i] = t.id; this.hp[i] = hp; this.big[i] = big; this.flash[i] = 0;
     this.alive[i] = 1; this.owner[i] = s.id;
     this.squads.push(s);
@@ -266,16 +269,20 @@ export class EnemyForce {
 
   kill(i, s) { this.alive[i] = 0; this.free.push(i); s.n--; }
 
+  // Also s.sp: the specialists (anything but grunts) that shields guard.
   bounds(s) {
     let minX = 1e9, maxX = -1e9, minW = 1e9, maxW = -1e9, sx = 0, sw = 0;
+    const sp = { n: 0, minW: 1e9, maxW: -1e9, cx: 0 };
     for (const i of s.units) {
       if (!this.alive[i] || this.owner[i] !== s.id) continue;
       const x = this.x[i], w = this.w[i];
       if (x < minX) minX = x; if (x > maxX) maxX = x;
       if (w < minW) minW = w; if (w > maxW) maxW = w;
       sx += x; sw += w;
+      if (this.type[i] !== 0) { sp.n++; sp.cx += x; if (w < sp.minW) sp.minW = w; if (w > sp.maxW) sp.maxW = w; }
     }
-    if (s.n > 0) Object.assign(s, { minX, maxX, minW, maxW, cx: sx / s.n, cw: sw / s.n });
+    if (sp.n) sp.cx /= sp.n;
+    if (s.n > 0) Object.assign(s, { minX, maxX, minW, maxW, cx: sx / s.n, cw: sw / s.n, sp });
   }
 
   // onHit(type, x, renderZ, leaked) fires once per enemy that reaches the
@@ -311,10 +318,12 @@ export class EnemyForce {
         }
         if (shielding) {
           const hold = hoverW + this.oz[i];
-          let target = !guard ? hold : s.mid ? (guard.minW + guard.maxW) / 2 - s.depth / 2 + this.oz[i] : guard.minW - CFG.SHIELD_LEAD - s.depth + this.oz[i];
+          // In front of the specialists in the squad (or the whole squad if none are left).
+          const g = guard && guard.sp && guard.sp.n > 0 ? guard.sp : guard;
+          let target = !g ? hold : s.mid ? (g.minW + g.maxW) / 2 - s.depth / 2 + this.oz[i] : g.minW - CFG.SHIELD_LEAD - s.depth + this.oz[i];
           target = Math.max(target, hold);
           this.w[i] = this.w[i] > target ? Math.max(target, this.w[i] - CFG.SHIELD_RUSH * dt) : target;
-          const step = CFG.ENEMY_HOMING * 1.5 * dt, cx = guard ? guard.cx : army.cx;
+          const step = CFG.ENEMY_HOMING * 1.5 * dt, cx = g ? g.cx : army.cx;
           this.x[i] = clampX(this.x[i] + Math.max(-step, Math.min(step, cx + this.ox[i] - this.x[i])));
           if (!s.charging) continue;
         } else if (!s.charging) {
@@ -329,6 +338,19 @@ export class EnemyForce {
         const gap = this.w[i] - dist + army.front;
         if (!shielding && !s.boss) this.w[i] -= (CFG.ENEMY_CHARGE_SPEED * t.speed + Math.max(0, gap - 6) * CFG.ENEMY_CATCHUP) * dt;
         if (s.boss) this.moveBoss(s, i, dt, army);
+        // Bombers jump toward the army until they're close: ghosted mid-air.
+        if (t.jumps && !s.boss) {
+          const J = CFG.BOMBER_JUMP;
+          if (this.jumpU[i] >= 0) {
+            this.jumpU[i] += dt / J.time;
+            this.w[i] -= J.dist / J.time * dt;
+            this.lift[i] = Math.sin(Math.PI * Math.min(1, this.jumpU[i])) * J.height;
+            if (this.jumpU[i] >= 1) { this.jumpU[i] = -1; this.lift[i] = 0; this.jumpT[i] = J.every * (0.7 + 0.6 * Math.random()); }
+          } else if ((this.jumpT[i] -= dt) <= 0 && gap > J.stop + J.dist) {
+            this.jumpU[i] = 0;
+            this.events.push({ kind: 'jump', s, x: this.x[i], w: this.w[i] });
+          }
+        }
         // Burning (brutes with their outer shell, and mini-bosses): close to
         // the army, a fire event every `every` s for main.js to play out.
         const burn = s.boss ? CFG.BOSS_BURN : t.burns && this.hp[i] > t.hp * CFG.BURN.shell ? CFG.BURN : null;
@@ -386,6 +408,7 @@ export class EnemyForce {
         // On fire: flickers in COLORS.burn, kept below white so the orange reads.
         const fire = this.burning[i] ? 0.8 + 0.2 * Math.sin(time * 23 + i * 3.1) : 0;
         if (fire) f = Math.min(f, 1.1 + 0.5 * fire);
+        if (this.jumpU[i] >= 0) f *= 0.45 + 0.25 * Math.sin(time * 40 + i);   // mid-jump: ghosted (untouchable)
         p[c * 3 + 1] = 0.14 * size + this.lift[i] + (s.charging && !s.boss ? Math.abs(Math.sin(time * 13 + i)) * 0.05 * this.big[i] : 0);
         p[c * 3 + 2] = -(this.w[i] - dist);
         // A brute shot down to half loses its outer hexagon (shape 7).
@@ -451,6 +474,7 @@ export class EnemyForce {
         if (!this.alive[i] || this.owner[i] !== s.id) continue;
         const ri = r0 * TYPE_LIST[this.type[i]].size * this.big[i] * (this.big[i] > 1 ? 1.3 : 1);   // bosses: a generous hitbox
         const t = TYPE_LIST[this.type[i]];
+        if (this.jumpU[i] >= 0) continue;   // a bomber mid-jump: untouchable
         if (Math.abs(this.x[i] - x) < ri * (t.hitW || 1) && this.w[i] >= oldW - ri && this.w[i] <= newW + ri) {
           // A mini-boss is shielded while its escort lives: the bullet is
           // stopped, but does nothing.
