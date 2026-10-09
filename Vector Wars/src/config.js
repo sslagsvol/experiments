@@ -135,8 +135,20 @@ export const CFG = {
     bomber: { hopEvery: 1.5, air: 0.7, hopHeight: 1.0, shock: { radius: 0.8, peak: 0.45, max: 10 }, shockRange: 2.2 },   // hops; each landing sends a shockwave
     brute:  { stepEvery: 1.2, stepTime: 0.35, sway: 0.55, swaySpeed: 0.8 },   // sways and stomps forward in steps
   },
-  BOSS_SPAWN: { drone: { every: 2.6, own: 9 }, bomber: { every: 3.0, own: 3 }, brute: { every: 3.2, own: 3 } },   // spew: every s, this many of its type…
-  BOSS_SPAWN_GRUNTS: 0.3,  // …plus this share of the team in grunts, in front
+  // Spew: every `every` s, `own` small units of its type plus `grunts` × the
+  // team in grunts, in front. (The drone boss is the first one: gentler.)
+  BOSS_SPAWN: { drone: { every: 3.2, own: 4, grunts: 0.15 }, bomber: { every: 3.0, own: 3, grunts: 0.3 }, brute: { every: 3.2, own: 3, grunts: 0.3 } },
+  // Reinforcements during a boss fight: a skinny green + gate rushes at the
+  // team each time the boss loses another BOSS_GIFT_STEP of its hp, and when a
+  // spew wave is shot down. Worth a share of the team as the boss arrived
+  // (so gifts don't compound), at least BOSS_GIFT_MIN.
+  BOSS_GIFT_STEP: 0.25,
+  BOSS_GIFT_SHARE: 0.3,    // for damage dealt…
+  BOSS_GIFT_WAVE: 0.12,    // …for a spew wave shot down
+  BOSS_GIFT_MIN: 6,
+  BOSS_GIFT_WIDTH: 0.7,
+  BOSS_GIFT_SPEED: 7,      // units/s toward the team (the track is stopped)
+  BOSS_GIFT_AHEAD: 18,     // spawns this far ahead
   // Escort of small boss-type units in front of the boss (it's shielded until
   // they're gone), and clusters of that type riding with each bonus squad:
   // this share of the team's headcount, by type.
@@ -150,6 +162,8 @@ export const CFG = {
   // a squad and holds there, soaking shots. They don't attack.
   SHIELD_SPACING: 0.75,    // between shields in a line
   SHIELD_LEAD: 0.9,        // how far in front of their squad they hold
+  SHIELD_ROWS: 2,          // staggered rows in front…
+  SHIELD_MID_DEPTH: 1.5,   // …plus a row through the middle of squads at least this deep
   SHIELD_RUSH: 5,          // units/s while rushing to the front
   SHIELD_CHANCE: 0.35,     // a regular squad brings a shield line (level guards always do)
   COMBO_CHANCE: 0.25,      // a regular squad is a set piece instead: shields guarding bombers, or grunts screening brutes
@@ -224,7 +238,7 @@ export const ANIM = {
   spawnFlash: 0.6,         // s new units flash white before settling to cyan
   gruntConverge: 8.5,      // grunts start closing ranks this far out (units), screening what's behind them
   killcamHold: 1.4,        // s (real time) of the first-blast / first-stomp killcam
-  killcamScale: 0.35,      // time scale during it
+  killcamScale: 0.45,      // time scale during it
   killcamIn: 0.25,         // s to ease the camera in
   killcamOut: 0.6,         // s to ease it back out
   toastLife: 2.4,          // s a "LEVEL 1" / "LEVEL 1 COMPLETE" banner stays up
@@ -262,7 +276,7 @@ export const ANIM = {
   surgeBoost: 0.6,         // extra speed right after winning a battle (×)
   surgeDecay: 1.2,         // surge fade (1/s)
   battleCamPush: 0.8,      // camera dolly toward the army during battles (units)
-  slowMoScale: 0.3,        // time scale at the most dangerous moment
+  slowMoScale: 0.4,        // time scale at the most dangerous moment
   slowMoThreshold: 0.8,    // danger ratio (incoming strength ÷ army) that triggers it
   slowMoIn: 1.2,           // s to ease into slow motion
   slowMoOut: 0.4,          // s to ease back to normal speed

@@ -70,6 +70,17 @@
   <div id="recap" class="recap"></div>
   <div id="entry" class="hidden"></div>
   <p id="retry" class="blink">Tap to retry</p>
+  <button id="over-quit" type="button" class="btn hidden">Quit</button>
+</div>
+
+<div id="continue" class="overlay hidden">
+  <h2>Team down</h2>
+  <p class="sub">Use your extra life? The mini-boss stays where it is; its minions are cleared.</p>
+  <div class="pause-actions">
+    <button id="continue-yes" type="button" class="btn primary">Continue</button>
+    <button id="continue-no" type="button" class="btn">Retreat</button>
+  </div>
+  <p class="kb-hint">Space continue · Q retreat (your army returns, no reward)</p>
 </div>
 
 <div id="pause" class="overlay hidden">
@@ -86,7 +97,12 @@
     <button id="resume" type="button" class="btn primary">Continue</button>
     <button id="quit" type="button" class="btn">Quit</button>
   </div>
-  <p class="kb-hint">Space continue · Q quit · G grid</p>
+  <div id="quit-confirm" class="pause-actions hidden">
+    <p class="sub">Quit this run? It won't be scored.</p>
+    <button id="quit-yes" type="button" class="btn danger">Quit run</button>
+    <button id="quit-no" type="button" class="btn">Cancel</button>
+  </div>
+  <p class="kb-hint">Space continue · Q quit (Q again to confirm) · G grid</p>
   <div class="pause-lab" aria-label="Experiments">
     <button id="grid-btn" type="button">Grid</button>
     <button id="parallax-btn" type="button">Parallax</button>

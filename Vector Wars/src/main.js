@@ -54,9 +54,24 @@ pauseBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); setPaused
 // Taps on the menu never reach the game (no steering, no stray taps on resume).
 pauseEl.addEventListener('pointerdown', (e) => e.stopPropagation());
 document.getElementById('resume').addEventListener('click', () => setPaused(false));
-document.getElementById('quit').addEventListener('click', () => quitRun());
+// Quit asks first; the confirm replaces the Continue / Quit buttons.
+const quitConfirm = document.getElementById('quit-confirm'), pauseActions = pauseEl.querySelector('.pause-actions');
+function askQuit(on) { quitConfirm.classList.toggle('hidden', !on); pauseActions.classList.toggle('hidden', on); }
+document.getElementById('quit').addEventListener('click', () => askQuit(true));
+document.getElementById('quit-yes').addEventListener('click', () => quitRun());
+document.getElementById('quit-no').addEventListener('click', () => askQuit(false));
 // Quit: abandon the run and go back to the title screen (pick a mode again).
-function quitRun() { setPaused(false); newRun(); }
+function quitRun() { askQuit(false); setPaused(false); newRun(); }
+// Game over: tap to retry the same mode; Quit (no confirm) goes to the title.
+const overQuit = document.getElementById('over-quit');
+overQuit.addEventListener('pointerdown', (e) => e.stopPropagation());
+overQuit.addEventListener('click', () => { if (G.state === 'over' && !hud.entering) newRun(); });
+const retryRun = () => { newRun(); startPlay(mode); };
+// Extra life: continue the mini-boss fight, or retreat.
+const continueEl = document.getElementById('continue');
+continueEl.addEventListener('pointerdown', (e) => e.stopPropagation());
+document.getElementById('continue-yes').addEventListener('click', () => resolveContinue(true));
+document.getElementById('continue-no').addEventListener('click', () => resolveContinue(false));
 // Keyboard: steering is read each frame (keys); everything else is here.
 // The initials entry handles its own keys while it's open.
 const keys = new KeyInput(window);
@@ -64,19 +79,27 @@ window.addEventListener('keydown', (e) => {
   document.body.classList.add('kb');   // show keyboard hints
   if (hud.entering || e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
   const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  if (G.held) {
+    // The extra-life prompt is up: Space / Enter continue, Q / Esc retreat.
+    if (k === ' ' || k === 'Enter') { e.preventDefault(); resolveContinue(true); }
+    else if (k === 'q' || k === 'Escape') resolveContinue(false);
+    return;
+  }
+  if (G.paused && !quitConfirm.classList.contains('hidden') && (k === 'Escape' || k === 'p')) { askQuit(false); return; }
   if (k === 'Escape' || k === 'p') {
     if (G.state === 'play') setPaused(!G.paused);
   } else if (k === ' ' || k === 'Enter') {
     e.preventDefault();
     sfx.unlock();
     if (G.state === 'title') startPlay('story');
-    else if (G.paused) setPaused(false);
-    else if (G.state === 'over' && time - G.overAt > 0.6 && hud.canRetry()) newRun();
+    else if (G.paused) { askQuit(false); setPaused(false); }
+    else if (G.state === 'over' && time - G.overAt > 0.6 && hud.canRetry()) retryRun();
   } else if (k === 'c' && G.state === 'title') {
     sfx.unlock();
     if (challengeOpen()) startPlay('challenge');
   } else if (k === 'q') {
-    if (G.paused) quitRun();
+    if (G.paused) { if (quitConfirm.classList.contains('hidden')) askQuit(true); else quitRun(); }
+    else if (G.state === 'over' && !hud.entering) newRun();
   } else if (k === 'm') {
     sfx.unlock(); sfx.setMuted(!sfx.muted); syncMute();
   } else if (k === 'g') {
@@ -131,8 +154,9 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) setPa
 window.addEventListener('blur', () => setPaused(true));
 
 function setPaused(on) {
-  if (!G || G.state !== 'play' || G.paused === on) return;
+  if (!G || G.state !== 'play' || G.paused === on || G.held) return;
   G.paused = on;
+  askQuit(false);
   hud.setPauseButton(!on);
   input.consumeTap();
   input.consumeDx();
@@ -188,7 +212,9 @@ function newRun() {
     killcam: 0,      // 0..1, eased: how far the camera has moved in on the army
     killcamT: 0,     // s left of a first-blast / first-stomp killcam
     seenAoe: {},     // enemy type ids whose area attack has already had its killcam
-    boltT: CFG.BOLT_EVERY[1],   // s until the next bullet-enemy volley (once they're unlocked)
+    boltT: CFG.BOLT_EVERY[1],
+    lives: 1,        // one extra life per run: continue a lost mini-boss fight
+    held: false,     // the extra-life prompt is up (the game is frozen)   // s until the next bullet-enemy volley (once they're unlocked)
     rng: mulberry32(SEED),
     fireAcc: 0,
     shake: 0,
@@ -512,9 +538,12 @@ function spawnSquad({ wz, spec, boss, cluster, bonus, challenge }) {
   G.enemyIdx++;
 }
 
+// Staggered rows in front (CFG.SHIELD_ROWS), and a row through the middle of a deep squad.
 function addShields(sq) {
-  const n = Math.max(2, Math.min(7, Math.round((sq.maxX - sq.minX) / CFG.SHIELD_SPACING) + 1));
-  return enemies.spawnShields(sq, n, G.rng);
+  const per = Math.max(2, Math.min(7, Math.round((sq.maxX - sq.minX) / CFG.SHIELD_SPACING) + 1));
+  const s = enemies.spawnShields(sq, per * CFG.SHIELD_ROWS, G.rng);
+  if (sq.maxW - sq.minW >= CFG.SHIELD_MID_DEPTH) enemies.spawnShields(sq, per, G.rng, true);
+  return s;
 }
 
 // Formation combos, worth `strength` (expected damage) like the squad they
@@ -544,10 +573,36 @@ function bossSpew(dt) {
   b.spewT = (b.spewT ?? sp.every * 0.5) - dt;
   if (b.spewT > 0 || bw - G.dist + army.front < 5) return;   // not when it's nearly on the team
   b.spewT = sp.every;
-  enemies.spawnSquad('blob', typeCount(CFG.BOSS_SPAWN_GRUNTS, 6, 30), bx, bw - 2.2, G.rng, G.level, only('grunt')).charging = true;
-  enemies.spawnSquad('blob', sp.own, bx, bw - 1.2, G.rng, G.level, only(b.bossType)).charging = true;
+  const wave = { left: 2 };
+  for (const sq of [enemies.spawnSquad('blob', typeCount(sp.grunts, 4, 30), bx, bw - 2.2, G.rng, G.level, only('grunt')), enemies.spawnSquad('blob', sp.own, bx, bw - 1.2, G.rng, G.level, only(b.bossType))]) {
+    sq.charging = true;
+    sq.wave = wave;
+  }
   sparks.ring(bx, 0.5, bw, 0.9, COLORS[ENEMY_TYPES[b.bossType].color], 24);
   sfx.play('pop', { pitch: 0.5 });
+}
+
+// Boss-fight reinforcements: a skinny green + gate rushes at the team (the
+// track is stopped) in a random lane. Shoot it up, then catch it.
+function bossGift(share) {
+  const b = enemies.boss;
+  if (G.state !== 'play' || army.N <= 0 || !b) return;
+  const v = Math.max(CFG.BOSS_GIFT_MIN, Math.round((b.baseN || army.N) * share));
+  const lim = CFG.TW - CFG.BOSS_GIFT_WIDTH / 2 - 0.05, x = (Math.random() * 2 - 1) * lim;
+  const g = gates.acquire(G.dist + CFG.BOSS_GIFT_AHEAD, null, null, { op: '+', v, ch: 0, f: 0 }, 0, { x, width: CFG.BOSS_GIFT_WIDTH });
+  g.rush = CFG.BOSS_GIFT_SPEED;
+  g.bonus = !!G.bonus;
+  sfx.play('levelCharge', { pitch: 1.6, gain: 1 });
+}
+
+// Gifts for damage dealt: one each time the boss crosses another BOSS_GIFT_STEP of hp.
+function bossGifts() {
+  const b = enemies.boss;
+  if (!b) return;
+  b.baseN = b.baseN || army.N;   // the team as the boss arrived
+  const lost = Math.floor((1 - enemies.bossHp(b)) / CFG.BOSS_GIFT_STEP + 1e-6);
+  b.gifts = b.gifts || 0;
+  if (lost > b.gifts && enemies.bossHp(b) > 0) { b.gifts = lost; bossGift(CFG.BOSS_GIFT_SHARE); }
 }
 
 // Bullet enemies: a volley every CFG.BOLT_EVERY s once they're unlocked (not
@@ -743,6 +798,49 @@ function leaveBonus() {
   noteGain(add);
 }
 
+// The strike team was wiped out with the extra life unused: freeze and ask.
+function offerContinue() {
+  G.held = true;
+  hud.setPauseButton(false);
+  continueEl.classList.remove('hidden');
+  if (sfx.ctx) sfx.ctx.suspend();
+}
+
+// Continue: spend the life, clear the minions, keep the mini-boss (its hp and
+// place), and bring the strike team back. Retreat: as if there were no life.
+function resolveContinue(yes) {
+  if (!G.held) return;
+  G.held = false;
+  continueEl.classList.add('hidden');
+  hud.setPauseButton(true);
+  input.consumeTap();
+  input.consumeDx();
+  if (sfx.ctx && !document.hidden) sfx.ctx.resume();
+  if (!yes) { bonusLost(); return; }
+  G.lives--;
+  enemies.clearMinions();
+  // The boss stays: where it was (at least a little way off), or, if it died
+  // crashing into the team, back at its hold distance with the hp it had.
+  const front = G.dist - army.front, def = levelDef(G.level);
+  let b = enemies.boss;
+  if (!b && G.bonus.bossLeft) {
+    const { type, hp, hpMax } = G.bonus.bossLeft;
+    b = enemies.spawnBoss(type, hp, 0, front + CFG.BOSS_HOLD);
+    if (b) Object.assign(b, { hpMax, gatesBroken: true, charging: true });
+  }
+  G.bonus.bossLeft = null;
+  if (b) {
+    const i = b.units[0];
+    enemies.w[i] = Math.max(enemies.w[i], front + 8);
+    b.baseN = def.team;
+  }
+  G.pending = G.pending.filter((p) => !p.bonus || p.boss);   // squads not out yet go too; a boss still to come doesn't
+  army.spawn(def.team, army.cx);
+  sparks.ring(army.cx, 0.4, G.dist - army.front, 1.4, COLORS.white, 40);
+  sfx.play('levelUp', { gain: 0.6 });
+  hud.toast('Extra life');
+}
+
 // The strike team was wiped out: the bonus is lost (no reward), but the run
 // isn't. Your army comes straight back and the rest of the bonus is cleared.
 function bonusLost() {
@@ -877,6 +975,8 @@ function maxedOut(g, s) {
 }
 
 function squadWiped(s) {
+  // A boss's spew wave shot down completely: reinforcements.
+  if (s.wave && --s.wave.left <= 0) bossGift(CFG.BOSS_GIFT_WAVE);
   world.addRipple(s.cx, s.cw, ANIM.rippleWipe, time);
   sparks.emit(s.cx, 0.3, s.cw, COLORS.enemy, 40, 4);
 }
@@ -887,7 +987,9 @@ function squadWiped(s) {
 function onHit(t, x, z, leaked, boss = false) {
   let killed;
   if (boss) {
-    // The mini-boss reached the team: one huge area hit, then it's gone.
+    // The mini-boss reached the team: one huge area hit, then it's gone
+    // (remembered, so an extra life brings it back with the hp it had).
+    if (G.bonus) G.bonus.bossLeft = enemies.lastBoss;
     const w = G.dist - z, h = CFG.BOSS_HIT;
     killed = army.killArea(x, z, h.radius, h.peak, Math.ceil(army.N * h.share), unitLost);
     army.blast(x, z, h.radius);
@@ -978,7 +1080,7 @@ function update(dt, realDt) {
     // Title: the Story / Challenge buttons start a run (taps elsewhere don't).
   } else if (G.state === 'over') {
     // No restart while typing initials, or in the instant after the board appears.
-    if (tapped && time - G.overAt > 0.6 && hud.canRetry()) newRun();
+    if (tapped && time - G.overAt > 0.6 && hud.canRetry()) retryRun();
   }
 
   if (G.state === 'play') {
@@ -999,6 +1101,8 @@ function update(dt, realDt) {
     enemies.update(dt, G.dist, army, time, onHit);
     for (const e of enemies.events.splice(0)) enemyEvent(e);
     bossSpew(dt);
+    bossGifts();
+    for (const g of gates.active) if (g.rush && !g.done) g.wz -= g.rush * dt;
     boltVolleys(dt);
 
     // Battles: the track rolls forward at reduced speed to meet a charging
@@ -1056,7 +1160,11 @@ function update(dt, realDt) {
     }
 
     G.stats.peak = Math.max(G.stats.peak, army.N);
-    if (army.N <= 0) { if (G.bonus && !G.bonus.failed) bonusLost(); else endRun(); }
+    if (army.N <= 0) {
+      if (G.bonus && !G.bonus.failed && G.lives > 0) offerContinue();
+      else if (G.bonus && !G.bonus.failed) bonusLost();
+      else endRun();
+    }
   } else {
     G.danger = Math.max(0, G.danger - realDt * 2);
     G.battle = Math.max(0, G.battle - realDt * 2);
@@ -1146,7 +1254,7 @@ let perfAcc = 0, perfFrames = 0, perfWindow = 0, fps = 60;
 const dbg = { speed: 1, slowMo: true, low: false };   // debug panel settings (?debug)
 
 function step(realDt, render = true) {
-  if (G.paused) return;
+  if (G.paused || G.held) return;
   const dt = realDt * G.timeScale;
   time += dt;
   update(dt, realDt);

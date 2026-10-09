@@ -571,3 +571,16 @@ body.kb .touch-only { display: none; }
   stroke: currentColor;
   stroke-width: 1.6;
 }
+
+/* Extra life (story, new-enemy levels): the team was wiped; continue the
+   mini-boss fight or retreat. */
+#continue {
+  pointer-events: auto;
+  background: radial-gradient(ellipse at center, rgba(4, 5, 26, 0.6), rgba(4, 5, 26, 0.88));
+  animation: pause-in 0.2s ease-out;
+}
+#continue .sub { max-width: 300px; margin-top: 8px; }
+#quit-confirm .sub { margin: 0 0 4px; }
+#over-quit { margin-top: 18px; pointer-events: auto; }
+.btn.danger { color: #ff8cc6; border-color: var(--enemy); text-shadow: 0 0 8px rgba(255, 61, 154, 0.7); }
+.pause-actions.hidden { display: none; }   /* .pause-actions sets display after .hidden */

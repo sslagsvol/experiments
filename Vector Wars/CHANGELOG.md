@@ -387,3 +387,19 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Shields:** 6 → 18 hp, and they now hold in front of a level guard's grunt screen too (they guard the frontmost squad of the group). Checked: shields in front of every other unit of their group in 182 of 182 samples.
 - Style guide: title card shows the locked Challenge button.
 - Bots: story alive in level 7 at 7:00; boss fights 26s (drone), 47s (bomber, 9 left), 56s (brute, 15 left).
+
+## Round 42 — v0.11.0 (cont.): shorter level 1, boss reinforcements, shield rows, gentler slow motion (2026-10-09)
+- **Level 1 about 40% shorter** (bot: 55s → 32s; the rest is fighting): no slow approach on the first gate, and the gaps are tight where they can be. A gate now sits 5 behind each squad, but a squad stays 14 past the gate before it: halving every gap put gates in front of charging squads, soaking up all the bullets, and the bot died 14s in.
+- **Level 2 boss gentler:** the drone boss spews 4 drones (was 9) every 3.2s (was 2.6) with half the grunts (`BOSS_SPAWN` now has per-type `grunts`: drone 0.15, bomber and brute 0.3).
+- **Boss-fight reinforcements:** a skinny green + gate rushes at the team (the track is stopped) in a random lane each time the boss loses another 25% of its hp (worth 30% of the team as the boss arrived) and whenever a spew wave is shot down (12%), at least 6. Shoot it up, then catch it (`BOSS_GIFT_*`). Based on the team at the boss's arrival so they don't compound (the first try snowballed a 35-unit team to 751).
+- **Shields in rows:** 2 staggered rows in front (`SHIELD_ROWS`), plus a row through the middle of squads at least 1.5 deep (`SHIELD_MID_DEPTH`).
+- **Slow motion 10–15% less slow:** `killcamScale` 0.35 → 0.45, `slowMoScale` 0.3 → 0.4.
+- Style guide: mini-boss card (reinforcements, per-type spew), combos card (shield rows).
+- Bots: drone boss beaten with the team growing 42 → 46 (4 gifts); bomber boss beaten from 15 units with 7 gifts (11 left); the brute boss beat the bot once (Regroup), as before it's the hardest.
+
+## Round 43 — v0.11.0 (cont.): extra life for mini-boss fights, quit confirm, game-over Quit (2026-10-09)
+- **Extra life** (one per run, `G.lives`): when the strike team is wiped on a new-enemy level, the game freezes and asks "Team down · Use your extra life?". **Continue** clears the minions and the escort (`enemies.clearMinions`), keeps the mini-boss with its hp and place (pushed at least 8 units off; one that died crashing into the team comes back at its hold distance with the hp it had), respawns the strike team, and shows "Extra life". **Retreat** (or a wipe with the life spent) is the old Regroup: your army returns, no reward. Space / Q work too; the pause menu can't open over it.
+- **Pause menu Quit asks first:** "Quit this run? It won't be scored." with Quit run / Cancel (Q twice quits; Esc cancels).
+- **Game over:** a **Quit** button (no confirm) goes to the title; tap / Space now **retries the same mode** at once (it used to go to the title).
+- Style guide: game-over card (Quit), Quit confirm card, Extra life card, `.btn.danger`.
+- Checked: prompt freezes the game; Continue keeps the boss's hp (19 → 19) and clears 8 minions; a crash wipe brings the boss back at 21/22 hp; the bot then won the fight; a second wipe regroups without asking.

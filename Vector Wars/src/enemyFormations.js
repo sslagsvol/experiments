@@ -13,7 +13,7 @@ export const ENEMY_KINDS = {
   skirmish: { spread: 0.5,  label: 'Skirmish', note: 'Loose and scattered; hits flanks.' },
   column:   { spread: 0.6,  label: 'Column',   note: 'Narrow and deep.' },
   waves:    { spread: 1.0,  label: 'Waves',    note: 'Three thin walls, one after another.' },
-  line:     { spread: 1.0,  label: 'Shield line', note: 'One stiff row of shields (rows of 7 when there are more), held in front of the squad it guards.' },
+  line:     { spread: 1.0,  label: 'Shield line', note: 'Stiff, staggered rows of shields (up to 7 a row), held in front of the squad they guard, or through its middle.' },
 };
 
 // Unit types. damage = player units taken out on contact. aoe = area damage
@@ -113,7 +113,8 @@ export function enemyFormation(kind, n, rng = Math.random) {
       break;
     case 'line': {
       const L = CFG.SHIELD_SPACING, per = Math.min(n, 7);
-      for (let i = 0; i < n; i++) pts.push([((i % per) - (per - 1) / 2) * L, Math.floor(i / per) * L * 0.8]);
+      // Rows staggered by half a gap, so the second row covers the first's holes.
+      for (let i = 0; i < n; i++) { const r = Math.floor(i / per); pts.push([((i % per) - (per - 1) / 2 + (r % 2) * 0.5) * L, r * L * 0.8]); }
       break;
     }
     default: // blob

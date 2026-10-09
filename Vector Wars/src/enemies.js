@@ -122,6 +122,7 @@ export class EnemyForce {
     for (let i = this.max - 1; i >= 0; i--) this.free.push(i);
     this.squads = [];
     this.events = [];
+    this.lastBoss = null;   // a mini-boss that died crashing into the team: { type, hp, hpMax }
     this.count = 0;
     this.geo.setDrawRange(0, 0);
   }
@@ -167,9 +168,11 @@ export class EnemyForce {
 
   // A line of shields guarding squad `guard`: they start at its back and rush
   // to its front (CFG.SHIELD_RUSH), then hold there, CFG.SHIELD_LEAD ahead.
-  spawnShields(guard, n, rng) {
+  // mid = true: they hold in the middle of the squad instead, among its units.
+  spawnShields(guard, n, rng, mid = false) {
     const s = this.spawnSquad('line', n, guard.cx, guard.maxW, rng, 0, { back: [], mix: [['shield', 1]] });
     s.guards = guard;
+    s.mid = mid;
     return s;
   }
 
@@ -239,6 +242,16 @@ export class EnemyForce {
     }
   }
 
+  // Removes every unit except mini-bosses (an extra life: the fight goes on,
+  // its minions are gone). A boss's escort goes too, so it's exposed.
+  clearMinions() {
+    for (const s of this.squads) {
+      if (s.boss) continue;
+      for (const i of s.units) if (this.alive[i] && this.owner[i] === s.id) this.kill(i, s);
+    }
+    this.prune();
+  }
+
   // The live mini-boss squad, if any.
   get boss() { return this.squads.find((s) => s.boss && s.n > 0) || null; }
   bossHp(s) { return s && s.n > 0 ? this.hp[s.units[0]] / s.hpMax : 0; }
@@ -284,7 +297,7 @@ export class EnemyForce {
           continue;
         }
         if (guard) {
-          const target = guard.minW - CFG.SHIELD_LEAD - s.depth + this.oz[i];
+          const target = s.mid ? (guard.minW + guard.maxW) / 2 - s.depth / 2 + this.oz[i] : guard.minW - CFG.SHIELD_LEAD - s.depth + this.oz[i];
           this.w[i] = this.w[i] > target ? Math.max(target, this.w[i] - CFG.SHIELD_RUSH * dt) : target;
           const step = CFG.ENEMY_HOMING * 1.5 * dt;
           this.x[i] = clampX(this.x[i] + Math.max(-step, Math.min(step, guard.cx + this.ox[i] - this.x[i])));
@@ -318,6 +331,7 @@ export class EnemyForce {
         }
         if (army.N <= 0) continue;
         if (rz >= army.front - 0.05 && rz <= army.back + 0.3 && Math.abs(this.x[i] - army.cx) <= army.halfW + 0.12) {
+          if (s.boss) this.lastBoss = { type: s.bossType, hp: this.hp[i], hpMax: s.hpMax };
           this.kill(i, s);
           onHit(t, this.x[i], rz, false, s.boss);
         } else if (rz > army.back + CFG.ENEMY_LEAK_MARGIN) {

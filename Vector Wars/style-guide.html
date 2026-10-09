@@ -100,9 +100,9 @@
     <div class="card">
       <div class="stage"><div class="overlay"><h2>Swarm lost</h2>
         <div id="recap" class="recap"></div>
-        <p class="blink">Tap to retry</p></div></div>
-      <h3>Game-over recap</h3><div class="var">renderRecap() · #recap .score · .kills · .row</div>
-      <div class="meta">The real recap from src/hud.js with sample stats. Score = distance × CFG.SCORE_PER_DIST + each enemy defeated × its hp × CFG.SCORE_PER_HP · numbers count up over 0.9s · sprites idle (grunts bob, drones sway, bombers pulse, brutes turn)</div>
+        <p class="blink">Tap to retry</p><button type="button" class="btn" style="margin-top:18px">Quit</button></div></div>
+      <h3>Game-over recap</h3><div class="var">renderRecap() · #recap .score · .kills · .row · #retry · #over-quit</div>
+      <div class="meta">Tap (or Space) retries the same mode at once; <b>Quit</b> (a plain .btn under the retry line, Q, no confirm) goes to the title. Both appear once the board check is done. The real recap from src/hud.js with sample stats. Score = distance × CFG.SCORE_PER_DIST + each enemy defeated × its hp × CFG.SCORE_PER_HP · numbers count up over 0.9s · sprites idle (grunts bob, drones sway, bombers pulse, brutes turn)</div>
     </div>
     <div class="card">
       <div class="stage" style="padding:16px 8px"><div id="sg-board"></div></div>
@@ -130,11 +130,26 @@
         <div class="pause-tabs"><button type="button" data-tab="run" class="on">This run</button><button type="button" data-tab="board">High scores</button></div>
         <div class="pause-body"><div id="sg-pause-recap" class="recap"></div><div class="pause-board"><div id="sg-pause-board"></div><div id="pause-pace">On pace for 6th place</div></div></div>
         <div class="pause-actions"><button type="button" class="btn primary">Continue</button><button type="button" class="btn">Quit</button></div>
-        <p class="kb-hint" style="display:block">Space continue · Q quit · G grid</p>
+        <p class="kb-hint" style="display:block">Space continue · Q quit (Q again to confirm) · G grid</p>
         <div class="pause-lab"><button type="button">Grid: grid</button><button type="button">Parallax: deep</button></div>
         <div class="version"></div></div></div>
       <h3>Pause menu</h3><div class="var">#pause · h1.paused · .pause-tabs · .pause-body(.show-board) · #pause-pace · .btn(.primary)</div>
       <div class="meta">Opened by the pause button, Esc / P, or leaving the tab mid-run · the recap so far ("Score so far") and the board, with where this score would place · phones switch between them with tabs; 680px+ shows both side by side · "Paused" breathes over 2.4s · Continue is the big lime CTA; Quit ends the run and goes back to the title screen · keyboard hints (.kb-hint) appear only after a key press (body.kb) · beta experiments (.pause-lab, dashed): grid pattern and parallax · version along the bottom, 11px at 40%</div>
+    </div>
+    <div class="card">
+      <div class="stage"><div id="pause" class="overlay"><h1 class="paused">Paused</h1>
+        <div class="pause-actions"><p class="sub" style="margin:0 0 4px">Quit this run? It won't be scored.</p><button type="button" class="btn danger">Quit run</button><button type="button" class="btn">Cancel</button></div>
+        <p class="kb-hint" style="display:block">Q again to confirm · Esc cancel</p></div></div>
+      <h3>Quit confirm</h3><div class="var">#quit-confirm · .btn.danger</div>
+      <div class="meta">Quit on the pause menu (or Q) swaps Continue / Quit for this confirm · "Quit run" is a .btn.danger (--enemy border, pink text and glow) · Cancel, Esc or P go back; Space resumes</div>
+    </div>
+    <div class="card">
+      <div class="stage"><div id="continue" class="overlay"><h2>Team down</h2>
+        <p class="sub" style="max-width:300px;margin-top:8px">Use your extra life? The mini-boss stays where it is; its minions are cleared.</p>
+        <div class="pause-actions"><button type="button" class="btn primary">Continue</button><button type="button" class="btn">Retreat</button></div>
+        <p class="kb-hint" style="display:block">Space continue · Q retreat (your army returns, no reward)</p></div></div>
+      <h3>Extra life</h3><div class="var">#continue · offerContinue() · resolveContinue() · enemies.clearMinions()</div>
+      <div class="meta">One extra life per run. When the strike team is wiped on a new-enemy level, the game freezes and this asks · Continue: the minions (and the escort) are cleared, the mini-boss keeps its hp and place (at least 8 units off; if it died crashing into the team it comes back at its hold distance), the strike team respawns, "Extra life" banner · Retreat, or a wipe with the life spent: "Regroup", your army returns, no reward · h2 in --enemy pink like "Swarm lost", dark glass backdrop, fades in over 0.2s</div>
     </div>
     <div class="card">
       <div class="stage hud-stage"><div id="hud"><div id="toast" class="sg-toast"><div class="t1">Level 1 complete</div><div class="t2">150 units · on to level 2</div></div></div></div>
@@ -523,7 +538,7 @@ for (const [key, t] of Object.entries(ENEMY_TYPES)) {
 // Mini-bosses (bonus levels): one giant unit of the next enemy type.
 {
   const mv = CFG.BOSS_MOVES, sp = CFG.BOSS_SPAWN;
-  const cv = card($('enemy-types'), { title: 'Mini-boss', vars: `enemies.spawnBoss · moveBoss · CFG.BOSS_SIZE ${CFG.BOSS_SIZE} · BOSS_SPEED · BOSS_MOVES · BOSS_SPAWN · BOSS_HP_SECONDS · BOSS_HIT`, meta: `${CFG.BOSS_SIZE}× its type's size, glows and pulses · average advance ×${CFG.BOSS_SPEED} speed · hp = the strike team's shots/s × ${CFG.BOSS_HP_SECONDS}s × (drone ${CFG.BOSS_HP_MUL.drone}, bomber ${CFG.BOSS_HP_MUL.bomber}, brute ${CFG.BOSS_HP_MUL.brute}) · <b>moves</b>: drone circles the track and darts at the team every ${mv.drone.dartEvery}s; bomber hops every ${mv.bomber.hopEvery}s and each landing sends a shockwave (hurts the front row within ${mv.bomber.shockRange} units); brute sways and stomps forward a step every ${mv.brute.stepEvery}s · <b>spew</b>: every ${sp.drone.every}s / ${sp.bomber.every}s / ${sp.brute.every}s, ${sp.drone.own} / ${sp.bomber.own} / ${sp.brute.own} small units of its type with grunts (BOSS_SPAWN_GRUNTS ${CFG.BOSS_SPAWN_GRUNTS}) in front · if it reaches the team: one area hit, up to ${CFG.BOSS_HIT.share * 100}% · health bar at the top (#boss-bar)`, note: `Giant drone (level 2), giant bomber (4), giant brute (6). It arrives behind an escort of small units of its type (ESCORT_SHARE of the team: drone ${CFG.ESCORT_SHARE.drone}, bomber ${CFG.ESCORT_SHARE.bomber}, brute ${CFG.ESCORT_SHARE.brute}) and hangs back ${CFG.BOSS_HOLD} units ahead, shielded (dim, slow pulse; shots tick off) until they're gone. Then the track stops and it comes at you its own way, spewing small units that soak shots: a real skill gate. Clusters of its type ride with each squad first (CLUSTER_SHARE), behind grunt walls (SCREEN_SHARE ${CFG.SCREEN_SHARE}). When it appears its health bar fills in over 1s, and ${ANIM.bossGateBreak}s later every gate between it and the team shatters. Killing it unleashes its type and lets the survivors rejoin your army; a killcam and a big burst mark the kill.` });
+  const cv = card($('enemy-types'), { title: 'Mini-boss', vars: `enemies.spawnBoss · moveBoss · CFG.BOSS_SIZE ${CFG.BOSS_SIZE} · BOSS_SPEED · BOSS_MOVES · BOSS_SPAWN · BOSS_HP_SECONDS · BOSS_HIT`, meta: `${CFG.BOSS_SIZE}× its type's size, glows and pulses · average advance ×${CFG.BOSS_SPEED} speed · hp = the strike team's shots/s × ${CFG.BOSS_HP_SECONDS}s × (drone ${CFG.BOSS_HP_MUL.drone}, bomber ${CFG.BOSS_HP_MUL.bomber}, brute ${CFG.BOSS_HP_MUL.brute}) · <b>moves</b>: drone circles the track and darts at the team every ${mv.drone.dartEvery}s; bomber hops every ${mv.bomber.hopEvery}s and each landing sends a shockwave (hurts the front row within ${mv.bomber.shockRange} units); brute sways and stomps forward a step every ${mv.brute.stepEvery}s · <b>spew</b>: every ${sp.drone.every}s / ${sp.bomber.every}s / ${sp.brute.every}s, ${sp.drone.own} / ${sp.bomber.own} / ${sp.brute.own} small units of its type with grunts (${sp.drone.grunts} / ${sp.bomber.grunts} / ${sp.brute.grunts} of the team) in front · <b>reinforcements</b>: a skinny green + gate (${CFG.BOSS_GIFT_WIDTH} wide) rushes at the team at ${CFG.BOSS_GIFT_SPEED} units/s each time the boss loses another ${CFG.BOSS_GIFT_STEP * 100}% of its hp (worth ${CFG.BOSS_GIFT_SHARE * 100}% of the team as it arrived) and when a spew wave is shot down (${CFG.BOSS_GIFT_WAVE * 100}%), at least ${CFG.BOSS_GIFT_MIN} · if it reaches the team: one area hit, up to ${CFG.BOSS_HIT.share * 100}% · health bar at the top (#boss-bar)`, note: `Giant drone (level 2), giant bomber (4), giant brute (6). It arrives behind an escort of small units of its type (ESCORT_SHARE of the team: drone ${CFG.ESCORT_SHARE.drone}, bomber ${CFG.ESCORT_SHARE.bomber}, brute ${CFG.ESCORT_SHARE.brute}) and hangs back ${CFG.BOSS_HOLD} units ahead, shielded (dim, slow pulse; shots tick off) until they're gone. Then the track stops and it comes at you its own way, spewing small units that soak shots: a real skill gate. Clusters of its type ride with each squad first (CLUSTER_SHARE), behind grunt walls (SCREEN_SHARE ${CFG.SCREEN_SHARE}). When it appears its health bar fills in over 1s, and ${ANIM.bossGateBreak}s later every gate between it and the team shatters. Killing it unleashes its type and lets the survivors rejoin your army; a killcam and a big burst mark the kill.` });
   demo(cv, (ctx, w, h, time) => {
     ctx.globalCompositeOperation = 'lighter';
     // Each moves its own way: the drone circles, the bomber hops, the brute steps.
@@ -536,7 +551,7 @@ for (const [key, t] of Object.entries(ENEMY_TYPES)) {
 
 // Formation combos and the bullet enemy's warning line (v0.11.0).
 {
-  const cv = card($('enemy-types'), { title: 'Formation combos', vars: 'main.js spawnCombo · addShields · CFG.COMBO_CHANCE · SHIELD_CHANCE · SHIELD_SPACING · SHIELD_LEAD · SHIELD_RUSH', meta: `${Math.round(CFG.COMBO_CHANCE * 100)}% of regular squads are a set piece of the same strength: <b>guarded</b> (bombers behind a shield line) or <b>screen</b> (a grunt wall with brutes behind it) · ${Math.round(CFG.SHIELD_CHANCE * 100)}% of other squads bring a shield line, and level guards always do (once shields join) · shields start at the back of their squad, rush to the front at ${CFG.SHIELD_RUSH} units/s, and hold ${CFG.SHIELD_LEAD} in front, ${CFG.SHIELD_SPACING} apart`, note: 'Left: guarded bombers. Right: a grunt screen with brutes behind.' });
+  const cv = card($('enemy-types'), { title: 'Formation combos', vars: 'main.js spawnCombo · addShields · CFG.COMBO_CHANCE · SHIELD_CHANCE · SHIELD_SPACING · SHIELD_LEAD · SHIELD_RUSH', meta: `${Math.round(CFG.COMBO_CHANCE * 100)}% of regular squads are a set piece of the same strength: <b>guarded</b> (bombers behind a shield line) or <b>screen</b> (a grunt wall with brutes behind it) · ${Math.round(CFG.SHIELD_CHANCE * 100)}% of other squads bring a shield line, and level guards always do (once shields join) · shields start at the back of their squad, rush to the front at ${CFG.SHIELD_RUSH} units/s, and hold ${CFG.SHIELD_LEAD} in front in ${CFG.SHIELD_ROWS} staggered rows, ${CFG.SHIELD_SPACING} apart; squads at least ${CFG.SHIELD_MID_DEPTH} deep get another row through their middle`, note: 'Left: guarded bombers. Right: a grunt screen with brutes behind.' });
   demo(cv, (ctx, w, h, time) => {
     ctx.globalCompositeOperation = 'lighter';
     const T = ENEMY_TYPES;
