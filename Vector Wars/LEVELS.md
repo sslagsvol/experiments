@@ -103,7 +103,7 @@ The order is fixed. The numbers are drafts, to be tuned by bot play (see section
 
 ## 7. Decisions (round 29) and World 1 as built
 
-**Round 37:** the words "bonus level" are gone from the game. A new-enemy level opens with the army **condensing** into a small, bright team under an **"Army level up"** banner, then **"New enemy: Drone"** (or Bomber, Brute) with its sprite. The "Army N waiting" label is gone; the real count comes back after the level (with the survivors' bonus as a "+N"). If the team is wiped out: "Regroup", and the army returns. Internally the code still calls these "bonus" levels.
+**Round 37:** the words "bonus level" are gone from the game. A new-enemy level opens with the army **condensing** into a small, bright team under an **"Army level up"** banner, then **"New enemy:"** over its sprite (round 38: no name, the icon says it). The "Army N waiting" label is gone; the real count comes back after the level (with the survivors' bonus as a "+N"). If the team is wiped out: "Regroup", and the army returns. Internally the code still calls these "bonus" levels.
 
 **From the user:**
 - **Progression over upgrades.** The pick-1-of-3 upgrade idea is interesting but parked; levels themselves are the progression (fire rate up each level, new enemies, new gate types, new level shapes).

@@ -587,7 +587,7 @@ function levelUp(g) {
     army.reset();
     army.spawn(def.team, army.cx);
     sparks.ring(army.cx, 0.4, G.dist - army.front, 1.4, COLORS.white, 40);
-    hud.levelBanner('Army level up', null, [`New enemy: ${ENEMY_TYPES[def.boss].label}`, ENEMY_TYPES[def.boss]]);
+    hud.levelBanner('Army level up', null, ['New enemy:', ENEMY_TYPES[def.boss]]);
     return;
   }
   // Minimal and direct: what you got, then (no words) the enemy this level adds.
