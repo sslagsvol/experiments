@@ -155,6 +155,8 @@ The order is fixed. The numbers are drafts, to be tuned by bot play (see section
 3. **Bullet enemy** (later levels and Challenge): immune to fire, moves as fast as a player bullet, kills small groups. Answers "a huge army deletes everything before it gets close". Telegraph it (a streak or warning line) so dodging is a skill.
 4. **Formation combos:** small set pieces (a few shields guarding a bomber; grunts screening a brute) and larger groupings that combine powers (burn, then explode: flaming units everywhere, once the burn enemy exists).
 
+**Built in v0.11.0** (all four): boss moves (drone circles and darts, bomber hops with landing shockwaves, brute sways and stomps in steps) and spew (small units of its type plus grunts while it's exposed); shields at level 9, in a line in front of their squad; bullet enemies from level 11 with a blinking warning line, dodgeable; combos (guarded bombers, grunt-screened brutes). Tuning values in `CFG.BOSS_*`, `SHIELD_*`, `BOLT_*`, `COMBO_CHANCE`, `CHALLENGE_UNLOCK`.
+
 **Also noted:** level 8 (the sprint) is a lot of fun; keep that shape around.
 
 ## 8. How to build it

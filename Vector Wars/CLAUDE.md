@@ -20,6 +20,7 @@ How to update:
 ## Testing
 
 - `index.html?debug` shows FPS and unit counts and exposes `window.vectorWars` (`step(frames)`, `steer(x)`, `morph()`, `army`) for driving the sim without `requestAnimationFrame`.
+- With `?debug`, the gear button (or `) opens the debug panel (`src/debugPanel.js`): game speed, level skip, low graphics, +units, difficulty sliders saved in localStorage. `?debug&level=N` starts at level N.
 - `?units=N` sets the starting army (capped at `CFG.CAPACITY`); `?seed=N` picks a different track.
 
 ## Version history

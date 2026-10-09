@@ -206,6 +206,15 @@ const RECIPES = {
     a.hiss(delay, t + 0.05 * s, { f0: 3000 * p, f1: 400 * p, q: 2, dur: 0.4 * s, vol: 0.5 });
     setTimeout(() => { fb.gain.value = 0; delay.disconnect(); }, 3000 * s);
   },
+  // A bullet enemy's warning: two quick, rising, slightly harsh beeps.
+  warn(a, out, t, p, s) {
+    for (let i = 0; i < 2; i++) a.tone(out, t + i * 0.11 * s, { type: 'square', f0: (880 + i * 330) * p, f1: (990 + i * 330) * p, dur: 0.07 * s, vol: 0.35 });
+  },
+  // A bullet enemy flying: a fast falling zap with a hiss trail.
+  zap(a, out, t, p, s) {
+    a.tone(out, t, { type: 'sawtooth', f0: 2400 * p, f1: 180 * p, dur: 0.22 * s, vol: 0.4 });
+    a.hiss(out, t, { type: 'highpass', f0: 5000 * p, f1: 1500 * p, dur: 0.2 * s, vol: 0.35 });
+  },
   // Army wiped out: a long dive and a rumble.
   lose(a, out, t, p, s) {
     a.tone(out, t, { type: 'sawtooth', f0: 330 * p, f1: 40 * p, dur: 1.3 * s, vol: 0.35 });

@@ -16,7 +16,8 @@ Round-by-round history of playtest feedback and what changed, grouped by release
 | 0.7.0 | round 24 | PR #10 |
 | 0.8.0 | rounds 25–26 | PR #11 |
 | 0.9.0 | rounds 27–35 | PR #12 |
-| 0.10.0 | round 36 | `vw/v0.10.0` |
+| 0.10.0 | round 36 | PR #13 |
+| 0.11.0 | rounds 37–39 | `vw/v0.11.0` |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
@@ -362,3 +363,27 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - Middle ground between v0.9.0 and v0.10.0: `SPEED` 7.2 → 6.8; `DIFFICULTY` 1.7 → 1.5; `DIFFICULTY_LEVEL_1` 1.4 → 1.3; `LEVEL_GUARD_THREAT` 0.95 → 0.7; `SCREEN_SHARE` 0.25 → 0.15; `GATE_DURABILITY_STEP` / `MAX` 0.15 / 2.5 → 0.10 / 2.0; `ANIM.gruntConverge` 10 → 7; `FIRE_LEVELS[0]` 0.25 → 0.3; level 1 final squad threat 0.9 → 0.75 and beats 2 units further apart (20 / 22).
 - New-enemy banner: just "New enemy:" over the sprite, no name.
 - Bots: story reaches level 5 at ~3:15 (was dying in levels 1–2).
+
+## Round 39 — v0.11.0: skill-gate bosses, shields, bullets, combos (2026-10-09)
+(Rounds 37–38 were committed after PR #13 merged, so they ship in v0.11.0.)
+- **Mini-boss moves** (`CFG.BOSS_MOVES`, `enemies.moveBoss`): once its escort is gone, the drone boss circles the track and darts at the team; the bomber boss hops and each landing sends a shockwave that hurts the front row when it's close; the brute boss sways and stomps forward a step at a time. Average advance unchanged (`BOSS_SPEED`).
+- **Mini-boss spawning** (`CFG.BOSS_SPAWN`, `BOSS_SPAWN_GRUNTS`): while exposed it spews small units of its type with grunts in front, soaking shots. Boss hp 5 → 4 shots-seconds to compensate; bomber hp × 1 → 1.25.
+- **Shield enemy** (`ENEMY_TYPES.shield`, shader shape 4, `COLORS.steel`): wide steel chevron, 6 hp, wide hitbox. A line rushes from the back of its squad to the front and holds there (`SHIELD_*`); never attacks. Joins at level 9 (Challenge: after 8 gates). Level guards always bring a line; 35% of other squads do.
+- **Bullet enemy** (`ENEMY_TYPES.bolt`, shapes 5 and 6, `COLORS.bolt`): immune to fire. A blinking dotted warning line marks its lane (`BOLT_WARN` 1.1s, warn sound), then it flies at bullet speed (zap sound) and cuts through a small group. A dodge scores like a kill. Volleys every 5–9s from level 11 (Challenge: after 14 gates), never during a mini-boss.
+- **Formation combos** (`spawnCombo`, `COMBO_CHANCE` 25%): bombers guarded by a shield line, or a grunt wall with brutes behind, at the strength of the squad they replace.
+- Level banners: an unlock level shows its line, then "New enemy:" over the sprite (not repeated for a type its mini-boss just introduced).
+- Debug: `?debug&level=N` starts just before level N's gate.
+- Style guide: Shield and Bullet cards (live), Mini-boss card (moves, spew, levels 2/4/6), Formation combos and Bullet warning line cards, palette roles for steel and bolt, the 'Shield line' formation.
+- Bots: story reaches level 7 at 5:19 (boss fights 13–33s; all moves fire); challenge dies at 2:06 after 20 gates with shields, bullets and dodges; endless from level 10 is still a cliff (it was before v0.11.0 too: tested with shields and combos off).
+
+## Round 40 — v0.11.0 (cont.): debug panel (2026-10-09)
+- With `?debug`, a gear button top-right (or the ` key) opens a **debug panel** (`src/debugPanel.js`): game speed 0.1–3× (faster runs in substeps, one render a frame), slow motion / killcam on or off, **Next level** and **Go to level N** (story), +100 / +1,000 units, **low graphics** (no bloom, 0.75× resolution, no adaptive changes), and live sliders for the difficulty values we've been tuning (speed, difficulty, threat range, level guard, grunt screens and convergence, endless growth, shields, combos, bullet warning, boss hp and speed, gate durability). Changed values show in green, stay in this browser until **Reset**, and **Copy values** puts a config.js snippet on the clipboard. Panel input never steers the army.
+- Style guide: debug panel card.
+
+## Round 41 — v0.11.0 (cont.): a bit harder, Challenge locked, bigger boss spew, tougher shields (2026-10-09)
+- **Difficulty up a notch** (between the round 38 middle ground and v0.10.0): `SPEED` 6.8 → 7.0; `DIFFICULTY` 1.5 → 1.6; `DIFFICULTY_LEVEL_1` 1.3 → 1.35; `LEVEL_GUARD_THREAT` 0.7 → 0.8; `SCREEN_SHARE` 0.15 → 0.2; `GATE_DURABILITY_STEP` 0.10 → 0.12; `ANIM.gruntConverge` 7 → 8.5; level 1 final squad 0.75 → 0.8.
+- **Challenge mode locked** until World 1 is beaten in Story mode: the button is greyed out with a lock icon and the note reads "Beat World 1 in Story mode to unlock Challenge"; clicks, the C key and `?classic` fall back to Story. Reaching level 10 stores the unlock (localStorage `vector-wars-world1`) and the banner reads "World 1 complete · Challenge mode unlocked". Always open with `?debug`.
+- **Mini-bosses spew about 3× as much** (`BOSS_SPAWN` own: drone 3 → 9, bomber 1 → 3, brute 1 → 3; `BOSS_SPAWN_GRUNTS` 0.1 → 0.3, up to 30) and **advance slower** (`BOSS_SPEED` 0.45 → 0.3). Brute boss hp × 1.3 → 1.15 so the fight doesn't drag.
+- **Shields:** 6 → 18 hp, and they now hold in front of a level guard's grunt screen too (they guard the frontmost squad of the group). Checked: shields in front of every other unit of their group in 182 of 182 samples.
+- Style guide: title card shows the locked Challenge button.
+- Bots: story alive in level 7 at 7:00; boss fights 26s (drone), 47s (bomber, 9 left), 56s (brute, 15 left).
