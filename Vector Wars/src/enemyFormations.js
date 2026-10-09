@@ -31,8 +31,8 @@ export const ENEMY_TYPES = {
   brute:  { id: 3, shape: 3, size: 2.3, hp: 8, damage: 0, aoe: { radius: 1.2, peak: 0.5, max: 60 }, est: 38, speed: 0.7, homing: 0.8, color: 'enemyHeavy',
             label: 'Brute', note: 'Big hexagon, 8 hit points. Stomps a wide area on contact: half the units near it, fewer at the edge.' },
   // Placed by main.js, never mixed into squads (squadMix):
-  shield: { id: 4, shape: 4, size: 2.0, hp: 6, damage: 0, est: 0.4, speed: 1.0, homing: 0.6, hitW: 1.5, color: 'steel',
-            label: 'Shield', note: 'Wide steel chevron, 6 hit points, a wide hitbox. Rushes to the front of the squad it guards and holds a stiff line there, soaking shots so the units behind get close. Never attacks.' },
+  shield: { id: 4, shape: 4, size: 2.0, hp: 18, damage: 0, est: 0.4, speed: 1.0, homing: 0.6, hitW: 1.5, color: 'steel',
+            label: 'Shield', note: 'Wide steel chevron, 18 hit points, a wide hitbox. Rushes to the front of the squad it guards (in front of its grunt screen too) and holds a stiff line there, soaking shots so the units behind get close. Never attacks.' },
   bolt:   { id: 5, shape: 5, size: 2.0, hp: 3, damage: 0, lane: { radius: 0.3, peak: 0.85, max: 10 }, est: 6, speed: 1.0, homing: 0, immune: true, color: 'bolt',
             label: 'Bullet', note: 'A white-violet streak, immune to fire. A blinking warning line marks its lane for a second, then it crosses the track at bullet speed and cuts through a small group. Dodge it (a dodge scores like a kill).' },
 };

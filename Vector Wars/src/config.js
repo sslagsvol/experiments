@@ -12,7 +12,7 @@ export const VERSION = '0.11.0';
 
 export const CFG = {
   TW: 2.0,                 // track half-width (world units)
-  SPEED: 6.8,              // forward speed (units/s)
+  SPEED: 7.0,              // forward speed (units/s)
   FIRST: 22,               // distance to the first track element
   SEG_GATE: 18,            // gap after a gate before the next element
   SEG_ENEMY: 28,           // gap after a squad (room to breathe after a battle)
@@ -54,7 +54,7 @@ export const CFG = {
   CHALLENGE_SPEED_MAX: 3.0, // …up to this
   CHALLENGE_GATE_SCALE_MAX: 10, // Challenge: gate values stop growing here (no more +7,000 gates)
   CHALLENGE_SQUAD_GROWTH: 0.04, // Challenge: squads × (1 + this × gates past the 15th)
-  LEVEL_GUARD_THREAT: 0.7, // story: the squad guarding each level gate, × the best-case army (not Challenge mode)
+  LEVEL_GUARD_THREAT: 0.8, // story: the squad guarding each level gate, × the best-case army (not Challenge mode)
   OVERFLOW_SQUADS: 3,      // a squad bigger than MAX_PER_SQUAD comes as up to this many waves
   // Past World 1 (story): each level's squads are ENDLESS_GROWTH× bigger than
   // the last, and the track speeds up ENDLESS_SPEED per level (up to
@@ -63,8 +63,8 @@ export const CFG = {
   ENDLESS_SPEED: 0.05,
   ENDLESS_SPEED_MAX: 1.4,
   // Difficulty: squad sizes (random and authored) and mini-boss hp × this.
-  DIFFICULTY: 1.5,
-  DIFFICULTY_LEVEL_1: 1.3, // level 1's authored squads: still a skill check, but most people should pass
+  DIFFICULTY: 1.6,
+  DIFFICULTY_LEVEL_1: 1.35, // level 1's authored squads: still a skill check, but most people should pass
   // Small armies: below SMALL_ARMY_FROM units the dots (and their spacing)
   // grow, reaching SMALL_ARMY_SCALE× at SMALL_ARMY_FULL units or fewer.
   SMALL_ARMY_FROM: 80,
@@ -75,7 +75,7 @@ export const CFG = {
   GATE_DURABILITY: 1.25,
   // …and it climbs with progress: × (1 + GATE_DURABILITY_STEP per level past
   // the 1st), up to GATE_DURABILITY_MAX. Challenge counts every 8 gates as a level.
-  GATE_DURABILITY_STEP: 0.10,
+  GATE_DURABILITY_STEP: 0.12,
   GATE_DURABILITY_MAX: 2.0,
 
   DRAG_SPAN: 0.6,          // fraction of screen width that sweeps the full track
@@ -121,10 +121,10 @@ export const CFG = {
   // to a small team for a fight against a mini-boss, one giant unit of the
   // next enemy type.
   BOSS_SIZE: 4,            // × its type's size
-  BOSS_SPEED: 0.45,        // × ENEMY_CHARGE_SPEED: it advances slowly
+  BOSS_SPEED: 0.3,         // × ENEMY_CHARGE_SPEED: it advances slowly
   BOSS_HP_SECONDS: 4,      // hp = the strike team's shots per second × this
   BOSS_SWAY: 0.45,         // × its type's side-to-side sway and turning
-  BOSS_HP_MUL: { drone: 0.8, bomber: 1.25, brute: 1.3 },
+  BOSS_HP_MUL: { drone: 0.8, bomber: 1.25, brute: 1.15 },
   BOSS_HIT: { radius: 1.5, peak: 0.75, share: 0.5 },   // if it reaches the team: area hit, up to half of it
   BOSS_HOLD: 12,           // the boss hangs back this far ahead of the team while its escort lives
   // Once its escort is gone, each mini-boss moves its own way (a little like
@@ -135,14 +135,14 @@ export const CFG = {
     bomber: { hopEvery: 1.5, air: 0.7, hopHeight: 1.0, shock: { radius: 0.8, peak: 0.45, max: 10 }, shockRange: 2.2 },   // hops; each landing sends a shockwave
     brute:  { stepEvery: 1.2, stepTime: 0.35, sway: 0.55, swaySpeed: 0.8 },   // sways and stomps forward in steps
   },
-  BOSS_SPAWN: { drone: { every: 2.6, own: 3 }, bomber: { every: 3.0, own: 1 }, brute: { every: 3.2, own: 1 } },   // spew: every s, this many of its type…
-  BOSS_SPAWN_GRUNTS: 0.1,  // …plus this share of the team in grunts, in front
+  BOSS_SPAWN: { drone: { every: 2.6, own: 9 }, bomber: { every: 3.0, own: 3 }, brute: { every: 3.2, own: 3 } },   // spew: every s, this many of its type…
+  BOSS_SPAWN_GRUNTS: 0.3,  // …plus this share of the team in grunts, in front
   // Escort of small boss-type units in front of the boss (it's shielded until
   // they're gone), and clusters of that type riding with each bonus squad:
   // this share of the team's headcount, by type.
   ESCORT_SHARE: { drone: 0.3, bomber: 0.15, brute: 0.1 },
   CLUSTER_SHARE: { drone: 0.25, bomber: 0.08, brute: 0.06 },
-  SCREEN_SHARE: 0.15,
+  SCREEN_SHARE: 0.2,
   BONUS_SQUAD_SCALE: 0.45, // bonus levels' regular grunt squads × this: the fight is about the new type and the boss       // a wall of grunts in front of each cluster and escort, soaking up shots so the new type gets close
   BONUS_RETURN_CAP: 0.25,  // survivors rejoin your army, at most this share of it (only if the boss died)…
   BONUS_RETURN_MIN: 20,    // …or this many, whichever is more (a good bonus can rescue a small army)
@@ -222,7 +222,7 @@ export const ANIM = {
   blastRecoverRate: 0.12,  // × the normal follow speed at the start of recovery
   bossGateBreak: 1.0,      // s after a mini-boss appears: the gates between it and you shatter
   spawnFlash: 0.6,         // s new units flash white before settling to cyan
-  gruntConverge: 7,       // grunts start closing ranks this far out (units), screening what's behind them
+  gruntConverge: 8.5,      // grunts start closing ranks this far out (units), screening what's behind them
   killcamHold: 1.4,        // s (real time) of the first-blast / first-stomp killcam
   killcamScale: 0.35,      // time scale during it
   killcamIn: 0.25,         // s to ease the camera in

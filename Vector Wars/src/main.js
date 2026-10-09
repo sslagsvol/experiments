@@ -25,6 +25,8 @@ const CLASSIC = () => G.mode === 'challenge';
 const startUnits = (m) => Math.min(CFG.CAPACITY, Math.max(1, parseInt(params.get('units'), 10) || (m === 'challenge' ? CFG.START_UNITS : LEVEL_1.start)));
 const SEED = parseInt(params.get('seed'), 10) || CFG.SEED;
 const DEBUG = params.has('debug');
+// Challenge mode unlocks once World 1 is beaten in Story mode (always open with ?debug).
+const WORLD1_KEY = 'vector-wars-world1';
 
 const canvas = document.getElementById('game');
 const world = createWorld(canvas);
@@ -72,7 +74,7 @@ window.addEventListener('keydown', (e) => {
     else if (G.state === 'over' && time - G.overAt > 0.6 && hud.canRetry()) newRun();
   } else if (k === 'c' && G.state === 'title') {
     sfx.unlock();
-    startPlay('challenge');
+    if (challengeOpen()) startPlay('challenge');
   } else if (k === 'q') {
     if (G.paused) quitRun();
   } else if (k === 'm') {
@@ -84,7 +86,17 @@ window.addEventListener('keydown', (e) => {
 // Title: pick a mode.
 const titleModes = document.getElementById('title-modes');
 titleModes.addEventListener('pointerdown', (e) => e.stopPropagation());
-for (const b of titleModes.querySelectorAll('button')) b.addEventListener('click', () => { sfx.unlock(); if (G.state === 'title') startPlay(b.dataset.mode); });
+for (const b of titleModes.querySelectorAll('button')) b.addEventListener('click', () => { sfx.unlock(); if (G.state === 'title' && !b.disabled) startPlay(b.dataset.mode); });
+const challengeOpen = () => DEBUG || store.get(WORLD1_KEY) === '1';
+// Locked: greyed out with a lock, and the note says how to open it.
+const LOCK_SVG = '<svg class="lock" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg>';
+function syncChallengeLock() {
+  const b = titleModes.querySelector('[data-mode="challenge"]'), open = challengeOpen();
+  b.disabled = !open;
+  b.classList.toggle('locked', !open);
+  b.innerHTML = open ? 'Challenge mode' : `${LOCK_SVG}Challenge mode`;
+  titleModes.querySelector('.mode-note').textContent = open ? 'Challenge: every enemy, fast, for high scores' : 'Beat World 1 in Story mode to unlock Challenge';
+}
 
 // Touch hides the keyboard hints again.
 window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') document.body.classList.remove('kb'); }, { capture: true });
@@ -95,6 +107,8 @@ const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch { /* storage unavailable */ } },
 };
+syncChallengeLock();
+if (mode === 'challenge' && !challengeOpen()) mode = 'story';
 let pattern = world.setPattern(params.get('grid') || store.get('vector-wars-grid') || CFG.GRID_PATTERN);
 let parallax = store.get('vector-wars-parallax') !== 'off';
 world.setParallax(parallax);
@@ -200,6 +214,7 @@ function newRun() {
 }
 
 function startPlay(m = mode) {
+  if (m === 'challenge' && !challengeOpen()) m = 'story';
   if (m !== G.mode) {
     // The title showed the other mode's army: rebuild the run for this one.
     mode = m;
@@ -483,15 +498,16 @@ function spawnSquad({ wz, spec, boss, cluster, bonus, challenge }) {
   const x = challenge ? 0 : (G.rng() * 2 - 1) * CFG.TW;
   // Now and then a set piece instead, with the same strength.
   if (G.enemyIdx > 0 && !bonus && !challenge && G.rng() < CFG.COMBO_CHANCE && spawnCombo(n * mixEst(squadMix(kind, unlockIdx())), x, wz)) { G.enemyIdx++; return; }
-  if (challenge) enemies.spawnSquad('wall', typeCount(CFG.SCREEN_SHARE, 6, 200), x, wz - 3, G.rng, G.level, only('grunt'));   // grunts screen the guard
+  // Grunts screen the guard (and the shields hold in front of them).
+  let front = challenge ? enemies.spawnSquad('wall', typeCount(CFG.SCREEN_SHARE, 6, 200), x, wz - 3, G.rng, G.level, only('grunt')) : null;
   // Bigger than one squad can hold: it comes as several waves, one behind another.
-  let front = null;
   for (let k = 0; k < CFG.OVERFLOW_SQUADS && n > 0; k++) {
     const sq = enemies.spawnSquad(kind, Math.min(n, CFG.MAX_PER_SQUAD), x, wz + k * 5, G.rng, unlockIdx());
     front = front || sq;
     n -= CFG.MAX_PER_SQUAD;
   }
-  // Shields: level guards always bring a line, other squads sometimes.
+  // Shields: level guards always bring a line, other squads sometimes. They
+  // guard the frontmost squad of the group, so they're always in front.
   if (front && G.enemyIdx > 0 && !bonus && shieldsOn() && (challenge || G.rng() < CFG.SHIELD_CHANCE)) addShields(front);
   G.enemyIdx++;
 }
@@ -528,7 +544,7 @@ function bossSpew(dt) {
   b.spewT = (b.spewT ?? sp.every * 0.5) - dt;
   if (b.spewT > 0 || bw - G.dist + army.front < 5) return;   // not when it's nearly on the team
   b.spewT = sp.every;
-  enemies.spawnSquad('blob', typeCount(CFG.BOSS_SPAWN_GRUNTS, 3, 10), bx, bw - 2.2, G.rng, G.level, only('grunt')).charging = true;
+  enemies.spawnSquad('blob', typeCount(CFG.BOSS_SPAWN_GRUNTS, 6, 30), bx, bw - 2.2, G.rng, G.level, only('grunt')).charging = true;
   enemies.spawnSquad('blob', sp.own, bx, bw - 1.2, G.rng, G.level, only(b.bossType)).charging = true;
   sparks.ring(bx, 0.5, bw, 0.9, COLORS[ENEMY_TYPES[b.bossType].color], 24);
   sfx.play('pop', { pitch: 0.5 });
@@ -705,6 +721,12 @@ function levelUp(g) {
   // (A type its mini-boss just introduced doesn't get a second banner.)
   const key = Object.keys(UNLOCK_AT).find((k) => UNLOCK_AT[k] === G.level && levelDef(G.level - 1).boss !== k);
   const title = G.level === WORLD_END ? 'World 1 complete' : fireUp ? 'Attack speed increased' : `Level ${G.level}`;
+  if (G.level === WORLD_END && store.get(WORLD1_KEY) !== '1') {
+    store.set(WORLD1_KEY, '1');
+    syncChallengeLock();
+    hud.toast(title, 'Challenge mode unlocked');
+    return;
+  }
   if (key) hud.levelBanner(title, null, ['New enemy:', ENEMY_TYPES[key]]);
   else hud.levelBanner(title, null);
 }

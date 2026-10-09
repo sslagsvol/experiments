@@ -379,3 +379,11 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 ## Round 40 — v0.11.0 (cont.): debug panel (2026-10-09)
 - With `?debug`, a gear button top-right (or the ` key) opens a **debug panel** (`src/debugPanel.js`): game speed 0.1–3× (faster runs in substeps, one render a frame), slow motion / killcam on or off, **Next level** and **Go to level N** (story), +100 / +1,000 units, **low graphics** (no bloom, 0.75× resolution, no adaptive changes), and live sliders for the difficulty values we've been tuning (speed, difficulty, threat range, level guard, grunt screens and convergence, endless growth, shields, combos, bullet warning, boss hp and speed, gate durability). Changed values show in green, stay in this browser until **Reset**, and **Copy values** puts a config.js snippet on the clipboard. Panel input never steers the army.
 - Style guide: debug panel card.
+
+## Round 41 — v0.11.0 (cont.): a bit harder, Challenge locked, bigger boss spew, tougher shields (2026-10-09)
+- **Difficulty up a notch** (between the round 38 middle ground and v0.10.0): `SPEED` 6.8 → 7.0; `DIFFICULTY` 1.5 → 1.6; `DIFFICULTY_LEVEL_1` 1.3 → 1.35; `LEVEL_GUARD_THREAT` 0.7 → 0.8; `SCREEN_SHARE` 0.15 → 0.2; `GATE_DURABILITY_STEP` 0.10 → 0.12; `ANIM.gruntConverge` 7 → 8.5; level 1 final squad 0.75 → 0.8.
+- **Challenge mode locked** until World 1 is beaten in Story mode: the button is greyed out with a lock icon and the note reads "Beat World 1 in Story mode to unlock Challenge"; clicks, the C key and `?classic` fall back to Story. Reaching level 10 stores the unlock (localStorage `vector-wars-world1`) and the banner reads "World 1 complete · Challenge mode unlocked". Always open with `?debug`.
+- **Mini-bosses spew about 3× as much** (`BOSS_SPAWN` own: drone 3 → 9, bomber 1 → 3, brute 1 → 3; `BOSS_SPAWN_GRUNTS` 0.1 → 0.3, up to 30) and **advance slower** (`BOSS_SPEED` 0.45 → 0.3). Brute boss hp × 1.3 → 1.15 so the fight doesn't drag.
+- **Shields:** 6 → 18 hp, and they now hold in front of a level guard's grunt screen too (they guard the frontmost squad of the group). Checked: shields in front of every other unit of their group in 182 of 182 samples.
+- Style guide: title card shows the locked Challenge button.
+- Bots: story alive in level 7 at 7:00; boss fights 26s (drone), 47s (bomber, 9 left), 56s (brute, 15 left).

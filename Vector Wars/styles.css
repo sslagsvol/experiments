@@ -553,3 +553,21 @@ body.kb .touch-only { display: none; }
   cursor: pointer;
 }
 #dbg .dbg-foot { margin-top: 10px; }
+
+/* Challenge mode is locked until World 1 is beaten in Story mode: greyed
+   out with a lock icon (main.js syncChallengeLock). */
+.btn.locked {
+  color: rgba(207, 232, 255, 0.35);
+  border-color: rgba(207, 232, 255, 0.18);
+  cursor: not-allowed;
+}
+.btn.locked:active { scale: 1; }
+.btn .lock {
+  width: 0.9em;
+  height: 0.9em;
+  margin-right: 0.5em;
+  vertical-align: -0.08em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
