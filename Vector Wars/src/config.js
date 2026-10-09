@@ -81,7 +81,8 @@ export const CFG = {
   DRAG_SPAN: 0.6,          // fraction of screen width that sweeps the full track
   STEER_RESPONSE: 14,      // higher = snappier follow
 
-  GATE_H: 1.25,
+  GATE_H: 0.625,           // panel height (halved in round 44: less of the view blocked)
+  GATE_TEXT: { short: 0.5, long: 0.4 },   // label height × the panel's (labels of 5+ characters use long)
   ADD_HITS_PER_STEP: 4,    // bullets to raise a + / − gate by one
   MULT_START: 1.0,         // × gates start doing nothing…
   MULT_STEP: 0.1,          // …and climb in steps of 0.1…
