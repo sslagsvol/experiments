@@ -278,7 +278,7 @@ function gate(ctx, x, y, w, h, s) {
   ctx.strokeRect(x + 1, y + 1, w - 2, h - 2); ctx.restore();
   const label = gateLabel(s);
   const ink = c.map((v) => v * 0.55 * 0.65 + 0.9 * 0.35);
-  ctx.fillStyle = css(ink); ctx.font = `${Math.round(h * (label.length > 4 ? 0.5 : 0.62))}px ${FONT}`;
+  ctx.fillStyle = css(ink); ctx.font = `${Math.round(h * (label.length > 4 ? CFG.GATE_TEXT.long : CFG.GATE_TEXT.short))}px ${FONT}`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, x + w / 2, y + h * 0.52);
   if (s.ch > 0) { ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.fillRect(x, y + h * 0.9, w * s.ch, h * 0.06); }
 }

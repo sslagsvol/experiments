@@ -1102,7 +1102,9 @@ function update(dt, realDt) {
     for (const e of enemies.events.splice(0)) enemyEvent(e);
     bossSpew(dt);
     bossGifts();
-    for (const g of gates.active) if (g.rush && !g.done) g.wz -= g.rush * dt;
+    // Gift gates keep rushing after they're crossed (or missed) so they pass
+    // behind the team and are released: the track is stopped in boss fights.
+    for (const g of gates.active) if (g.rush) g.wz -= g.rush * dt;
     boltVolleys(dt);
 
     // Battles: the track rolls forward at reduced speed to meet a charging

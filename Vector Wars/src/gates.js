@@ -90,7 +90,7 @@ class Panel {
       ctx.fillStyle = '#fff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.font = `${Math.round(canvas.height * (label.length > 4 ? 0.5 : 0.62))}px ${FONT}`;
+      ctx.font = `${Math.round(canvas.height * (label.length > 4 ? CFG.GATE_TEXT.long : CFG.GATE_TEXT.short))}px ${FONT}`;
       ctx.fillText(label, canvas.width / 2, canvas.height * 0.52);
       this.tex.needsUpdate = true;
     }
@@ -166,6 +166,7 @@ export class GatePool {
     Object.assign(g, {
       wz, L, R, S, phase, sx: opts.x || 0, sw: opts.width || CFG.MOVING_GATE_WIDTH,
       fixed: opts.width !== undefined, slow: !!opts.slow, done: false, primary: null, doneAt: 0,
+      rush: 0, bonus: false,   // pooled: clear what the last user set (a boss-fight gift's rush, a bonus flag)
     });
     g.group.visible = true;
     this.active.push(g);
