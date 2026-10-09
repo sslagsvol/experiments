@@ -3,7 +3,7 @@
 A crowd-runner in the style of the "army through gates" mobile ads, redesigned around what those games get wrong: fake choices, hidden numbers, no skill expression, and art that buries the numbers. One thumb, thousands of units, 60fps on a mid-range phone.
 
 - **Play:** `index.html`. The title screen offers **Story mode** (the levels, `LEVELS.md`) and **Challenge mode** (the classic fast random track with nearly every enemy unlocked, for high-score runs; both share the one leaderboard). Challenge is locked until World 1 is beaten in Story mode (open with `?debug`). URL options: `?debug` (overlay plus the `window.vectorWars` test hook), `?units=N` (starting army), `?seed=N` (a different track), `?grid=hex` (a grid pattern), `?classic` (the old fully random track, no level 1), `?debug&level=N` (start just before level N's gate). With `?debug`, the gear button (or the ` key) opens the **debug panel**: game speed, slow motion on/off, level skip, +units, low graphics, and live sliders for the difficulty values (Copy values gives a config.js snippet).
-- **Version:** **v0.11.0 beta** (`VERSION` in `src/config.js`, shown on the title and pause screens). See section 7.
+- **Version:** **v0.11.1 beta** (`VERSION` in `src/config.js`, shown on the title and pause screens). See section 7.
 - **Style guide:** `style-guide.html`, every color, sprite, formation, animation and sound. Visual or animation changes must update it (rule in `CLAUDE.md`).
 - **Sound lab:** `sound-lab.html`, every sound with detune (lower, same speed) and stretch (longer, same pitch), globally or per sound (`SFX.tune` / `SFX.stretch`).
 - **History:** `CHANGELOG.md`, the round-by-round log of playtest feedback and what changed.
@@ -176,4 +176,5 @@ The game is in **beta**, so versions are **0.MINOR.PATCH**.
 | 0.8.0 | 2026-10-08 | PR #11 (`f236537`) | Level plan; level 1 playtest: authored opening, level gate, banner, linear ramp after |
 | 0.9.0 | 2026-10-08 | PR #12 (`1743790`) | Slower fire that grows per level, tougher gates, killcam, level-gate crescendo; World 1 levels 2–10 with bonus levels and mini-bosses |
 | 0.10.0 | 2026-10-08 | PR #13 (`2d8827c`) | Faster and harder: shorter levels, level-gate guards, grunts close ranks, boss gate shatter, unit flash, Challenge-mode caps |
-| 0.11.0 | (this branch) | `vw/v0.11.0` | Middle-ground difficulty; "Army level up" / "New enemy:" banners; durability by level; mini-boss moves and spawning; shield and bullet enemies; formation combos |
+| 0.11.0 | 2026-10-09 | PR #16 (`9582d34`) | Middle-ground difficulty; "Army level up" / "New enemy:" banners; durability by level; mini-boss moves and spawning, reinforcement gates, an extra life; shield and bullet enemies; formation combos; Challenge locked until World 1; debug panel |
+| 0.11.1 | (this branch) | `vw/v0.11.1` | Gate fixes (pooled gates kept a gift's rush; gift gates never despawned); gates half as tall with smaller numbers |

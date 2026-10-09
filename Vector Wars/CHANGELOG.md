@@ -17,7 +17,8 @@ Round-by-round history of playtest feedback and what changed, grouped by release
 | 0.8.0 | rounds 25–26 | PR #11 |
 | 0.9.0 | rounds 27–35 | PR #12 |
 | 0.10.0 | round 36 | PR #13 |
-| 0.11.0 | rounds 37–39 | `vw/v0.11.0` |
+| 0.11.0 | rounds 37–43 | PR #16 |
+| 0.11.1 | round 44 | `vw/v0.11.1` |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
@@ -404,7 +405,7 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - Style guide: game-over card (Quit), Quit confirm card, Extra life card, `.btn.danger`.
 - Checked: prompt freezes the game; Continue keeps the boss's hp (19 → 19) and clears 8 minions; a crash wipe brings the boss back at 21/22 hp; the bot then won the fight; a second wipe regroups without asking.
 
-## Round 44 — v0.11.0 (cont.): gate fixes, shorter gates (2026-10-09)
+## Round 44 — v0.11.1: gate fixes, shorter gates (2026-10-09)
 - **Fixed: a level gate sometimes rushed at the team** (obvious at 3× debug speed). Gates are pooled, and reuse didn't clear the `rush` a boss-fight gift had set (or its `bonus` flag, which could even let a Regroup delete the level gate). `GatePool.acquire` now resets both.
 - **Fixed: boss-fight gift gates never went away.** They stopped moving once crossed or missed, and with the track stopped in boss fights they sat on the team, faded, blocking the view. They now keep rushing past and are released.
 - **Gates half as tall** (`GATE_H` 1.25 → 0.625) with **numbers about 2.5× smaller** (new `GATE_TEXT`: 0.5 of the panel height, 0.4 for 5+ characters; were 0.62 / 0.5 of the taller panel). The style guide's gate drawings read both.
