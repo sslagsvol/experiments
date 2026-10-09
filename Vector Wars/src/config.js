@@ -48,13 +48,13 @@ export const CFG = {
   FIRE_MAX: 50,
   // Fire rate grows with progression: level 1 fires at FIRE_LEVELS[0] of the
   // full rate, and each level gate moves one step up (?classic always 1).
-  FIRE_LEVELS: [0.25, 0.4, 0.55, 0.7, 0.85, 1],
-  CHALLENGE_SPEED: 1.15,   // Challenge mode: track speed × at the start…
-  CHALLENGE_SPEED_STEP: 0.01, // …+ this per gate passed…
-  CHALLENGE_SPEED_MAX: 1.6, // …up to this
+  FIRE_LEVELS: [0.25, 0.45, 0.65, 0.78, 0.90, 1],
+  CHALLENGE_SPEED: 1.25,   // Challenge mode: track speed × at the start…
+  CHALLENGE_SPEED_STEP: 0.04, // …+ this per gate passed…
+  CHALLENGE_SPEED_MAX: 3.0, // …up to this
   CHALLENGE_GATE_SCALE_MAX: 10, // Challenge: gate values stop growing here (no more +7,000 gates)
   CHALLENGE_SQUAD_GROWTH: 0.04, // Challenge: squads × (1 + this × gates past the 15th)
-  LEVEL_CHALLENGE_THREAT: 1.3,  // story: the squad guarding each level gate, × the best-case army
+  LEVEL_CHALLENGE_THREAT: 0.95,  // story: the squad guarding each level gate, × the best-case army
   OVERFLOW_SQUADS: 3,      // a squad bigger than MAX_PER_SQUAD comes as up to this many waves
   // Past World 1 (story): each level's squads are ENDLESS_GROWTH× bigger than
   // the last, and the track speeds up ENDLESS_SPEED per level (up to
