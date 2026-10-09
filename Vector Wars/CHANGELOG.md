@@ -396,3 +396,10 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Slow motion 10–15% less slow:** `killcamScale` 0.35 → 0.45, `slowMoScale` 0.3 → 0.4.
 - Style guide: mini-boss card (reinforcements, per-type spew), combos card (shield rows).
 - Bots: drone boss beaten with the team growing 42 → 46 (4 gifts); bomber boss beaten from 15 units with 7 gifts (11 left); the brute boss beat the bot once (Regroup), as before it's the hardest.
+
+## Round 43 — v0.11.0 (cont.): extra life for mini-boss fights, quit confirm, game-over Quit (2026-10-09)
+- **Extra life** (one per run, `G.lives`): when the strike team is wiped on a new-enemy level, the game freezes and asks "Team down · Use your extra life?". **Continue** clears the minions and the escort (`enemies.clearMinions`), keeps the mini-boss with its hp and place (pushed at least 8 units off; one that died crashing into the team comes back at its hold distance with the hp it had), respawns the strike team, and shows "Extra life". **Retreat** (or a wipe with the life spent) is the old Regroup: your army returns, no reward. Space / Q work too; the pause menu can't open over it.
+- **Pause menu Quit asks first:** "Quit this run? It won't be scored." with Quit run / Cancel (Q twice quits; Esc cancels).
+- **Game over:** a **Quit** button (no confirm) goes to the title; tap / Space now **retries the same mode** at once (it used to go to the title).
+- Style guide: game-over card (Quit), Quit confirm card, Extra life card, `.btn.danger`.
+- Checked: prompt freezes the game; Continue keeps the boss's hp (19 → 19) and clears 8 minions; a crash wipe brings the boss back at 21/22 hp; the bot then won the fight; a second wipe regroups without asking.

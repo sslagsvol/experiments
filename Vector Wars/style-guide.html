@@ -100,9 +100,9 @@
     <div class="card">
       <div class="stage"><div class="overlay"><h2>Swarm lost</h2>
         <div id="recap" class="recap"></div>
-        <p class="blink">Tap to retry</p></div></div>
-      <h3>Game-over recap</h3><div class="var">renderRecap() · #recap .score · .kills · .row</div>
-      <div class="meta">The real recap from src/hud.js with sample stats. Score = distance × CFG.SCORE_PER_DIST + each enemy defeated × its hp × CFG.SCORE_PER_HP · numbers count up over 0.9s · sprites idle (grunts bob, drones sway, bombers pulse, brutes turn)</div>
+        <p class="blink">Tap to retry</p><button type="button" class="btn" style="margin-top:18px">Quit</button></div></div>
+      <h3>Game-over recap</h3><div class="var">renderRecap() · #recap .score · .kills · .row · #retry · #over-quit</div>
+      <div class="meta">Tap (or Space) retries the same mode at once; <b>Quit</b> (a plain .btn under the retry line, Q, no confirm) goes to the title. Both appear once the board check is done. The real recap from src/hud.js with sample stats. Score = distance × CFG.SCORE_PER_DIST + each enemy defeated × its hp × CFG.SCORE_PER_HP · numbers count up over 0.9s · sprites idle (grunts bob, drones sway, bombers pulse, brutes turn)</div>
     </div>
     <div class="card">
       <div class="stage" style="padding:16px 8px"><div id="sg-board"></div></div>
@@ -130,11 +130,26 @@
         <div class="pause-tabs"><button type="button" data-tab="run" class="on">This run</button><button type="button" data-tab="board">High scores</button></div>
         <div class="pause-body"><div id="sg-pause-recap" class="recap"></div><div class="pause-board"><div id="sg-pause-board"></div><div id="pause-pace">On pace for 6th place</div></div></div>
         <div class="pause-actions"><button type="button" class="btn primary">Continue</button><button type="button" class="btn">Quit</button></div>
-        <p class="kb-hint" style="display:block">Space continue · Q quit · G grid</p>
+        <p class="kb-hint" style="display:block">Space continue · Q quit (Q again to confirm) · G grid</p>
         <div class="pause-lab"><button type="button">Grid: grid</button><button type="button">Parallax: deep</button></div>
         <div class="version"></div></div></div>
       <h3>Pause menu</h3><div class="var">#pause · h1.paused · .pause-tabs · .pause-body(.show-board) · #pause-pace · .btn(.primary)</div>
       <div class="meta">Opened by the pause button, Esc / P, or leaving the tab mid-run · the recap so far ("Score so far") and the board, with where this score would place · phones switch between them with tabs; 680px+ shows both side by side · "Paused" breathes over 2.4s · Continue is the big lime CTA; Quit ends the run and goes back to the title screen · keyboard hints (.kb-hint) appear only after a key press (body.kb) · beta experiments (.pause-lab, dashed): grid pattern and parallax · version along the bottom, 11px at 40%</div>
+    </div>
+    <div class="card">
+      <div class="stage"><div id="pause" class="overlay"><h1 class="paused">Paused</h1>
+        <div class="pause-actions"><p class="sub" style="margin:0 0 4px">Quit this run? It won't be scored.</p><button type="button" class="btn danger">Quit run</button><button type="button" class="btn">Cancel</button></div>
+        <p class="kb-hint" style="display:block">Q again to confirm · Esc cancel</p></div></div>
+      <h3>Quit confirm</h3><div class="var">#quit-confirm · .btn.danger</div>
+      <div class="meta">Quit on the pause menu (or Q) swaps Continue / Quit for this confirm · "Quit run" is a .btn.danger (--enemy border, pink text and glow) · Cancel, Esc or P go back; Space resumes</div>
+    </div>
+    <div class="card">
+      <div class="stage"><div id="continue" class="overlay"><h2>Team down</h2>
+        <p class="sub" style="max-width:300px;margin-top:8px">Use your extra life? The mini-boss stays where it is; its minions are cleared.</p>
+        <div class="pause-actions"><button type="button" class="btn primary">Continue</button><button type="button" class="btn">Retreat</button></div>
+        <p class="kb-hint" style="display:block">Space continue · Q retreat (your army returns, no reward)</p></div></div>
+      <h3>Extra life</h3><div class="var">#continue · offerContinue() · resolveContinue() · enemies.clearMinions()</div>
+      <div class="meta">One extra life per run. When the strike team is wiped on a new-enemy level, the game freezes and this asks · Continue: the minions (and the escort) are cleared, the mini-boss keeps its hp and place (at least 8 units off; if it died crashing into the team it comes back at its hold distance), the strike team respawns, "Extra life" banner · Retreat, or a wipe with the life spent: "Regroup", your army returns, no reward · h2 in --enemy pink like "Swarm lost", dark glass backdrop, fades in over 0.2s</div>
     </div>
     <div class="card">
       <div class="stage hud-stage"><div id="hud"><div id="toast" class="sg-toast"><div class="t1">Level 1 complete</div><div class="t2">150 units · on to level 2</div></div></div></div>

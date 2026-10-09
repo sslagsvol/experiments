@@ -122,6 +122,7 @@ export class EnemyForce {
     for (let i = this.max - 1; i >= 0; i--) this.free.push(i);
     this.squads = [];
     this.events = [];
+    this.lastBoss = null;   // a mini-boss that died crashing into the team: { type, hp, hpMax }
     this.count = 0;
     this.geo.setDrawRange(0, 0);
   }
@@ -241,6 +242,16 @@ export class EnemyForce {
     }
   }
 
+  // Removes every unit except mini-bosses (an extra life: the fight goes on,
+  // its minions are gone). A boss's escort goes too, so it's exposed.
+  clearMinions() {
+    for (const s of this.squads) {
+      if (s.boss) continue;
+      for (const i of s.units) if (this.alive[i] && this.owner[i] === s.id) this.kill(i, s);
+    }
+    this.prune();
+  }
+
   // The live mini-boss squad, if any.
   get boss() { return this.squads.find((s) => s.boss && s.n > 0) || null; }
   bossHp(s) { return s && s.n > 0 ? this.hp[s.units[0]] / s.hpMax : 0; }
@@ -320,6 +331,7 @@ export class EnemyForce {
         }
         if (army.N <= 0) continue;
         if (rz >= army.front - 0.05 && rz <= army.back + 0.3 && Math.abs(this.x[i] - army.cx) <= army.halfW + 0.12) {
+          if (s.boss) this.lastBoss = { type: s.bossType, hp: this.hp[i], hpMax: s.hpMax };
           this.kill(i, s);
           onHit(t, this.x[i], rz, false, s.boss);
         } else if (rz > army.back + CFG.ENEMY_LEAK_MARGIN) {

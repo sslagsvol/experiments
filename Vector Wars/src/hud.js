@@ -28,6 +28,7 @@ export class Hud {
     this.titleBoard = document.getElementById('title-board');
     this.entryEl = document.getElementById('entry');
     this.retry = document.getElementById('retry');
+    this.overQuit = document.getElementById('over-quit');
     this.pauseBtn = document.getElementById('pause-btn');
     this.pauseEl = document.getElementById('pause');
     this.pauseRecap = document.getElementById('pause-recap');
@@ -107,12 +108,14 @@ export class Hud {
     if (this.entry) { this.entry.close(); this.entry = null; }
     this.entryEl.classList.add('hidden');
     this.retry.classList.add('hidden');
+    this.overQuit.classList.add('hidden');
     this.retryAt = Infinity;
     if (stats) this.stopRecap = renderRecap(this.recap, stats);
   }
 
   allowRetry() {
     this.retry.classList.remove('hidden');
+    this.overQuit.classList.remove('hidden');
     this.retryAt = performance.now();
   }
 
