@@ -39,7 +39,6 @@ export class Hud {
     this.stopPauseRecap = null;
     this.toastEl = document.getElementById('toast');
     this.bossBar = document.getElementById('boss-bar');
-    this.parkedEl = document.getElementById('parked');
     for (const el of document.querySelectorAll('.version')) el.textContent = `v${VERSION} beta`;
     this.gridBtn = document.getElementById('grid-btn');
     this.parallaxBtn = document.getElementById('parallax-btn');
@@ -158,13 +157,6 @@ export class Hud {
     if (v >= 0) this.bossBar.firstChild.style.width = `${v * 100}%`;
   }
 
-  // During a bonus level: your waiting army, small above the count.
-  setParked(n) {
-    if (n === this.last.parked) return;
-    this.last.parked = n;
-    this.parkedEl.textContent = n > 0 ? `Army ${fmt(n)} waiting` : '';
-  }
-
   // A big banner across the upper screen ("LEVEL 1").
   toast(title, sub = '') {
     this.toastEl.querySelector('.t1').textContent = title;
@@ -175,9 +167,12 @@ export class Hud {
 
   // After a level gate: one short line ("Attack speed increased"), then, if
   // this level adds an enemy type, a single small idle sprite of it, no words.
-  levelBanner(title, newType) {
+  // `then` = [title, newType]: a second banner that follows the first.
+  levelBanner(title, newType, then = null) {
     this.toast(title);
     cancelAnimationFrame(this.foeRaf);
+    clearTimeout(this.thenTimer);
+    if (then) this.thenTimer = setTimeout(() => this.levelBanner(...then), 1700);
     if (!newType) return;
     this.toastEl.classList.add('foe');
     const c = this.toastEl.querySelector('.t3'), ctx = c.getContext('2d'), t0 = performance.now();

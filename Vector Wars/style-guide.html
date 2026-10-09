@@ -140,12 +140,12 @@
       <div class="stage hud-stage"><div id="hud"><div id="toast" class="sg-toast"><div class="t1">Level 1 complete</div><div class="t2">150 units · on to level 2</div></div></div></div>
       <div class="controls"><button type="button" id="sg-toast-replay">Replay</button></div>
       <h3>Level banner</h3><div class="var">hud.toast() · hud.levelBanner() · #toast .t1 · .t2 · .t3 · @keyframes toast, toast-foe</div>
-      <div class="meta">Audiowide clamp(30px, 10vw, 54px) white with --you glow, 24% down the screen · sub line 15px · sweeps in (letter-spacing .3em → 0) and fades over 2.4s (ANIM.toastLife) · "Level 1" at the start of a run · after a level gate, one short line ("Attack speed increased") and, when the level adds an enemy type, a single 64px idle sprite of it with no words, fading in at ~0.9s (banner 3.1s) · the track is empty for CFG.LEVEL_QUIET units after the gate so nothing else is on screen</div>
+      <div class="meta">Audiowide clamp(30px, 10vw, 54px) white with --you glow, 24% down the screen · sub line 15px · sweeps in (letter-spacing .3em → 0) and fades over 2.4s (ANIM.toastLife) · "Level 1" at the start of a run · a new-enemy level shows "Army level up" then "New enemy: Drone" with its sprite · after a level gate, one short line ("Attack speed increased") and, when the level adds an enemy type, a single 64px idle sprite of it with no words, fading in at ~0.9s (banner 3.1s) · the track is empty for CFG.LEVEL_QUIET units after the gate so nothing else is on screen</div>
     </div>
     <div class="card">
-      <div class="stage hud-stage"><div id="hud"><div id="boss-bar" class="on" style="top:20px"><div class="fill" style="width:62%"></div></div><div id="parked" style="bottom:52px">Army 340 waiting</div><div id="army-hud" style="visibility:visible"><div id="count">25</div></div></div></div>
-      <h3>Bonus level HUD</h3><div class="var">#boss-bar (.on) .fill · #parked · hud.setBoss() · setParked()</div>
-      <div class="meta">Boss bar: min(260px, 60vw) × 8px, --enemy border and fill with glow, under the score; fades in while a mini-boss is alive and shrinks as it takes hits · waiting army: 13px uppercase --you at 70%, just above the strike team's count</div>
+      <div class="stage hud-stage"><div id="hud"><div id="boss-bar" class="on" style="top:20px"><div class="fill" style="width:62%"></div></div><div id="army-hud" style="visibility:visible"><div id="count">30</div></div></div></div>
+      <h3>Mini-boss HUD</h3><div class="var">#boss-bar (.on) .fill · hud.setBoss()</div>
+      <div class="meta">Boss bar: min(260px, 60vw) × 8px, --enemy border and fill with glow, under the score; fills in over 1s when a mini-boss appears (@keyframes boss-in), then shrinks as it takes hits. On a new-enemy level the army condenses to a small team: banners "Army level up", then "New enemy: Drone" with its sprite; the real count returns after the level.</div>
     </div>
     <div class="card">
       <div class="stage danger-stage"><div id="danger" style="opacity:1"></div><div id="hud"><div id="army-hud"><div id="count" class="danger">68</div><div id="loss" class="delta live">−214</div></div></div></div>

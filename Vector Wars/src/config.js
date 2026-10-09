@@ -54,7 +54,7 @@ export const CFG = {
   CHALLENGE_SPEED_MAX: 3.0, // …up to this
   CHALLENGE_GATE_SCALE_MAX: 10, // Challenge: gate values stop growing here (no more +7,000 gates)
   CHALLENGE_SQUAD_GROWTH: 0.04, // Challenge: squads × (1 + this × gates past the 15th)
-  LEVEL_CHALLENGE_THREAT: 0.95,  // story: the squad guarding each level gate, × the best-case army
+  LEVEL_GUARD_THREAT: 0.95, // story: the squad guarding each level gate, × the best-case army (not Challenge mode)
   OVERFLOW_SQUADS: 3,      // a squad bigger than MAX_PER_SQUAD comes as up to this many waves
   // Past World 1 (story): each level's squads are ENDLESS_GROWTH× bigger than
   // the last, and the track speeds up ENDLESS_SPEED per level (up to
@@ -73,6 +73,10 @@ export const CFG = {
   // Every gate takes this many times its listed hits to step (+ / − per +1,
   // × and ÷ per 0.1).
   GATE_DURABILITY: 1.25,
+  // …and it climbs with progress: × (1 + GATE_DURABILITY_STEP per level past
+  // the 1st), up to GATE_DURABILITY_MAX. Challenge counts every 8 gates as a level.
+  GATE_DURABILITY_STEP: 0.15,
+  GATE_DURABILITY_MAX: 2.5,
 
   DRAG_SPAN: 0.6,          // fraction of screen width that sweeps the full track
   STEER_RESPONSE: 14,      // higher = snappier follow
@@ -113,7 +117,9 @@ export const CFG = {
   RAMP_GATE: 0.7,
   RAMP_PAR: 0.4,
   LEVEL_SPACING_SPRINT: 14, // gap between gates in a sprint level
-  // Bonus levels: a mini-boss is one giant unit of the next enemy type.
+  // New-enemy levels (internally "bonus"): the army condenses ("Army level up")
+  // to a small team for a fight against a mini-boss, one giant unit of the
+  // next enemy type.
   BOSS_SIZE: 4,            // × its type's size
   BOSS_SPEED: 0.45,        // × ENEMY_CHARGE_SPEED: it advances slowly
   BOSS_HP_SECONDS: 5,      // hp = the strike team's shots per second × this

@@ -349,3 +349,10 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - Planned (`LEVELS.md` section 9): boss personalities and spawning, shields, bullet enemies, formation combos.
 - Bots: story dies in level 3 at ~2:30 (was 7+ min); challenge dies at ~2:25.
 
+## Round 37 — v0.10.0 (cont.): user tuning, durability by level, "New enemy" (2026-10-09)
+- User playtest: v0.10.0 was too hard (couldn't get past level 2; endless high score 440,000 → 24,000). User retuned: `FIRE_LEVELS` [0.25, 0.45, 0.65, 0.78, 0.90, 1], Challenge speed 1.25 + 0.04 per gate up to 3.0, level guard 0.95 (committed separately).
+- `LEVEL_CHALLENGE_THREAT` renamed **`LEVEL_GUARD_THREAT`** (it's the story level-gate guard, nothing to do with Challenge mode).
+- **Gate durability climbs with progress:** × (1 + `GATE_DURABILITY_STEP` 0.15 per level past the 1st), up to `GATE_DURABILITY_MAX` 2.5; Challenge counts every 8 gates as a level.
+- **No more "bonus level":** a new-enemy level shows "Army level up" as the army condenses to a small team (white spark ring), then "New enemy: [name]" with its sprite. The "Army N waiting" label is removed; a wiped team shows "Regroup". `hud.levelBanner` takes a follow-up banner.
+- Style guide: mini-boss HUD card, level banner note.
+
