@@ -215,6 +215,11 @@ const RECIPES = {
     a.tone(out, t, { type: 'sawtooth', f0: 2400 * p, f1: 180 * p, dur: 0.22 * s, vol: 0.4 });
     a.hiss(out, t, { type: 'highpass', f0: 5000 * p, f1: 1500 * p, dur: 0.2 * s, vol: 0.35 });
   },
+  // Units catching fire: a short crackle and a low whoosh.
+  burn(a, out, t, p, s) {
+    a.hiss(out, t, { type: 'bandpass', f0: 900 * p, f1: 400 * p, q: 0.8, dur: 0.25 * s, vol: 0.7, attack: 0.03 * s });
+    for (let i = 0; i < 4; i++) a.hiss(out, t + (i * 0.04 + Math.random() * 0.03) * s, { type: 'highpass', f0: (2500 + Math.random() * 2500) * p, dur: 0.02 * s, vol: 0.4 });
+  },
   // Army wiped out: a long dive and a rumble.
   lose(a, out, t, p, s) {
     a.tone(out, t, { type: 'sawtooth', f0: 330 * p, f1: 40 * p, dur: 1.3 * s, vol: 0.35 });

@@ -18,7 +18,8 @@ Round-by-round history of playtest feedback and what changed, grouped by release
 | 0.9.0 | rounds 27–35 | PR #12 |
 | 0.10.0 | round 36 | PR #13 |
 | 0.11.0 | rounds 37–43 | PR #16 |
-| 0.11.1 | round 44 | `vw/v0.11.1` |
+| 0.11.1 | round 44 | PR #17 |
+| 0.11.2 | round 45 | `vw/v0.11.2` |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
@@ -409,3 +410,13 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Fixed: a level gate sometimes rushed at the team** (obvious at 3× debug speed). Gates are pooled, and reuse didn't clear the `rush` a boss-fight gift had set (or its `bonus` flag, which could even let a Regroup delete the level gate). `GatePool.acquire` now resets both.
 - **Fixed: boss-fight gift gates never went away.** They stopped moving once crossed or missed, and with the track stopped in boss fights they sat on the team, faded, blocking the view. They now keep rushing past and are released.
 - **Gates half as tall** (`GATE_H` 1.25 → 0.625) with **numbers about 2.5× smaller** (new `GATE_TEXT`: 0.5 of the panel height, 0.4 for 5+ characters; were 0.62 / 0.5 of the taller panel). The style guide's gate drawings read both.
+
+## Round 45 — v0.11.2: burning brutes, deadly mini-bosses, level reshuffle (2026-10-09)
+- **"Watch the edges!"** once per run, the first time 10% of the army falls off within 1.5s (`CFG.EDGE_WARN`).
+- **Shields from level 3** (`UNLOCK_AT.shield` 9 → 3), **30 hp** (was 18). Near the army they **hover** `SHIELD_HOVER` 2.5 in front of it, still blocking, instead of charging in; `SHIELD_LINGER` 4s after their squad is gone they break off. To keep level 3 passable: a narrower hitbox (`hitW` 1.5 → 1.0, so one row has gaps), at most `SHIELD_PER_ROW` 4 a row, one row until level 5 (`SHIELD_FULL_AT`), the middle row from level 7 (`SHIELD_MID_AT`). (The first try, with up to 21 hovering 30-hp shields, killed the bot in level 3 without it scoring one shield.)
+- **Level 5: sprint into gauntlet.** 8 gates at 1.5× speed, a calm stretch at normal speed (`FINALE_CALM`), then four waves `FINALE_GAP` apart (`RUSH_FINALE` in levels.js): a huge grunt wall, drone skirmishers, bombers behind shields, a mixed last stand. Each is sized as threat × the army you'd have from the best side of every gate this level (`bestCase`, `G.best`), so wrong gates leave you short. Bot: an army at 55% of the best case dies in the last wave at +25% threats; settled between the two tries.
+- **Bullets from level 9** (`UNLOCK_AT.bolt` 11 → 9).
+- **Burning brutes:** 14 hp (was 8; `est` 45). With their outer shell (hp above half, `BURN.shell`) and within `BURN.range` 3 of the army, they burn: an orange flicker, fire sparks, a crackle, and units within 1.3 of them catch fire every 0.35s. Shot to half, the outer hexagon breaks off (shader shape 7) and the fire goes out.
+- **Mini-bosses burn** within 6 units (`BOSS_BURN`, radius 2.4), and **touching the team is game over** (no extra life; the crash-restore from round 43 is gone). The boss's own brutes arrive shell-less (no fire). Brute boss spews 2 brutes (was 3, user call) and its hp × 1.15 → 1.0: with touch = game over it beat the bot twice; now beaten in 45s, 49 → 53 units.
+- New `COLORS.burn`, `burn` sound; style guide: palette, brute and shield cards (live), mini-boss and combos cards.
+- Bots: full story run beat the drone and bomber bosses and cleared the level 5 finale; level 3 passed from 60 units (7 shields shot down).

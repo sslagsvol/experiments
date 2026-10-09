@@ -52,16 +52,28 @@ export const LEVEL_1 = {
 //         'bonus'    a small strike team (`team` units; your army waits),
 //                    a few squads, then a giant `boss` (the next enemy type to
 //                    be unleashed), a bonus × gate, and back to your army
+//   finale: (sprint) back-to-back waves after the gates, each { kind, mix,
+//         threat, shields? } sized as threat × the army you'd have from the
+//         best side of every gate in the level: get the gates wrong and you
+//         won't make it through. The track drops to normal speed for them.
 //   div / moving / split: gate types allowed (÷ gates, moving gates, pairs
 //   where both sides are good). Enemy types join by level (UNLOCK_AT).
 // After the last entry, levels repeat ENDLESS.
 // A mini-boss every other level, so the big enemies arrive early and the
 // battles are massive by levels 5–7.
+// Level 5: sprint into gauntlet. A huge grunt wall, then specialists.
+const RUSH_FINALE = [
+  { kind: 'wall', mix: [['grunt', 1]], threat: 0.56 },                         // a huge wall of grunts
+  { kind: 'skirmish', mix: [['grunt', 0.6], ['drone', 0.4]], threat: 0.4 },    // drone skirmishers
+  { kind: 'blob', mix: [['bomber', 1]], threat: 0.34, shields: true },          // bombers behind shields
+  { kind: 'waves', mix: [['grunt', 0.8], ['drone', 0.2]], threat: 0.52 },      // the last stand
+];
+
 export const LEVELS = {
   2: { kind: 'bonus', team: 30, boss: 'drone', squads: 2 },
   3: { kind: 'normal', pieces: 6, div: true, moving: true },
   4: { kind: 'bonus', team: 35, boss: 'bomber', squads: 2 },
-  5: { kind: 'normal', pieces: 7, div: true, moving: true, split: true },
+  5: { kind: 'sprint', pieces: 8, speed: 1.5, div: true, moving: true, split: true, finale: RUSH_FINALE },
   6: { kind: 'bonus', team: 40, boss: 'brute', squads: 2 },
   7: { kind: 'gauntlet', pieces: 6, div: true, moving: true, split: true },
   8: { kind: 'sprint', pieces: 8, speed: 1.5, div: true, moving: true },
