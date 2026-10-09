@@ -173,6 +173,7 @@ function newRun() {
     killcam: 0,      // 0..1, eased: how far the camera has moved in on the army
     killcamT: 0,     // s left of a first-blast / first-stomp killcam
     seenAoe: {},     // enemy type ids whose area attack has already had its killcam
+    boltT: CFG.BOLT_EVERY[1],   // s until the next bullet-enemy volley (once they're unlocked)
     rng: mulberry32(SEED),
     fireAcc: 0,
     shake: 0,
@@ -185,7 +186,7 @@ function newRun() {
     danger: 0,       // incoming enemy strength ÷ army size, smoothed
     timeScale: 1,    // slow motion when the danger is high
     overAt: 0,
-    stats: { peak: startUnits(mode), lostEnemy: 0, leaked: 0, lostGate: 0, fell: 0, gateHits: 0, kills: [0, 0, 0, 0], bossPts: 0 },
+    stats: { peak: startUnits(mode), lostEnemy: 0, leaked: 0, lostGate: 0, fell: 0, gateHits: 0, kills: TYPE_LIST.map(() => 0), bossPts: 0 },
     ui: 0,                       // real-time clock for HUD fades
     gain: { n: 0, t: -9 },       // running gain total shown left of the count
     loss: { n: 0, t: -9 },       // running loss total shown right of the count
@@ -209,6 +210,13 @@ function startPlay(m = mode) {
   hud.showTitle(false);
   hud.setPauseButton(true);
   if (!CLASSIC()) hud.toast(`Level ${G.level}`, 'Shoot the enemies · shoot the gates up');
+  // Debug: ?level=N starts just before level N's gate (skipping level 1).
+  const jump = DEBUG && !CLASSIC() && parseInt(params.get('level'), 10);
+  if (jump > 1) {
+    Object.assign(G, { beat: -1, rampFrom: 0, enemyIdx: 2, genLevel: jump, queue: [], rampArmy: army.N });
+    gates.acquire(G.dist + 6, null, null, { op: 'level', n: jump, ch: 0, f: 0 }, 0, fullWidth);
+    G.nextW = G.dist + 6 + CFG.LEVEL_QUIET;
+  }
 }
 
 // Score = distance + enemies defeated, each worth its hit points.
@@ -264,6 +272,11 @@ function spawnBeat() {
 // Which enemy types squads may use (squadMix / UNLOCK_AT): by level, each
 // unleashed by the bonus-level mini-boss before it.
 const unlockIdx = () => CLASSIC() ? (G.enemyIdx >= 1 ? 99 : 0) : G.level;   // Challenge: everything after the first squad
+
+// Shields and bullet enemies aren't mixed into squads: main.js places them,
+// by level in Story and by gates passed in Challenge.
+const shieldsOn = () => CLASSIC() ? G.gateIdx >= CFG.CHALLENGE_UNLOCK.shield : G.level >= UNLOCK_AT.shield;
+const boltsOn = () => CLASSIC() ? G.gateIdx >= CFG.CHALLENGE_UNLOCK.bolt : G.level >= UNLOCK_AT.bolt;
 
 // Past World 1, squads grow ENDLESS_GROWTH× per level.
 const endlessMul = () => G.level >= WORLD_END ? Math.pow(CFG.ENDLESS_GROWTH, G.level - WORLD_END + 1) : 1;
@@ -461,13 +474,104 @@ function spawnSquad({ wz, spec, boss, cluster, bonus, challenge }) {
     n = Math.round(Math.max(8, ref * threat / mixEst(squadMix(kind, unlockIdx()))) * grow * (bonus ? CFG.BONUS_SQUAD_SCALE : 1));
   }
   const x = challenge ? 0 : (G.rng() * 2 - 1) * CFG.TW;
+  // Now and then a set piece instead, with the same strength.
+  if (G.enemyIdx > 0 && !bonus && !challenge && G.rng() < CFG.COMBO_CHANCE && spawnCombo(n * mixEst(squadMix(kind, unlockIdx())), x, wz)) { G.enemyIdx++; return; }
   if (challenge) enemies.spawnSquad('wall', typeCount(CFG.SCREEN_SHARE, 6, 200), x, wz - 3, G.rng, G.level, only('grunt'));   // grunts screen the guard
   // Bigger than one squad can hold: it comes as several waves, one behind another.
+  let front = null;
   for (let k = 0; k < CFG.OVERFLOW_SQUADS && n > 0; k++) {
-    enemies.spawnSquad(kind, Math.min(n, CFG.MAX_PER_SQUAD), x, wz + k * 5, G.rng, unlockIdx());
+    const sq = enemies.spawnSquad(kind, Math.min(n, CFG.MAX_PER_SQUAD), x, wz + k * 5, G.rng, unlockIdx());
+    front = front || sq;
     n -= CFG.MAX_PER_SQUAD;
   }
+  // Shields: level guards always bring a line, other squads sometimes.
+  if (front && G.enemyIdx > 0 && !bonus && shieldsOn() && (challenge || G.rng() < CFG.SHIELD_CHANCE)) addShields(front);
   G.enemyIdx++;
+}
+
+function addShields(sq) {
+  const n = Math.max(2, Math.min(7, Math.round((sq.maxX - sq.minX) / CFG.SHIELD_SPACING) + 1));
+  return enemies.spawnShields(sq, n, G.rng);
+}
+
+// Formation combos, worth `strength` (expected damage) like the squad they
+// replace: shields guarding a knot of bombers, or a dense grunt screen with
+// brutes behind it. Returns false when neither is unlocked yet.
+function spawnCombo(strength, x, wz) {
+  const lvl = unlockIdx(), picks = [];
+  if (lvl >= UNLOCK_AT.brute) picks.push('screen');
+  if (lvl >= UNLOCK_AT.bomber && shieldsOn()) picks.push('guarded');
+  if (!picks.length) return false;
+  if (picks[Math.floor(G.rng() * picks.length)] === 'guarded') {
+    const bombers = enemies.spawnSquad('blob', Math.max(2, Math.min(8, Math.round(strength * 0.7 / ENEMY_TYPES.bomber.est))), x, wz, G.rng, lvl, only('bomber'));
+    addShields(bombers);
+  } else {
+    enemies.spawnSquad('wall', Math.max(10, Math.round(strength * 0.5 / ENEMY_TYPES.grunt.est)), x, wz - 1.5, G.rng, lvl, only('grunt'));
+    enemies.spawnSquad('column', Math.max(1, Math.min(6, Math.round(strength * 0.5 / ENEMY_TYPES.brute.est))), x, wz + 1, G.rng, lvl, only('brute'));
+  }
+  return true;
+}
+
+// An exposed mini-boss (its escort gone) keeps spewing small units of its
+// type, with a few grunts in front (CFG.BOSS_SPAWN).
+function bossSpew(dt) {
+  const b = enemies.boss;
+  if (!b || !b.charging || (b.escort && b.escort.n > 0) || army.N <= 0) return;
+  const sp = CFG.BOSS_SPAWN[b.bossType], i = b.units[0], bx = enemies.x[i], bw = enemies.w[i];
+  b.spewT = (b.spewT ?? sp.every * 0.5) - dt;
+  if (b.spewT > 0 || bw - G.dist + army.front < 5) return;   // not when it's nearly on the team
+  b.spewT = sp.every;
+  enemies.spawnSquad('blob', typeCount(CFG.BOSS_SPAWN_GRUNTS, 3, 10), bx, bw - 2.2, G.rng, G.level, only('grunt')).charging = true;
+  enemies.spawnSquad('blob', sp.own, bx, bw - 1.2, G.rng, G.level, only(b.bossType)).charging = true;
+  sparks.ring(bx, 0.5, bw, 0.9, COLORS[ENEMY_TYPES[b.bossType].color], 24);
+  sfx.play('pop', { pitch: 0.5 });
+}
+
+// Bullet enemies: a volley every CFG.BOLT_EVERY s once they're unlocked (not
+// during mini-boss fights). The first is aimed at the army; more come at
+// higher levels, staggered, down other lanes.
+function boltVolleys(dt) {
+  if (!boltsOn() || enemies.boss || G.bonus || army.N <= 0) return;
+  if ((G.boltT -= dt) > 0) return;
+  G.boltT = CFG.BOLT_EVERY[0] + Math.random() * (CFG.BOLT_EVERY[1] - CFG.BOLT_EVERY[0]);
+  const extra = CLASSIC() ? (G.gateIdx - CFG.CHALLENGE_UNLOCK.bolt) / 6 : (G.level - UNLOCK_AT.bolt) / 2;
+  const n = 1 + Math.floor(Math.random() * Math.min(CFG.BOLT_VOLLEY_MAX, 1 + extra));
+  for (let k = 0; k < n; k++) {
+    const x = k === 0 ? army.cx : (Math.random() * 2 - 1) * CFG.TW;
+    enemies.spawnBolt(x, G.dist - army.front + CFG.BOLT_AHEAD, CFG.BOLT_WARN + k * 0.35);
+  }
+  sfx.play('warn');
+}
+
+// Boss moves and bullet events from enemies.update.
+function enemyEvent(e) {
+  const gap = e.w - G.dist + army.front;   // how far ahead of the army's front row
+  if (e.kind === 'dart') {
+    sfx.play('zap', { pitch: 0.55, gain: 0.5 });
+    sparks.emit(e.x, 0.6, e.w, COLORS.enemy, 18, 3);
+  } else if (e.kind === 'land') {
+    // The giant bomber lands: a shockwave that hurts the team's front row if it's close.
+    const m = CFG.BOSS_MOVES.bomber, sh = m.shock;
+    sfx.play('blast', { pitch: 0.7, gain: 0.7 });
+    world.addRipple(e.x, e.w, ANIM.rippleBlast, time);
+    sparks.ring(e.x, 0.15, e.w, Math.min(m.shockRange, gap), COLORS.enemyHot, 40);
+    G.shake = Math.max(G.shake, 0.15);
+    if (gap < m.shockRange && army.N > 0) {
+      const killed = army.killArea(e.x, army.front, sh.radius, sh.peak, sh.max, unitLost);
+      army.blast(e.x, army.front, sh.radius);
+      noteLoss(killed);
+      G.stats.lostEnemy += killed;
+    }
+  } else if (e.kind === 'stomp') {
+    sfx.play('stomp', { pitch: 0.8, gain: 0.5 });
+    world.addRipple(e.x, e.w, ANIM.rippleStomp * 0.5, time);
+    sparks.ring(e.x, 0.1, e.w, 1.0, COLORS.enemyHeavy, 30);
+    G.shake = Math.max(G.shake, 0.12);
+  } else if (e.kind === 'boltFly') {
+    sfx.play('zap');
+  } else if (e.kind === 'dodged') {
+    G.stats.kills[ENEMY_TYPES.bolt.id]++;   // a dodge scores like a kill
+  }
 }
 
 // ---------- Rules ----------
@@ -591,9 +695,11 @@ function levelUp(g) {
     return;
   }
   // Minimal and direct: what you got, then (no words) the enemy this level adds.
-  const key = Object.keys(UNLOCK_AT).find((k) => UNLOCK_AT[k] === G.level);
+  // (A type its mini-boss just introduced doesn't get a second banner.)
+  const key = Object.keys(UNLOCK_AT).find((k) => UNLOCK_AT[k] === G.level && levelDef(G.level - 1).boss !== k);
   const title = G.level === WORLD_END ? 'World 1 complete' : fireUp ? 'Attack speed increased' : `Level ${G.level}`;
-  hud.levelBanner(title, key ? ENEMY_TYPES[key] : null);
+  if (key) hud.levelBanner(title, null, ['New enemy:', ENEMY_TYPES[key]]);
+  else hud.levelBanner(title, null);
 }
 
 // Leaving a bonus level: your army comes back. If the mini-boss died, the
@@ -761,6 +867,15 @@ function onHit(t, x, z, leaked, boss = false) {
     sfx.play('stomp');
     G.shake = 0.35;
     G.killcamT = Math.max(G.killcamT, ANIM.killcamHold);
+  } else if (t.lane) {
+    // A bullet enemy cuts a lane through the army, front to back.
+    const L = t.lane;
+    killed = 0;
+    for (let lz = army.front; lz <= army.back + 0.01 && killed < L.max; lz += L.radius) killed += army.killArea(x, lz, L.radius, L.peak, L.max - killed, unitLost);
+    sparks.emit(x, 0.3, G.dist - z, COLORS[t.color], 30, 6);
+    world.addRipple(x, G.dist - z, ANIM.rippleBlast, time);
+    sfx.play('blast', { pitch: 1.6, gain: 0.6 });
+    G.shake = Math.max(G.shake, 0.15);
   } else if (t.aoe) {
     // Dense (packed) armies get a slightly smaller radius so kills stay in range.
     const r = t.aoe.radius * Math.max(0.6, Math.min(1, army.pack)), w = G.dist - z, c = COLORS[t.color];
@@ -853,6 +968,9 @@ function update(dt, realDt) {
     G.ax += (G.tx - G.ax) * Math.min(1, realDt * CFG.STEER_RESPONSE);
 
     enemies.update(dt, G.dist, army, time, onHit);
+    for (const e of enemies.events.splice(0)) enemyEvent(e);
+    bossSpew(dt);
+    boltVolleys(dt);
 
     // Battles: the track rolls forward at reduced speed to meet a charging
     // squad, stops dead once it's close, and surges when it's beaten.

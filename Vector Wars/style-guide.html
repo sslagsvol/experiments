@@ -204,8 +204,8 @@
 <script type="module">
 import { CFG, COLORS, ANIM, BLOOM, GRID_PATTERNS, VERSION, multHitsForStep } from './src/config.js';
 import { FORMATIONS, UNIT_SPACING } from './src/formations.js';
-import { enemyFormation, ENEMY_KINDS, ENEMY_TYPES, TYPE_LIST } from './src/enemyFormations.js';
-import { drawEnemy } from './src/sprites.js';
+import { enemyFormation, ENEMY_KINDS, ENEMY_TYPES, TYPE_LIST, UNLOCK_AT } from './src/enemyFormations.js';
+import { drawEnemy, cssColor } from './src/sprites.js';
 import { renderRecap, renderBoard, InitialsEntry } from './src/hud.js';
 import { cachedScores } from './src/scores.js';
 import { Sfx, SOUND_NAMES } from './src/audio.js';
@@ -312,6 +312,8 @@ const ROLES = {
   enemy: 'Grunts and drones, enemy sparks, danger vignette',
   enemyHot: 'Bombers and their blast rings',
   enemyHeavy: 'Brutes and their stomp rings',
+  steel: 'Shields (the steel chevrons guarding squads)',
+  bolt: 'Bullet enemies and their blinking warning line',
   add: '+ gates (value ≥ 0)',
   sub: '− gates, and ÷ gates once added',
   mult: '× gates and their charge',
@@ -504,7 +506,7 @@ for (const [kind, info] of Object.entries(ENEMY_KINDS)) {
 // Shapes come from src/sprites.js (shared with the end-of-run recap).
 const enemyShape = (ctx, x, y, size, t, time, flash = 0) => drawEnemy(ctx, t, x, y, size, time, { flash });
 for (const [key, t] of Object.entries(ENEMY_TYPES)) {
-  const stats = `hp ${t.hp} · ` + (t.aoe ? `area: radius ${t.aoe.radius}, ${Math.round(t.aoe.peak * 100)}% kill chance at center → 0 at edge, max ${t.aoe.max}` : `kills ${t.damage} on contact`) + ` · speed ×${t.speed} · homing ×${t.homing}` + (t.strafe ? ` · strafe ${t.strafe}` : '') + (t.converge ? ' · homes on center' : '');
+  const stats = `hp ${t.hp} · ` + (t.aoe ? `area: radius ${t.aoe.radius}, ${Math.round(t.aoe.peak * 100)}% kill chance at center → 0 at edge, max ${t.aoe.max}` : `kills ${t.damage} on contact`) + ` · speed ×${t.speed} · homing ×${t.homing}` + (t.strafe ? ` · strafe ${t.strafe}` : '') + (t.converge ? ' · homes on center' : '') + (t.lane ? ` · lane: radius ${t.lane.radius}, ${Math.round(t.lane.peak * 100)}% front to back, max ${t.lane.max}` : '') + (t.immune ? ' · immune to fire' : '') + (t.hitW ? ` · hitbox ×${t.hitW} wide` : '') + (UNLOCK_AT[key] ? ` · joins at level ${UNLOCK_AT[key]}` : '');
   const cv = card($('enemy-types'), { title: t.label, vars: `ENEMY_TYPES.${key} · COLORS.${t.color} · size ×${t.size}`, meta: stats, note: t.note });
   demo(cv, (ctx, w, h, time) => {
     ctx.globalCompositeOperation = 'lighter';
@@ -515,10 +517,40 @@ for (const [key, t] of Object.entries(ENEMY_TYPES)) {
 }
 // Mini-bosses (bonus levels): one giant unit of the next enemy type.
 {
-  const cv = card($('enemy-types'), { title: 'Mini-boss', vars: `enemies.spawnBoss · CFG.BOSS_SIZE ${CFG.BOSS_SIZE} · BOSS_SPEED · BOSS_SWAY · BOSS_HP_SECONDS · BOSS_HIT`, meta: `${CFG.BOSS_SIZE}× its type's size, glows and pulses · advances at ×${CFG.BOSS_SPEED} speed, sways ×${CFG.BOSS_SWAY} · hp = the strike team's shots/s × ${CFG.BOSS_HP_SECONDS}s × (drone ${CFG.BOSS_HP_MUL.drone}, bomber ${CFG.BOSS_HP_MUL.bomber}, brute ${CFG.BOSS_HP_MUL.brute}) · if it reaches the team: one area hit, up to ${CFG.BOSS_HIT.share * 100}% · health bar at the top (#boss-bar)`, note: `Giant drone (level 3), giant bomber (6), giant brute (9). It arrives behind an escort of small units of its type (ESCORT_SHARE of the team: drone ${CFG.ESCORT_SHARE.drone}, bomber ${CFG.ESCORT_SHARE.bomber}, brute ${CFG.ESCORT_SHARE.brute}) and hangs back ${CFG.BOSS_HOLD} units ahead, shielded (dim, slow pulse; shots tick off) until they're gone. Then the track stops and it advances slowly: a team in good shape kills it before it arrives. Clusters of its type ride with each bonus squad first (CLUSTER_SHARE). A wall of grunts (SCREEN_SHARE ${CFG.SCREEN_SHARE}) walks in front of every cluster and escort, soaking up shots so the new type gets close enough to show its power. When it appears its health bar fills in over 1s, and ${ANIM.bossGateBreak}s later every gate between it and the team shatters. Killing it unleashes its type and lets the survivors rejoin your army; a killcam and a big burst mark the kill.` });
+  const mv = CFG.BOSS_MOVES, sp = CFG.BOSS_SPAWN;
+  const cv = card($('enemy-types'), { title: 'Mini-boss', vars: `enemies.spawnBoss · moveBoss · CFG.BOSS_SIZE ${CFG.BOSS_SIZE} · BOSS_SPEED · BOSS_MOVES · BOSS_SPAWN · BOSS_HP_SECONDS · BOSS_HIT`, meta: `${CFG.BOSS_SIZE}× its type's size, glows and pulses · average advance ×${CFG.BOSS_SPEED} speed · hp = the strike team's shots/s × ${CFG.BOSS_HP_SECONDS}s × (drone ${CFG.BOSS_HP_MUL.drone}, bomber ${CFG.BOSS_HP_MUL.bomber}, brute ${CFG.BOSS_HP_MUL.brute}) · <b>moves</b>: drone circles the track and darts at the team every ${mv.drone.dartEvery}s; bomber hops every ${mv.bomber.hopEvery}s and each landing sends a shockwave (hurts the front row within ${mv.bomber.shockRange} units); brute sways and stomps forward a step every ${mv.brute.stepEvery}s · <b>spew</b>: every ${sp.drone.every}s / ${sp.bomber.every}s / ${sp.brute.every}s, ${sp.drone.own} / ${sp.bomber.own} / ${sp.brute.own} small units of its type with grunts (BOSS_SPAWN_GRUNTS ${CFG.BOSS_SPAWN_GRUNTS}) in front · if it reaches the team: one area hit, up to ${CFG.BOSS_HIT.share * 100}% · health bar at the top (#boss-bar)`, note: `Giant drone (level 2), giant bomber (4), giant brute (6). It arrives behind an escort of small units of its type (ESCORT_SHARE of the team: drone ${CFG.ESCORT_SHARE.drone}, bomber ${CFG.ESCORT_SHARE.bomber}, brute ${CFG.ESCORT_SHARE.brute}) and hangs back ${CFG.BOSS_HOLD} units ahead, shielded (dim, slow pulse; shots tick off) until they're gone. Then the track stops and it comes at you its own way, spewing small units that soak shots: a real skill gate. Clusters of its type ride with each squad first (CLUSTER_SHARE), behind grunt walls (SCREEN_SHARE ${CFG.SCREEN_SHARE}). When it appears its health bar fills in over 1s, and ${ANIM.bossGateBreak}s later every gate between it and the team shatters. Killing it unleashes its type and lets the survivors rejoin your army; a killcam and a big burst mark the kill.` });
   demo(cv, (ctx, w, h, time) => {
     ctx.globalCompositeOperation = 'lighter';
-    ['drone', 'bomber', 'brute'].forEach((k, i) => enemyShape(ctx, w * (0.2 + i * 0.3), h / 2, 26 * ENEMY_TYPES[k].size * (1.4 + 0.08 * Math.sin(time * 5)), ENEMY_TYPES[k], time, 0.3 + 0.2 * Math.sin(time * 5)));
+    // Each moves its own way: the drone circles, the bomber hops, the brute steps.
+    const hop = Math.abs(Math.sin(time * Math.PI / CFG.BOSS_MOVES.bomber.hopEvery)) * h * 0.15;
+    const step = (time % CFG.BOSS_MOVES.brute.stepEvery) < CFG.BOSS_MOVES.brute.stepTime ? h * 0.04 : 0;
+    const pos = { drone: [Math.sin(time * 1.2) * w * 0.06, Math.cos(time * 1.2) * h * 0.06], bomber: [0, -hop], brute: [Math.sin(time * 0.8) * w * 0.04, -step] };
+    ['drone', 'bomber', 'brute'].forEach((k, i) => enemyShape(ctx, w * (0.2 + i * 0.3) + pos[k][0], h / 2 + pos[k][1], 26 * ENEMY_TYPES[k].size * (1.4 + 0.08 * Math.sin(time * 5)), ENEMY_TYPES[k], time, 0.3 + 0.2 * Math.sin(time * 5)));
+  });
+}
+
+// Formation combos and the bullet enemy's warning line (v0.11.0).
+{
+  const cv = card($('enemy-types'), { title: 'Formation combos', vars: 'main.js spawnCombo · addShields · CFG.COMBO_CHANCE · SHIELD_CHANCE · SHIELD_SPACING · SHIELD_LEAD · SHIELD_RUSH', meta: `${Math.round(CFG.COMBO_CHANCE * 100)}% of regular squads are a set piece of the same strength: <b>guarded</b> (bombers behind a shield line) or <b>screen</b> (a grunt wall with brutes behind it) · ${Math.round(CFG.SHIELD_CHANCE * 100)}% of other squads bring a shield line, and level guards always do (once shields join) · shields start at the back of their squad, rush to the front at ${CFG.SHIELD_RUSH} units/s, and hold ${CFG.SHIELD_LEAD} in front, ${CFG.SHIELD_SPACING} apart`, note: 'Left: guarded bombers. Right: a grunt screen with brutes behind.' });
+  demo(cv, (ctx, w, h, time) => {
+    ctx.globalCompositeOperation = 'lighter';
+    const T = ENEMY_TYPES;
+    for (let i = 0; i < 4; i++) enemyShape(ctx, w * 0.12 + i * 18, h * 0.42 + (i % 2) * 10, 18, T.bomber, time + i);
+    for (let i = 0; i < 3; i++) enemyShape(ctx, w * 0.1 + i * 26, h * 0.72, 30, T.shield, time + i);
+    for (let i = 0; i < 2; i++) enemyShape(ctx, w * 0.66 + i * 34, h * 0.32, 30, T.brute, time + i);
+    for (let i = 0; i < 14; i++) enemyShape(ctx, w * 0.56 + (i % 7) * 13, h * 0.62 + Math.floor(i / 7) * 12, 11, T.grunt, time + i);
+  });
+}
+{
+  const cv = card($('enemy-types'), { title: 'Bullet warning line', vars: 'enemies.spawnBolt · flyBolt · CFG.BOLT_WARN · BOLT_AHEAD · BOLT_EVERY · BOLT_VOLLEY_MAX · COLORS.bolt · shader shape 6', meta: `a volley every ${CFG.BOLT_EVERY[0]}–${CFG.BOLT_EVERY[1]}s once bullets join (level ${UNLOCK_AT.bolt}; Challenge after ${CFG.CHALLENGE_UNLOCK.bolt} gates; never during a mini-boss), up to ${CFG.BOLT_VOLLEY_MAX} at higher levels, the first aimed at you · each waits ${CFG.BOLT_AHEAD} units ahead behind 22 soft dots down its lane, blinking faster for ${CFG.BOLT_WARN}s (warn sound), then flies at bullet speed (${CFG.BULLET_SPEED} units/s, zap sound)`, note: 'Dodge sideways out of the lane; a dodge scores like a kill.' });
+  demo(cv, (ctx, w, h, time) => {
+    ctx.globalCompositeOperation = 'lighter';
+    const u = (time % 2.2) / 2.2, warn = u < 0.6, c = COLORS.bolt.map((v) => v * 0.55);
+    if (warn) {
+      const on = Math.sin(time * (12 + 26 * u / 0.6)) > -0.2;
+      for (let d = 0; d < 12; d++) { ctx.fillStyle = cssColor(c, on ? 0.9 : 0.25); ctx.beginPath(); ctx.arc(w / 2, h * 0.12 + d * h * 0.07, 2.5, 0, Math.PI * 2); ctx.fill(); }
+      enemyShape(ctx, w / 2, h * 0.12, 30, ENEMY_TYPES.bolt, time, 0.4);
+    } else enemyShape(ctx, w / 2, h * (0.12 + (u - 0.6) / 0.4 * 0.9), 30, ENEMY_TYPES.bolt, time, 1);
   });
 }
 
@@ -849,7 +881,7 @@ document.getElementById('sg-toast-replay').addEventListener('click', () => { sgT
 
 // Pause menu: the real recap and board, tabs live.
 renderRecap(document.getElementById('sg-pause-recap'), {
-  score: 9120, distPts: 4280, kills: [820, 40, 22, 12],
+  score: 9120, distPts: 4280, kills: [820, 40, 22, 12, 6, 2],
   killPts: TYPE_LIST.map((t, i) => [820, 40, 22, 12][i] * t.hp * CFG.SCORE_PER_HP),
   peak: 640, lostEnemy: 790, leaked: 12, lostGate: 30, fell: 4, newBest: false,
 }, 'Score so far');
@@ -871,7 +903,7 @@ document.querySelectorAll('[data-medal]').forEach((b) => b.addEventListener('cli
 
 // Recap: the real renderer with sample stats.
 renderRecap(document.getElementById('recap'), {
-  score: 24869, distPts: 8164, kills: [2388, 137, 72, 84],
+  score: 24869, distPts: 8164, kills: [2388, 137, 72, 84, 31, 9],
   killPts: TYPE_LIST.map((t, i) => [2388, 137, 72, 84][i] * t.hp * CFG.SCORE_PER_HP),
   peak: 813, lostEnemy: 2159, leaked: 0, lostGate: 42, fell: 0, newBest: true,
 });

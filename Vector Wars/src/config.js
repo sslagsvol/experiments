@@ -8,7 +8,7 @@
 
 // The game's version: 0.MINOR.PATCH while in beta. Bump it on the release
 // branch (vw/vX.Y.Z) and add a matching heading in CHANGELOG.md. See PLAN.md.
-export const VERSION = '0.10.0';
+export const VERSION = '0.11.0';
 
 export const CFG = {
   TW: 2.0,                 // track half-width (world units)
@@ -122,11 +122,21 @@ export const CFG = {
   // next enemy type.
   BOSS_SIZE: 4,            // × its type's size
   BOSS_SPEED: 0.45,        // × ENEMY_CHARGE_SPEED: it advances slowly
-  BOSS_HP_SECONDS: 5,      // hp = the strike team's shots per second × this
+  BOSS_HP_SECONDS: 4,      // hp = the strike team's shots per second × this
   BOSS_SWAY: 0.45,         // × its type's side-to-side sway and turning
-  BOSS_HP_MUL: { drone: 0.8, bomber: 1, brute: 1.3 },
+  BOSS_HP_MUL: { drone: 0.8, bomber: 1.25, brute: 1.3 },
   BOSS_HIT: { radius: 1.5, peak: 0.75, share: 0.5 },   // if it reaches the team: area hit, up to half of it
   BOSS_HOLD: 12,           // the boss hangs back this far ahead of the team while its escort lives
+  // Once its escort is gone, each mini-boss moves its own way (a little like
+  // its small version) and keeps spewing small units of its type plus grunts,
+  // so the fight is a real skill gate. Its average advance stays BOSS_SPEED.
+  BOSS_MOVES: {
+    drone:  { orbit: 0.8, orbitSpeed: 1.2, dartEvery: 3.2, dartTime: 0.45, dartSpeed: 3.5 },   // wide circles, then a dart at the team
+    bomber: { hopEvery: 1.5, air: 0.7, hopHeight: 1.0, shock: { radius: 0.8, peak: 0.45, max: 10 }, shockRange: 2.2 },   // hops; each landing sends a shockwave
+    brute:  { stepEvery: 1.2, stepTime: 0.35, sway: 0.55, swaySpeed: 0.8 },   // sways and stomps forward in steps
+  },
+  BOSS_SPAWN: { drone: { every: 2.6, own: 3 }, bomber: { every: 3.0, own: 1 }, brute: { every: 3.2, own: 1 } },   // spew: every s, this many of its type…
+  BOSS_SPAWN_GRUNTS: 0.1,  // …plus this share of the team in grunts, in front
   // Escort of small boss-type units in front of the boss (it's shielded until
   // they're gone), and clusters of that type riding with each bonus squad:
   // this share of the team's headcount, by type.
@@ -136,6 +146,20 @@ export const CFG = {
   BONUS_SQUAD_SCALE: 0.45, // bonus levels' regular grunt squads × this: the fight is about the new type and the boss       // a wall of grunts in front of each cluster and escort, soaking up shots so the new type gets close
   BONUS_RETURN_CAP: 0.25,  // survivors rejoin your army, at most this share of it (only if the boss died)…
   BONUS_RETURN_MIN: 20,    // …or this many, whichever is more (a good bonus can rescue a small army)
+  // Shields (v0.11.0): a line of steel chevrons that rushes to the front of
+  // a squad and holds there, soaking shots. They don't attack.
+  SHIELD_SPACING: 0.75,    // between shields in a line
+  SHIELD_LEAD: 0.9,        // how far in front of their squad they hold
+  SHIELD_RUSH: 5,          // units/s while rushing to the front
+  SHIELD_CHANCE: 0.35,     // a regular squad brings a shield line (level guards always do)
+  COMBO_CHANCE: 0.25,      // a regular squad is a set piece instead: shields guarding bombers, or grunts screening brutes
+  // Bullet enemies (v0.11.0): immune to fire. A warning line marks the lane,
+  // then it crosses at player-bullet speed and cuts through a small group.
+  BOLT_WARN: 1.1,          // s of warning line before it flies
+  BOLT_AHEAD: 24,          // it waits this far ahead of the army
+  BOLT_EVERY: [5, 9],      // s between volleys (random in this range)
+  BOLT_VOLLEY_MAX: 3,      // up to this many per volley (more at higher levels)
+  CHALLENGE_UNLOCK: { shield: 8, bolt: 14 },   // Challenge: gates passed before these join
   LEVEL_QUIET: 52,         // empty track after a level gate, so the banner shows with no enemies on screen
   LEVEL_CHARGE_HITS: 60,   // bullets to fill a level gate's charge bar (it soaks them up; the crossing is the crescendo)
   // Keyboard steering: units/s across the track at full hold (after a short
@@ -173,6 +197,8 @@ export const SFX = {
   stomp:   { volume: 0.65, maxRate: 4 },   // brute stomp
   win:     { volume: 0.55 },               // battle won: the blast plus an echoing crackle
   lose:    { volume: 0.6 },                // army wiped out
+  warn:    { volume: 0.35, maxRate: 4 },   // a bullet enemy's warning line appears
+  zap:     { volume: 0.4,  maxRate: 8 },   // a bullet enemy flies (and the drone boss darts)
 };
 
 // Animation timings. The style guide (style-guide.html) renders these live,
@@ -269,6 +295,8 @@ export const COLORS = {
   dying: [1.8, 0.1, 0.06],   // lost units burn from cyan to this, then to black
   div: [1.5, 0.12, 0.3],     // ÷ gates (a deeper red than − gates)
   white: [1.6, 1.6, 1.6],
+  steel: [0.75, 0.85, 1.25],  // shield enemies: a cool steel, bluer-grey than any red enemy, dimmer than your cyan
+  bolt: [2.0, 1.1, 1.9],      // bullet enemies and their warning line: a hot white-violet
 };
 
 // Bullets needed for a × gate's next 0.1 step at multiplier m.

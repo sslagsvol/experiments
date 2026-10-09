@@ -13,6 +13,7 @@ export const ENEMY_KINDS = {
   skirmish: { spread: 0.5,  label: 'Skirmish', note: 'Loose and scattered; hits flanks.' },
   column:   { spread: 0.6,  label: 'Column',   note: 'Narrow and deep.' },
   waves:    { spread: 1.0,  label: 'Waves',    note: 'Three thin walls, one after another.' },
+  line:     { spread: 1.0,  label: 'Shield line', note: 'One stiff row of shields (rows of 7 when there are more), held in front of the squad it guards.' },
 };
 
 // Unit types. damage = player units taken out on contact. aoe = area damage
@@ -29,6 +30,11 @@ export const ENEMY_TYPES = {
             label: 'Bomber', note: 'Pulsing ring. Homes in on the center and explodes: a tight, deadly blast.' },
   brute:  { id: 3, shape: 3, size: 2.3, hp: 8, damage: 0, aoe: { radius: 1.2, peak: 0.5, max: 60 }, est: 38, speed: 0.7, homing: 0.8, color: 'enemyHeavy',
             label: 'Brute', note: 'Big hexagon, 8 hit points. Stomps a wide area on contact: half the units near it, fewer at the edge.' },
+  // Placed by main.js, never mixed into squads (squadMix):
+  shield: { id: 4, shape: 4, size: 2.0, hp: 6, damage: 0, est: 0.4, speed: 1.0, homing: 0.6, hitW: 1.5, color: 'steel',
+            label: 'Shield', note: 'Wide steel chevron, 6 hit points, a wide hitbox. Rushes to the front of the squad it guards and holds a stiff line there, soaking shots so the units behind get close. Never attacks.' },
+  bolt:   { id: 5, shape: 5, size: 2.0, hp: 3, damage: 0, lane: { radius: 0.3, peak: 0.85, max: 10 }, est: 6, speed: 1.0, homing: 0, immune: true, color: 'bolt',
+            label: 'Bullet', note: 'A white-violet streak, immune to fire. A blinking warning line marks its lane for a second, then it crosses the track at bullet speed and cuts through a small group. Dodge it (a dodge scores like a kill).' },
 };
 export const TYPE_LIST = Object.values(ENEMY_TYPES);
 
@@ -36,7 +42,7 @@ export const TYPE_LIST = Object.values(ENEMY_TYPES);
 // (squadIndex = how many squads have spawned so far).
 // When each special type joins squads: the squad index on the classic track,
 // or the level number (each one unleashed by the bonus-level mini-boss before it).
-export const UNLOCK_AT = { drone: 3, bomber: 5, brute: 7 };
+export const UNLOCK_AT = { drone: 3, bomber: 5, brute: 7, shield: 9, bolt: 11 };
 
 export function squadMix(kind, squadIndex) {
   const drones = squadIndex >= UNLOCK_AT.drone, bombers = squadIndex >= UNLOCK_AT.bomber, brutes = squadIndex >= UNLOCK_AT.brute;
@@ -105,6 +111,11 @@ export function enemyFormation(kind, n, rng = Math.random) {
     case 'column':
       for (let i = 0; i < n; i++) pts.push([((i % 5) - 2) * S, Math.floor(i / 5) * S]);
       break;
+    case 'line': {
+      const L = CFG.SHIELD_SPACING, per = Math.min(n, 7);
+      for (let i = 0; i < n; i++) pts.push([((i % per) - (per - 1) / 2) * L, Math.floor(i / per) * L * 0.8]);
+      break;
+    }
     default: // blob
       for (let i = 0; i < n; i++) {
         const r = Math.sqrt(i + 0.5) * S * 0.62, a = i * 2.39996;

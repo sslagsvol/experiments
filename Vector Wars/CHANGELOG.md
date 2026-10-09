@@ -16,7 +16,8 @@ Round-by-round history of playtest feedback and what changed, grouped by release
 | 0.7.0 | round 24 | PR #10 |
 | 0.8.0 | rounds 25–26 | PR #11 |
 | 0.9.0 | rounds 27–35 | PR #12 |
-| 0.10.0 | round 36 | `vw/v0.10.0` |
+| 0.10.0 | round 36 | PR #13 |
+| 0.11.0 | rounds 37–39 | `vw/v0.11.0` |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
@@ -362,3 +363,15 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - Middle ground between v0.9.0 and v0.10.0: `SPEED` 7.2 → 6.8; `DIFFICULTY` 1.7 → 1.5; `DIFFICULTY_LEVEL_1` 1.4 → 1.3; `LEVEL_GUARD_THREAT` 0.95 → 0.7; `SCREEN_SHARE` 0.25 → 0.15; `GATE_DURABILITY_STEP` / `MAX` 0.15 / 2.5 → 0.10 / 2.0; `ANIM.gruntConverge` 10 → 7; `FIRE_LEVELS[0]` 0.25 → 0.3; level 1 final squad threat 0.9 → 0.75 and beats 2 units further apart (20 / 22).
 - New-enemy banner: just "New enemy:" over the sprite, no name.
 - Bots: story reaches level 5 at ~3:15 (was dying in levels 1–2).
+
+## Round 39 — v0.11.0: skill-gate bosses, shields, bullets, combos (2026-10-09)
+(Rounds 37–38 were committed after PR #13 merged, so they ship in v0.11.0.)
+- **Mini-boss moves** (`CFG.BOSS_MOVES`, `enemies.moveBoss`): once its escort is gone, the drone boss circles the track and darts at the team; the bomber boss hops and each landing sends a shockwave that hurts the front row when it's close; the brute boss sways and stomps forward a step at a time. Average advance unchanged (`BOSS_SPEED`).
+- **Mini-boss spawning** (`CFG.BOSS_SPAWN`, `BOSS_SPAWN_GRUNTS`): while exposed it spews small units of its type with grunts in front, soaking shots. Boss hp 5 → 4 shots-seconds to compensate; bomber hp × 1 → 1.25.
+- **Shield enemy** (`ENEMY_TYPES.shield`, shader shape 4, `COLORS.steel`): wide steel chevron, 6 hp, wide hitbox. A line rushes from the back of its squad to the front and holds there (`SHIELD_*`); never attacks. Joins at level 9 (Challenge: after 8 gates). Level guards always bring a line; 35% of other squads do.
+- **Bullet enemy** (`ENEMY_TYPES.bolt`, shapes 5 and 6, `COLORS.bolt`): immune to fire. A blinking dotted warning line marks its lane (`BOLT_WARN` 1.1s, warn sound), then it flies at bullet speed (zap sound) and cuts through a small group. A dodge scores like a kill. Volleys every 5–9s from level 11 (Challenge: after 14 gates), never during a mini-boss.
+- **Formation combos** (`spawnCombo`, `COMBO_CHANCE` 25%): bombers guarded by a shield line, or a grunt wall with brutes behind, at the strength of the squad they replace.
+- Level banners: an unlock level shows its line, then "New enemy:" over the sprite (not repeated for a type its mini-boss just introduced).
+- Debug: `?debug&level=N` starts just before level N's gate.
+- Style guide: Shield and Bullet cards (live), Mini-boss card (moves, spew, levels 2/4/6), Formation combos and Bullet warning line cards, palette roles for steel and bolt, the 'Shield line' formation.
+- Bots: story reaches level 7 at 5:19 (boss fights 13–33s; all moves fire); challenge dies at 2:06 after 20 gates with shields, bullets and dodges; endless from level 10 is still a cliff (it was before v0.11.0 too: tested with shields and combos off).

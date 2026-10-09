@@ -10,13 +10,15 @@ export const cssColor = (c, a = 1) => `rgba(${c.map((v) => Math.round(toSrgb(v) 
 
 // Draws one enemy of type t (an ENEMY_TYPES entry) centered at (x, y).
 // idle = true adds the type's idle motion: grunts bob, drones sway, bombers
-// pulse, brutes slowly turn.
+// pulse, brutes slowly turn, shields barely drift, bullets streak down.
 export function drawEnemy(ctx, t, x, y, size, time, { flash = 0, idle = false } = {}) {
   const c = COLORS[t.color].map((v) => v * 0.55 * (1 + flash * 2.5) * (idle ? 1.6 : 1)), r = size / 2;
   ctx.save();
   if (idle) {
     if (t.shape === 0) y += Math.sin(time * 4) * size * 0.06;
     if (t.shape === 1) x += Math.sin(time * 2.5) * size * 0.15;
+    if (t.shape === 4) y += Math.sin(time * 1.5) * size * 0.03;
+    if (t.shape === 5) y += ((time * 1.2) % 1 - 0.5) * size * 0.25;
   }
   ctx.translate(x, y);
   if (idle && t.shape === 3) ctx.rotate(time * 0.6);
@@ -31,6 +33,14 @@ export function drawEnemy(ctx, t, x, y, size, time, { flash = 0, idle = false } 
     ctx.moveTo(-r * 0.6, -r * 0.4); ctx.lineTo(r * 0.6, -r * 0.4); ctx.lineTo(0, r * 0.6); ctx.closePath();
   } else if (t.shape === 2) {
     ctx.arc(0, 0, r * 0.68, 0, Math.PI * 2);
+  } else if (t.shape === 4) {
+    // Shield: a flat bar bent into a chevron, point down (toward the player).
+    const hy = r * 0.13, y0 = r * 0.15, wy = r * 0.27;   // half thickness, point height, wing rise (0.35 × 0.78)
+    ctx.moveTo(-r * 0.78, y0 - wy - hy); ctx.lineTo(0, y0 - hy); ctx.lineTo(r * 0.78, y0 - wy - hy);
+    ctx.lineTo(r * 0.78, y0 - wy + hy); ctx.lineTo(0, y0 + hy); ctx.lineTo(-r * 0.78, y0 - wy + hy); ctx.closePath();
+  } else if (t.shape === 5) {
+    // Bullet enemy: a narrow streak with a hot core.
+    ctx.rect(-r * 0.12, -r * 0.85, r * 0.24, r * 1.7);
   } else {
     for (const k of [0.78, 0.45]) {
       for (let j = 0; j < 6; j++) {
@@ -41,6 +51,10 @@ export function drawEnemy(ctx, t, x, y, size, time, { flash = 0, idle = false } 
     }
   }
   ctx.stroke();
+  if (t.shape === 5) {
+    ctx.fillStyle = cssColor(c.map((v) => v * 1.6));
+    ctx.fillRect(-r * 0.04, -r * 0.7, r * 0.08, r * 1.4);
+  }
   if (t.shape === 2) {
     // Bomber core pulses.
     const pulse = 0.5 + 0.5 * Math.sin(time * 9);
