@@ -349,3 +349,16 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - Planned (`LEVELS.md` section 9): boss personalities and spawning, shields, bullet enemies, formation combos.
 - Bots: story dies in level 3 at ~2:30 (was 7+ min); challenge dies at ~2:25.
 
+## Round 37 — v0.10.0 (cont.): user tuning, durability by level, "New enemy" (2026-10-09)
+- User playtest: v0.10.0 was too hard (couldn't get past level 2; endless high score 440,000 → 24,000). User retuned: `FIRE_LEVELS` [0.25, 0.45, 0.65, 0.78, 0.90, 1], Challenge speed 1.25 + 0.04 per gate up to 3.0, level guard 0.95 (committed separately).
+- `LEVEL_CHALLENGE_THREAT` renamed **`LEVEL_GUARD_THREAT`** (it's the story level-gate guard, nothing to do with Challenge mode).
+- **Gate durability climbs with progress:** × (1 + `GATE_DURABILITY_STEP` 0.15 per level past the 1st), up to `GATE_DURABILITY_MAX` 2.5; Challenge counts every 8 gates as a level.
+- **No more "bonus level":** a new-enemy level shows "Army level up" as the army condenses to a small team (white spark ring), then "New enemy: [name]" with its sprite. The "Army N waiting" label is removed; a wiped team shows "Regroup". `hud.levelBanner` takes a follow-up banner.
+- Style guide: mini-boss HUD card, level banner note.
+
+
+## Round 38 — v0.10.0 (cont.): middle-ground difficulty (2026-10-09)
+- User playtest: still steep, tricky even for the user. Found: `DIFFICULTY` multiplies every squad, screen and boss hp, so the level guard (0.95 × 1.7 plus its grunt screen) was about 2× the best-case army at every level end.
+- Middle ground between v0.9.0 and v0.10.0: `SPEED` 7.2 → 6.8; `DIFFICULTY` 1.7 → 1.5; `DIFFICULTY_LEVEL_1` 1.4 → 1.3; `LEVEL_GUARD_THREAT` 0.95 → 0.7; `SCREEN_SHARE` 0.25 → 0.15; `GATE_DURABILITY_STEP` / `MAX` 0.15 / 2.5 → 0.10 / 2.0; `ANIM.gruntConverge` 10 → 7; `FIRE_LEVELS[0]` 0.25 → 0.3; level 1 final squad threat 0.9 → 0.75 and beats 2 units further apart (20 / 22).
+- New-enemy banner: just "New enemy:" over the sprite, no name.
+- Bots: story reaches level 5 at ~3:15 (was dying in levels 1–2).

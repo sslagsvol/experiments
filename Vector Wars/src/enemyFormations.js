@@ -22,7 +22,7 @@ export const ENEMY_KINDS = {
 // damage, used to size squads by strength rather than headcount.
 export const ENEMY_TYPES = {
   grunt:  { id: 0, shape: 0, size: 1.0, hp: 1, damage: 1.5, est: 1.5, speed: 1.0, homing: 1.0, color: 'enemy',
-            label: 'Grunt', note: 'Diamond. Marches in formation, then closes ranks from about 10 units out (ANIM.gruntConverge), screening the stronger units behind it.' },
+            label: 'Grunt', note: 'Diamond. Marches in formation, then closes ranks from about 7 units out (ANIM.gruntConverge), screening the stronger units behind it.' },
   drone:  { id: 1, shape: 1, size: 1.1, hp: 1, damage: 1, est: 1, speed: 1.2, homing: 2.5, strafe: 0.9, color: 'enemy',
             label: 'Drone', note: 'Triangle. Strafes side to side; hard to dodge.' },
   bomber: { id: 2, shape: 2, size: 1.4, hp: 2, damage: 0, aoe: { radius: 0.7, peak: 0.95, max: 45 }, est: 35, speed: 1.35, homing: 3.5, converge: true, color: 'enemyHot',

@@ -455,7 +455,7 @@ function spawnSquad({ wz, spec, boss, cluster, bonus, challenge }) {
     const par = Math.min(CFG.CAPACITY, CLASSIC() ? 30 * Math.pow(1.3, G.gateIdx) : (G.rampArmy || projectedArmy(wz)) * (1 + CFG.RAMP_PAR * rampK()));
     const ref = 0.8 * projectedArmy(wz) + 0.2 * par;
     // The squad guarding a level gate is a skill check: full strength.
-    const threat = challenge ? CFG.LEVEL_CHALLENGE_THREAT : CFG.ENEMY_THREAT_MIN + G.rng() * (CFG.ENEMY_THREAT_MAX - CFG.ENEMY_THREAT_MIN);
+    const threat = challenge ? CFG.LEVEL_GUARD_THREAT : CFG.ENEMY_THREAT_MIN + G.rng() * (CFG.ENEMY_THREAT_MAX - CFG.ENEMY_THREAT_MIN);
     // Size by strength, not headcount: a squad with brutes or bombers has fewer units.
     const grow = CLASSIC() ? 1 + CFG.CHALLENGE_SQUAD_GROWTH * Math.max(0, G.gateIdx - 15) : CFG.DIFFICULTY * endlessMul();
     n = Math.round(Math.max(8, ref * threat / mixEst(squadMix(kind, unlockIdx()))) * grow * (bonus ? CFG.BONUS_SQUAD_SCALE : 1));
@@ -580,12 +580,14 @@ function levelUp(g) {
   if (G.level >= WORLD_END) G.levelSpeed = Math.min(CFG.ENDLESS_SPEED_MAX, 1 + CFG.ENDLESS_SPEED * (G.level - WORLD_END + 1));
   const fireUp = fireMul() > fireBefore;
   if (def.kind === 'bonus') {
-    // Bonus level: your army waits; a small strike team goes in. The banner
-    // shows the mini-boss to come (no words).
+    // New-enemy level: the army "condenses" to a small, bright team (shown as
+    // a level-up, not a loss) to face the giant of the next enemy type. The
+    // real army count is kept and comes back after the level.
     G.bonus = { parked: army.N, killed: false, failed: false };
     army.reset();
-    army.spawn(def.team, 0);
-    hud.levelBanner('Bonus level', ENEMY_TYPES[def.boss]);
+    army.spawn(def.team, army.cx);
+    sparks.ring(army.cx, 0.4, G.dist - army.front, 1.4, COLORS.white, 40);
+    hud.levelBanner('Army level up', null, ['New enemy:', ENEMY_TYPES[def.boss]]);
     return;
   }
   // Minimal and direct: what you got, then (no words) the enemy this level adds.
@@ -616,7 +618,7 @@ function bonusLost() {
   G.queue = G.queue.filter((p) => p.kind === 'level' || p.n !== G.level);   // drop bonus pieces not placed yet
   for (const g of [...gates.active]) if (g.bonus) gates.release(g);
   army.spawn(parked, 0);
-  hud.toast('Strike team lost');
+  hud.toast('Regroup');
 }
 
 // Shatter every gate between the army and world distance w (they never arrive).
@@ -660,6 +662,12 @@ function shatterSparks(g) {
   }
 }
 
+// Gates get tougher as you progress: by level in Story, every 8 gates in Challenge.
+function gateDurability() {
+  const lvl = CLASSIC() ? 1 + G.gateIdx / 8 : G.level;
+  return CFG.GATE_DURABILITY * Math.min(CFG.GATE_DURABILITY_MAX, 1 + CFG.GATE_DURABILITY_STEP * Math.max(0, lvl - 1));
+}
+
 // Returns true when the gate's value stepped (for the tick sound).
 function hitGate(s) {
   G.stats.gateHits++;
@@ -667,7 +675,7 @@ function hitGate(s) {
   if (s.op === 'x') {
     if (s.m < CFG.MULT_MAX - 1e-6) {
       // Climbs in 0.1 steps; higher steps cost more hits.
-      s.ch += 1 / (multHitsForStep(s.m) * CFG.GATE_DURABILITY);
+      s.ch += 1 / (multHitsForStep(s.m) * gateDurability());
       if (s.ch >= 0.999) {
         s.ch = 0;
         s.m = Math.round((s.m + CFG.MULT_STEP) * 10) / 10;
@@ -676,7 +684,7 @@ function hitGate(s) {
     }
   } else if (s.op === '/') {
     // ÷ gates walk down toward ÷1.0 (no effect); steps near ÷3 cost the most.
-    s.ch += 1 / (multHitsForStep(s.d - CFG.MULT_STEP) * CFG.GATE_DURABILITY);
+    s.ch += 1 / (multHitsForStep(s.d - CFG.MULT_STEP) * gateDurability());
     if (s.ch >= 0.999) { s.ch = 0; s.d = Math.round((s.d - CFG.MULT_STEP) * 10) / 10; }
     if (s.d <= 1 + 1e-6) {
       // Shot down to ÷1.0: it flips into a ×1.0 gate and keeps climbing.
@@ -685,7 +693,7 @@ function hitGate(s) {
     }
   } else {
     // + / − gates fill a charge bar too: ADD_HITS_PER_STEP bullets per +1.
-    s.ch += 1 / (CFG.ADD_HITS_PER_STEP * CFG.GATE_DURABILITY);
+    s.ch += 1 / (CFG.ADD_HITS_PER_STEP * gateDurability());
     if (s.ch >= 0.999) { s.ch = 0; s.v += 1; }
   }
   s.f = 1;
@@ -978,10 +986,9 @@ function syncHud(realDt) {
   G.ui += realDt;
   for (const tally of [G.gain, G.loss]) if (tally.n > 0 && G.ui - tally.t > 1.2) tally.n = 0;
   hud.setDeltas(G.gain.n, G.loss.n);
-  // Bonus levels: the mini-boss's health bar, and your waiting army.
+  // The mini-boss's health bar.
   const boss = G.state === 'play' ? enemies.boss : null;
   hud.setBoss(boss ? enemies.bossHp(boss) : -1);
-  hud.setParked(G.bonus && !G.bonus.failed ? G.bonus.parked : 0);
 }
 
 // ---------- Loop ----------

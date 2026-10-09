@@ -28,16 +28,16 @@ export const LEVEL_1 = {
   start: 20,
   beats: [
     { gap: 0,  squad: { kind: 'blob', n: 5, x: 0 } },                 // a couple of opponents
-    { gap: 18, single: add(1), width: CFG.TW, slow: true },           // +1, half the road, dead center
-    { gap: 20, squad: { kind: 'blob', n: 8, x: 0 } },                 // easy wave
-    { gap: 20, pair: [add(-10), add(-1)], mirror: true },             // −10 / −1: take (or fix) the small one
-    { gap: 18, squad: { kind: 'wall', threat: 0.35, x: 0 } },
-    { gap: 20, pair: [add(5), add(12)], mirror: true },               // where you stand is what you pump
-    { gap: 18, squad: { kind: 'skirmish', threat: 0.45, x: 0 } },
-    { gap: 20, pair: [add(8), div(2)], mirror: true },                // first ÷ gate: shoot it down and it flips to ×
-    { gap: 18, squad: { kind: 'wedge', threat: 0.55, x: 0 } },
-    { gap: 20, pair: [mult(), add(10)], mirror: true },               // first × gate
-    { gap: 22, squad: { kind: 'waves', threat: 0.9, x: 0 } },         // end-of-level challenge: a real skill check
+    { gap: 20, single: add(1), width: CFG.TW, slow: true },           // +1, half the road, dead center
+    { gap: 22, squad: { kind: 'blob', n: 8, x: 0 } },                 // easy wave
+    { gap: 22, pair: [add(-10), add(-1)], mirror: true },             // −10 / −1: take (or fix) the small one
+    { gap: 20, squad: { kind: 'wall', threat: 0.35, x: 0 } },
+    { gap: 22, pair: [add(5), add(12)], mirror: true },               // where you stand is what you pump
+    { gap: 20, squad: { kind: 'skirmish', threat: 0.45, x: 0 } },
+    { gap: 22, pair: [add(8), div(2)], mirror: true },                // first ÷ gate: shoot it down and it flips to ×
+    { gap: 20, squad: { kind: 'wedge', threat: 0.55, x: 0 } },
+    { gap: 22, pair: [mult(), add(10)], mirror: true },               // first × gate
+    { gap: 22, squad: { kind: 'waves', threat: 0.75, x: 0 } },         // end-of-level challenge: a real skill check
     { gap: 24, levelGate: 2 },
   ],
 };
