@@ -16,6 +16,7 @@ Round-by-round history of playtest feedback and what changed, grouped by release
 | 0.7.0 | round 24 | PR #10 |
 | 0.8.0 | rounds 25–26 | PR #11 |
 | 0.9.0 | rounds 27–35 | PR #12 |
+| 0.10.0 | round 36 | `vw/v0.10.0` |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
@@ -341,4 +342,10 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 ## Round 35 — v0.9.0 (cont.): past World 1 gets much harder (2026-10-08)
 - User: once you pass World 1 there needs to be a major difficulty adjustment; it feels like you could go on forever.
 - **Endless (level 10+, story):** squads ×`CFG.ENDLESS_GROWTH` (1.3) bigger every level on top of the normal ramp, the track 5% faster per level (up to ×1.4), and every third level is a gauntlet. Bot: a 1,100-unit army at level 12 met a squad at the 1,500 cap and was wiped out within about 20 seconds.
+
+## Round 36 — v0.10.0: faster, harder (2026-10-08)
+- User playtest: still too slow and too easy (10+ minutes with little effort; aim for 3–4 minutes for a really good run); end-of-level challenges; grunts should converge earlier instead of leaving holes to the power units; gates block bullets and are too close to mini-boss fights, so shatter them as the boss health bar animates in; shield and bullet enemies; Challenge mode breaks after about 12 levels' worth (max army every gate, +7,000 gates); level 8 is fun; new units should flash white; mini-bosses need their own movement and should spawn units (real skill gates); formation combos.
+- Built: track speed 7.2; shorter level 1 and levels; end-of-level guard squads (`LEVEL_CHALLENGE_THREAT` 1.3) behind grunt screens; difficulty 1.7 after level 1 (`DIFFICULTY_LEVEL_1` 1.4); grunts close ranks (`ANIM.gruntConverge`); boss bar fills in and the gates before the boss shatter (`ANIM.bossGateBreak`); new units flash white (`ANIM.spawnFlash`); Challenge caps gate growth (`CHALLENGE_GATE_SCALE_MAX`), ramps speed and squads (`CHALLENGE_SPEED_*`, `CHALLENGE_SQUAD_GROWTH`); oversize squads come in waves (`OVERFLOW_SQUADS`).
+- Planned (`LEVELS.md` section 9): boss personalities and spawning, shields, bullet enemies, formation combos.
+- Bots: story dies in level 3 at ~2:30 (was 7+ min); challenge dies at ~2:25.
 
