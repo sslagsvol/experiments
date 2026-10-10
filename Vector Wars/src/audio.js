@@ -13,6 +13,7 @@ export class Sfx {
     this.ctx = null;
     this.rate = 1;          // < 1 in slow motion: everything plays lower and longer
     this.last = {};
+    this.persist = true;    // false: mute changes last this visit only (debug mode)
     try { this.muted = localStorage.getItem(STORE_KEY) === '1'; } catch { this.muted = false; }
     document.addEventListener('visibilitychange', () => {
       if (!this.ctx) return;
@@ -46,7 +47,7 @@ export class Sfx {
 
   setMuted(m) {
     this.muted = m;
-    try { localStorage.setItem(STORE_KEY, m ? '1' : '0'); } catch { /* storage unavailable */ }
+    if (this.persist) try { localStorage.setItem(STORE_KEY, m ? '1' : '0'); } catch { /* storage unavailable */ }
     if (this.master) this.master.gain.setTargetAtTime(m ? 0 : SFX.master, this.ctx.currentTime, 0.02);
   }
 

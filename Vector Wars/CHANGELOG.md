@@ -430,3 +430,4 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 
 ## Round 47 — v0.11.4: level 5 finale eased (2026-10-09)
 - User playtest: "feeling great"; the end of level 5 is too tough. The four finale waves are about 15% smaller (`RUSH_FINALE` threats 0.56 / 0.40 / 0.34 / 0.52 → 0.48 / 0.34 / 0.29 / 0.44 × the best-case army).
+- **Debug mode starts muted** (`?debug`, which every test run uses). The mute button still works there, but only for that visit: the saved setting for normal play isn't touched (`sfx.persist`).

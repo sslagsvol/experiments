@@ -45,6 +45,8 @@ window.addEventListener('pointerdown', () => sfx.unlock(), { capture: true });
 const muteBtn = document.getElementById('mute');
 const syncMute = () => { muteBtn.classList.toggle('off', sfx.muted); muteBtn.setAttribute('aria-pressed', String(sfx.muted)); };
 muteBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); sfx.unlock(); sfx.setMuted(!sfx.muted); syncMute(); });
+// Debug (and test) runs start muted, without touching the saved setting.
+if (DEBUG) { sfx.persist = false; sfx.muted = true; }
 syncMute();
 
 // Pause: the button, Esc / P, or leaving the tab mid-run.
