@@ -191,7 +191,9 @@ export const CFG = {
   // between ahead[0] and ahead[1] units in front of the army); a mini-boss loses
   // `bossDamage` of its hp. The button shows when a squad or boss is within
   // `showRange` and stays up `linger` s after.
-  BOMB: { unlockAt: 5, cost: 0.2, ahead: [2, 7], radius: 2.8, bossDamage: 0.25, showRange: 7.5, linger: 1.5, challengeEvery: 10 },
+  // Earning more: every `earn` squads shot down completely (not by the bomb)
+  // add a bomb, up to `max` held.
+  BOMB: { unlockAt: 5, cost: 0.2, ahead: [2, 7], radius: 2.8, bossDamage: 0.25, showRange: 7.5, linger: 1.5, challengeEvery: 10, earn: 5, max: 2 },
   COMBO_CHANCE: 0.25,      // a regular squad is a set piece instead: shields guarding bombers, or grunts screening brutes
   // Bullet enemies (v0.11.0): immune to fire. A warning line marks the lane,
   // then it crosses at player-bullet speed and cuts through a small group.

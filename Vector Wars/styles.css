@@ -190,7 +190,7 @@ html, body {
   position: absolute;
   left: 8px;
   right: 8px;
-  top: calc(44px + env(safe-area-inset-top));
+  top: calc(84px + env(safe-area-inset-top));   /* below the score, level tag and bomb meter */
   font-size: 11px;
   color: var(--text);
   text-shadow: none;
@@ -604,8 +604,19 @@ body.kb .touch-only { display: none; }
   gap: 8px;
 }
 #level-tag:empty { display: none; }
-#level-tag .bomb-mark { width: 15px; height: 15px; }
-#level-tag .bomb-mark svg, #bomb-btn svg { fill: none; stroke: #ffb43d; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 4px rgba(255, 140, 40, 0.8)); }
+/* Bomb meter (after the bomb unlocks): a bomb per charge held (dim when
+   empty), then pips toward the next one; flashes when one is earned. */
+#bomb-meter { display: none; align-items: center; gap: 8px; opacity: .7; }
+#bomb-meter.show { display: flex; }
+#bomb-meter.earned { animation: meter-earn 1.2s ease-out; }
+@keyframes meter-earn { 0%, 40% { opacity: 1; scale: 1.25; } 100% { opacity: .7; scale: 1; } }
+#bomb-meter .bombs { display: flex; gap: 3px; }
+.bomb-mark { width: 15px; height: 15px; }
+.bomb-mark.empty { opacity: .25; }
+#bomb-meter .pips { display: flex; gap: 3px; }
+#bomb-meter .pips i { width: 5px; height: 5px; border-radius: 50%; border: 1px solid #ffb43d; opacity: .5; }
+#bomb-meter .pips i.on { background: #ffb43d; opacity: 1; box-shadow: 0 0 4px rgba(255, 140, 40, 0.8); }
+.bomb-mark svg, #bomb-btn svg { fill: none; stroke: #ffb43d; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 4px rgba(255, 140, 40, 0.8)); }
 
 /* The bomb: a big round button that takes the middle of the screen when a
    squad or mini-boss closes in and a bomb is ready (B on a keyboard). */

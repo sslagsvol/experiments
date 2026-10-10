@@ -223,7 +223,7 @@ function newRun() {
     marks: [],       // track-speed changes placed on the track: { wz, speed }
     best: 0,         // best-case army through this level's gates (sizes a sprint finale)
     lives: 1,        // one extra life per run: continue a lost mini-boss fight
-    bomb: { on: mode === 'challenge', charges: mode === 'challenge' ? 1 : 0, seen: -9, gates: 0 },   // the bomb power-up
+    bomb: { on: mode === 'challenge', charges: mode === 'challenge' ? 1 : 0, pips: 0, earnedAt: -9, seen: -9, gates: 0 },   // the bomb power-up
     edge: { t: -9, n: 0, of: 1 },   // units fallen off the edge in the current window
     edgeWarned: false,
     held: false,     // the extra-life prompt is up (the game is frozen)   // s until the next bullet-enemy volley (once they're unlocked)
@@ -682,7 +682,7 @@ function edgeWatch() {
 // BOMB.challengeEvery gates.
 function bombReady() { return G.bomb.on && G.bomb.charges > 0 && G.state === 'play' && !G.held && army.N > 0; }
 function bombWatch() {
-  if (CLASSIC() && G.gateIdx >= G.bomb.gates + CFG.BOMB.challengeEvery) { G.bomb.gates = G.gateIdx; G.bomb.charges = 1; }
+  if (CLASSIC() && G.gateIdx >= G.bomb.gates + CFG.BOMB.challengeEvery) { G.bomb.gates = G.gateIdx; G.bomb.charges = Math.max(1, G.bomb.charges); }
   if (bombReady() && enemies.threat(G.dist, army, CFG.BOMB.showRange) > 0) G.bomb.seen = G.ui;
   return bombReady() && G.ui - G.bomb.seen < CFG.BOMB.linger;
 }
@@ -700,7 +700,7 @@ function detonate() {
   if (cost > 0) { army.kill(cost, unitLost); noteLoss(cost); G.stats.bombed = (G.stats.bombed || 0) + cost; }
   for (const hit of enemies.blast(x, w, B.radius, B.bossDamage)) {
     if (hit.boss) bossDown(hit.s, x, w);
-    else { G.stats.kills[hit.t.id]++; if (hit.s.n === 0) squadWiped(hit.s); }
+    else { G.stats.kills[hit.t.id]++; if (hit.s.n === 0) squadWiped(hit.s, true); }
   }
   army.blast(x, z, B.radius * 0.6);
   sparks.ring(x, 0.3, w, B.radius, COLORS.white, 70);
@@ -874,7 +874,7 @@ function levelUp(g) {
   // The bomb: unlocked after the bomber fight, then one charge per level.
   const bombNew = !G.bomb.on && G.level >= CFG.BOMB.unlockAt;
   if (bombNew) G.bomb.on = true;
-  if (G.bomb.on) G.bomb.charges = 1;
+  if (G.bomb.on) G.bomb.charges = Math.max(1, G.bomb.charges);   // at least one each level (an earned spare is kept)
   if (def.kind === 'bonus') {
     // New-enemy level: the army "condenses" to a small, bright team (shown as
     // a level-up, not a loss) to face the giant of the next enemy type. The
@@ -1081,9 +1081,17 @@ function maxedOut(g, s) {
   world.addRipple(x, g.wz, ANIM.rippleGate, time);
 }
 
-function squadWiped(s) {
+function squadWiped(s, byBomb = false) {
   // A boss's spew wave shot down completely: reinforcements.
   if (s.wave && --s.wave.left <= 0) bossGift(CFG.BOSS_GIFT_WAVE);
+  // Squads shot down fill the bomb meter: every BOMB.earn of them, another bomb.
+  const B = CFG.BOMB;
+  if (G.bomb.on && !byBomb && G.bomb.charges < B.max && ++G.bomb.pips >= B.earn) {
+    G.bomb.pips = 0;
+    G.bomb.charges++;
+    G.bomb.earnedAt = G.ui;
+    sfx.play('maxMult', { gain: 0.5 });
+  }
   world.addRipple(s.cx, s.cw, ANIM.rippleWipe, time);
   sparks.emit(s.cx, 0.3, s.cw, COLORS.enemy, 40, 4);
 }
@@ -1348,7 +1356,9 @@ function syncHud(realDt) {
   const score = G.state === 'title' ? 0 : runStats().score;
   const rank = G.state === 'play' ? rankFor(score, board) : -1;
   if (hud.setScore(score, rank <= 2 ? rank : -1)) sfx.play('maxMult');
-  hud.setLevel(G.state === 'title' ? '' : CLASSIC() ? `Gate ${G.gateIdx}` : `Level ${G.level}`, bombReady());
+  hud.setLevel(G.state === 'title' ? '' : CLASSIC() ? `Gate ${G.gateIdx}` : `Level ${G.level}`);
+  // The bomb meter under it, once the bomb is unlocked: bombs held and pips toward the next.
+  hud.setBombMeter(G.state !== 'title' && G.bomb.on ? { charges: G.bomb.charges, max: CFG.BOMB.max, pips: G.bomb.charges >= CFG.BOMB.max ? CFG.BOMB.earn : G.bomb.pips, earn: CFG.BOMB.earn, flash: G.ui - G.bomb.earnedAt < 1.2 } : null);
   hud.setBomb(G.state === 'play' && !G.paused && bombWatch());
   // Gain / loss totals stay up while changes keep coming, then fade.
   G.ui += realDt;

@@ -13,6 +13,7 @@ export class Hud {
   constructor() {
     this.dist = document.getElementById('dist');
     this.levelTag = document.getElementById('level-tag');
+    this.bombMeter = document.getElementById('bomb-meter');
     this.bombBtn = document.getElementById('bomb-btn');
     this.score = document.getElementById('score');
     this.badge = document.getElementById('rank-badge');
@@ -153,12 +154,26 @@ export class Hud {
     this.parallaxBtn.textContent = `Parallax: ${parallax ? 'deep' : 'classic'}`;
   }
 
-  // Under the score: "Level 3" (or "Gate 12"), plus a bomb mark while one is ready.
-  setLevel(text, bomb) {
-    const key = text + (bomb ? '*' : '');
-    if (key === this.last.level) return;
-    this.last.level = key;
-    this.levelTag.innerHTML = text ? `<span>${text}</span>${bomb ? `<span class="bomb-mark" title="Bomb ready">${this.bombBtn.querySelector('svg').outerHTML}</span>` : ''}` : '';
+  // Under the score: "Level 3" (or "Gate 12").
+  setLevel(text) {
+    if (text === this.last.level) return;
+    this.last.level = text;
+    this.levelTag.textContent = text;
+  }
+
+  // Under the level tag, once the bomb is unlocked: a bomb per charge held
+  // (dim when empty) and pips toward the next one. m = { charges, max, pips,
+  // earn, flash } or null to hide.
+  setBombMeter(m) {
+    const key = m ? `${m.charges}/${m.pips}/${m.flash}` : '';
+    if (key === this.last.meter) return;
+    this.last.meter = key;
+    this.bombMeter.classList.toggle('show', !!m);
+    if (!m) return;
+    this.bombMeter.classList.toggle('earned', m.flash);
+    const icon = this.bombBtn.querySelector('svg').outerHTML;
+    this.bombMeter.innerHTML = `<span class="bombs">${Array.from({ length: m.max }, (_, k) => k).map((k) => `<span class="bomb-mark${k < m.charges ? '' : ' empty'}">${icon}</span>`).join('')}</span>`
+      + `<span class="pips">${Array.from({ length: m.earn }, (_, k) => `<i class="${k < m.pips ? 'on' : ''}"></i>`).join('')}</span>`;
   }
 
   setBomb(on) {
