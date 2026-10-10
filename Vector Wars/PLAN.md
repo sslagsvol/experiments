@@ -78,7 +78,7 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 
 ## 4. Roadmap
 
-**Built so far (v0.7–v0.12):** parallax and grid patterns, keyboard controls, World 1 (levels 1–10: an authored level 1, new-enemy levels with mini-bosses on 2 / 4 / 6, a sprint-into-gauntlet on 5, a sprint on 8), five enemy types plus bullets (grunt, drone, bomber that jumps, burning brute, shield; immune bullets), mini-boss moves, spawning, burning and reinforcement gates, an extra life, the **bomb** (v0.12.0: unlocked after the bomber fight; one at a time, a top-left button whose ring refills as you shoot enemies down; costs 20% of the army, wipes a small area ahead), Challenge mode (locked until World 1), the debug panel. Details by level: `LEVELS.md`; by round: `CHANGELOG.md`.
+**Built so far (v0.7–v0.12):** parallax and grid patterns, keyboard controls, World 1 (levels 1–10: an authored level 1, new-enemy levels with mini-bosses on 2 / 4 / 6, a sprint-into-gauntlet on 5, a sprint on 8), five enemy types plus bullets (grunt, drone, bomber that jumps, burning brute, shield; immune bullets), mini-boss moves, spawning, burning and reinforcement gates, an extra life, the **bomb** (v0.12.0: unlocked after the bomber fight; one at a time, a big bottom-left button whose ring refills as you shoot enemies down; costs 20% of the army, wipes a small area ahead), Challenge mode (locked until World 1), the debug panel. Details by level: `LEVELS.md`; by round: `CHANGELOG.md`.
 
 ### Next up (prioritized, round 48)
 1. **HIGH: the level 6–7 wall.** Playtesters can't get past level 6 and scores plateau around 200k. Bot findings (v0.11.4 / v0.12.0):
@@ -169,4 +169,4 @@ The game is in **beta**, so versions are **0.MINOR.PATCH**.
 | 0.11.2 | 2026-10-09 | PR #18 (`f5245f0`) | Burning brutes (shell breaks at half hp), burning mini-bosses whose touch ends the run, shields at level 3 that hover in front, level 5 sprint-into-gauntlet, bullets at level 9, "Watch the edges!" |
 | 0.11.3 | 2026-10-09 | direct push to main (`3d3fdcb`) | Jumping bombers (untouchable mid-air); shields guard specialists, never grunts |
 | 0.11.4 | 2026-10-09 | PR #19 (`e623e7b`) | Level 5 finale waves about 15% smaller; debug mode starts muted |
-| 0.12.0 | (this branch) | `vw/v0.12.0` | The bomb power-up (top-left button, ring refills with kills); level tag under the score; legible gate labels; shields hover closer and charge when their squad is gone; the level 6–7 wall analyzed and planned |
+| 0.12.0 | (this branch) | `vw/v0.12.0` | The bomb power-up (bottom-left button, ring refills with kills); level tag under the score; legible gate labels; shields hover closer and charge when their squad is gone; the level 6–7 wall analyzed and planned |

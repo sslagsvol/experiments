@@ -190,7 +190,7 @@ html, body {
   position: absolute;
   left: 8px;
   right: 8px;
-  top: calc(116px + env(safe-area-inset-top));   /* below the score, level tag and bomb button */
+  top: calc(64px + env(safe-area-inset-top));   /* below the score and level tag */
   font-size: 11px;
   color: var(--text);
   text-shadow: none;
@@ -604,15 +604,16 @@ body.kb .touch-only { display: none; }
   gap: 8px;
 }
 #level-tag:empty { display: none; }
-/* The bomb button (after the bomb unlocks), under the level tag: an outline
+/* The bomb button (after the bomb unlocks), bottom left: an outline
    ring that fills with orange as enemies are shot down (hud.setBomb sets its
    dash length); full,
    the button fills in and pulses: tap it (or press B). */
 #bomb-btn {
-  position: relative;
-  width: 46px;
-  height: 46px;
-  margin-top: 2px;
+  position: absolute;
+  left: calc(18px + env(safe-area-inset-left));
+  bottom: calc(64px + env(safe-area-inset-bottom));   /* above the army count row, clear of its +/− tags */
+  width: 88px;
+  height: 88px;
   padding: 0;
   display: none;
   border: none;
@@ -623,14 +624,14 @@ body.kb .touch-only { display: none; }
 }
 #bomb-btn.show { display: block; }
 #bomb-btn .ring { position: absolute; inset: 0; width: 100%; height: 100%; rotate: -90deg; fill: none; }
-#bomb-btn .ring .track { stroke: rgba(255, 180, 61, 0.22); stroke-width: 2.5; }
-#bomb-btn .ring .fill { stroke: #ffb43d; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 0 126; filter: drop-shadow(0 0 3px rgba(255, 140, 40, 0.8)); transition: stroke-dasharray 0.25s ease-out; }
-#bomb-btn .icon { position: absolute; inset: 9px; width: 28px; height: 28px; fill: none; stroke: #ffb43d; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; opacity: .45; }
+#bomb-btn .ring .track { stroke: rgba(255, 180, 61, 0.22); stroke-width: 2.2; }
+#bomb-btn .ring .fill { stroke: #ffb43d; stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 0 126; filter: drop-shadow(0 0 3px rgba(255, 140, 40, 0.8)); transition: stroke-dasharray 0.25s ease-out; }
+#bomb-btn .icon { position: absolute; inset: 20%; width: 60%; height: 60%; fill: none; stroke: #ffb43d; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; opacity: .45; }
 #bomb-btn .icon .spark { display: none; }
-#bomb-btn.ready { cursor: pointer; background: radial-gradient(circle, rgba(255, 170, 60, 0.95), rgba(255, 110, 20, 0.85) 70%); box-shadow: 0 0 14px rgba(255, 140, 40, 0.8); animation: bomb-ready 1s ease-in-out infinite; }
+#bomb-btn.ready { cursor: pointer; background: radial-gradient(circle, rgba(255, 170, 60, 0.95), rgba(255, 110, 20, 0.85) 70%); box-shadow: 0 0 20px rgba(255, 140, 40, 0.8); animation: bomb-ready 1s ease-in-out infinite; }
 #bomb-btn.ready .icon { stroke: #fff; opacity: 1; }
 #bomb-btn.ready .icon .spark { display: inline; animation: blink 0.3s steps(2, start) infinite; }
 #bomb-btn.fresh { animation: bomb-in 0.5s ease-out, bomb-ready 1s ease-in-out 0.5s infinite; }
 #bomb-btn.ready:active { scale: 0.9; }
 @keyframes bomb-in { 0% { scale: 1.6; } 100% { scale: 1; } }
-@keyframes bomb-ready { 50% { box-shadow: 0 0 26px rgba(255, 140, 40, 1); } }
+@keyframes bomb-ready { 50% { box-shadow: 0 0 38px rgba(255, 140, 40, 1); } }
