@@ -12,6 +12,8 @@ const commas = (n) => Math.round(n).toLocaleString('en-US');
 export class Hud {
   constructor() {
     this.dist = document.getElementById('dist');
+    this.levelTag = document.getElementById('level-tag');
+    this.bombBtn = document.getElementById('bomb-btn');
     this.score = document.getElementById('score');
     this.badge = document.getElementById('rank-badge');
     this.best = document.getElementById('best');
@@ -149,6 +151,20 @@ export class Hud {
   setLab(pattern, parallax) {
     this.gridBtn.textContent = `Grid: ${pattern}`;
     this.parallaxBtn.textContent = `Parallax: ${parallax ? 'deep' : 'classic'}`;
+  }
+
+  // Under the score: "Level 3" (or "Gate 12"), plus a bomb mark while one is ready.
+  setLevel(text, bomb) {
+    const key = text + (bomb ? '*' : '');
+    if (key === this.last.level) return;
+    this.last.level = key;
+    this.levelTag.innerHTML = text ? `<span>${text}</span>${bomb ? `<span class="bomb-mark" title="Bomb ready">${this.bombBtn.querySelector('svg').outerHTML}</span>` : ''}` : '';
+  }
+
+  setBomb(on) {
+    if (on === this.last.bomb) return;
+    this.last.bomb = on;
+    this.bombBtn.classList.toggle('show', on);
   }
 
   // Mini-boss health, 0..1 (negative hides the bar).

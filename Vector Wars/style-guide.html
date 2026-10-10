@@ -115,15 +115,20 @@
       <div class="meta">3 slots · ▲▼ cycle A–Z, 0–9 and ! ? . - * # @ &amp; $ % + = &lt; &gt; / _ space (hold to repeat) · tap a slot to select · keyboard typing, arrows, Backspace, Enter · "New high score" flashes gold/pink · spaced for thumbs: slots 30px apart, ▲ / letter / ▼ 10px apart, buttons at least 52×44px, ENTER 22px below</div>
     </div>
     <div class="card">
-      <div class="stage hud-stage"><div id="hud"><div id="dist"><span id="score">24,869</span><span id="rank-badge"></span></div><button id="pause-btn" class="show" type="button" aria-label="Pause (demo)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button><div id="best">Hi 24,869</div><button id="mute" type="button" aria-label="Mute sound (demo)"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="on" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/><path class="x" d="M16 9l5 6M21 9l-5 6"/></svg></button><div id="army-hud"><div id="gain" class="delta live">+371</div><div id="count">640</div><div id="loss" class="delta live">−24</div></div></div></div>
-      <h3>In-game HUD</h3><div class="var">#dist #score · #best · #pause-btn · #mute (.off) · #army-hud #gain · #count · #loss</div>
-      <div class="meta">Share Tech Mono · live score 22px --hud (distance + enemies defeated) · pause left of mute, shown only during a run · "Hi" = top of the high score board, 14px · army count 34px white with --you glow, fixed at the bottom center · gains 20px --gain on its left, losses 20px --loss on its right; both can show at once</div>
+      <div class="stage hud-stage"><div id="hud"><div id="score-box"><div id="dist"><span id="score">24,869</span><span id="rank-badge"></span></div><div id="level-tag"><span>Level 6</span><span class="bomb-mark"><svg viewBox="0 0 64 64" aria-hidden="true"><circle class="body" cx="27" cy="39" r="17"/><path class="shine" d="M17 34 a11 11 0 0 1 7 -8"/><path class="cap" d="M36 25 l5 -5 l5 5 l-5 5 z"/><path class="fuse" d="M44 21 q6 -8 12 -6"/><g class="spark"><path d="M56 15 l0 -7 M56 15 l6 -3 M56 15 l6 4 M56 15 l-5 -4"/></g></svg></span></div></div><button id="pause-btn" class="show" type="button" aria-label="Pause (demo)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button><div id="best">Hi 24,869</div><button id="mute" type="button" aria-label="Mute sound (demo)"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="on" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/><path class="x" d="M16 9l5 6M21 9l-5 6"/></svg></button><div id="army-hud"><div id="gain" class="delta live">+371</div><div id="count">640</div><div id="loss" class="delta live">−24</div></div></div></div>
+      <h3>In-game HUD</h3><div class="var">#score-box · #dist #score · #level-tag (.bomb-mark) · #best · #pause-btn · #mute (.off) · #army-hud #gain · #count · #loss</div>
+      <div class="meta">Share Tech Mono · live score 22px --hud (distance + enemies defeated) · under it the level tag, 13px caps --text at 75% ("Level 6"; Challenge: "Gate 12"), with a small orange bomb mark while a bomb is ready (hud.setLevel) · pause left of mute, shown only during a run · "Hi" = top of the high score board, 14px · army count 34px white with --you glow, fixed at the bottom center · gains 20px --gain on its left, losses 20px --loss on its right; both can show at once</div>
     </div>
     <div class="card">
-      <div class="stage hud-stage"><div id="hud"><div id="dist" class="top m0"><span id="score">21,340</span><span id="rank-badge">1st</span></div></div></div>
+      <div class="stage hud-stage"><div id="hud"><div id="score-box"><div id="dist" class="top m0"><span id="score">21,340</span><span id="rank-badge">1st</span></div><div id="level-tag"><span>Level 6</span></div></div></div></div>
       <div class="controls"><button type="button" data-medal="0">1st</button><button type="button" data-medal="1">2nd</button><button type="button" data-medal="2">3rd</button><button type="button" data-medal="-1">Off board</button></div>
       <h3>Top-3 score badge</h3><div class="var">#dist.top · .m0–.m2 · #rank-badge · .rank-up · @keyframes badge-glow</div>
       <div class="meta">While the run's score is on pace for 1st–3rd on the board: the score doubles to 44px (springy 0.35s), glows in that rank's board color (gold, pink, lime) and an Audiowide medal badge pulses beside it · moving up a place pops it (rank-up 0.6s) and plays the maxMult sound</div>
+    </div>
+    <div class="card">
+      <div class="stage hud-stage"><div id="hud"><button id="bomb-btn" class="show" type="button" style="position:absolute;top:50%"><svg viewBox="0 0 64 64" aria-hidden="true"><circle class="body" cx="27" cy="39" r="17"/><path class="shine" d="M17 34 a11 11 0 0 1 7 -8"/><path class="cap" d="M36 25 l5 -5 l5 5 l-5 5 z"/><path class="fuse" d="M44 21 q6 -8 12 -6"/><g class="spark"><path d="M56 15 l0 -7 M56 15 l6 -3 M56 15 l6 4 M56 15 l-5 -4"/></g></svg><span>Bomb</span></button></div></div>
+      <h3>Bomb button</h3><div class="var">#bomb-btn (.show) · @keyframes bomb-in, bomb-pulse · CFG.BOMB · detonate()</div>
+      <div class="meta" id="sg-bomb-meta"></div>
     </div>
     <div class="card">
       <div class="stage"><div id="pause" class="overlay"><h1 class="paused">Paused</h1>
@@ -277,7 +282,7 @@ function gate(ctx, x, y, w, h, s) {
   ctx.save(); ctx.strokeStyle = css(c); ctx.lineWidth = 2; ctx.shadowColor = css(c); ctx.shadowBlur = 10;
   ctx.strokeRect(x + 1, y + 1, w - 2, h - 2); ctx.restore();
   const label = gateLabel(s);
-  const ink = c.map((v) => v * 0.55 * 0.65 + 0.9 * 0.35);
+  const ink = c.map((v) => 0.5 * 0.82 + v * 0.5 * 0.18);   // near-white, under the bloom threshold (gates.js)
   ctx.fillStyle = css(ink); ctx.font = `${Math.round(h * (label.length > 4 ? CFG.GATE_TEXT.long : CFG.GATE_TEXT.short))}px ${FONT}`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, x + w / 2, y + h * 0.52);
   if (s.ch > 0) { ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.fillRect(x, y + h * 0.9, w * s.ch, h * 0.06); }
@@ -975,6 +980,9 @@ for (const b of document.querySelectorAll('.spd')) b.addEventListener('click', (
 if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) $('pause').click();
 
 document.fonts.ready.then(() => requestAnimationFrame(loop));
+
+// Bomb button card (static markup above; its values come from CFG.BOMB).
+$('sg-bomb-meta').innerHTML = `Unlocked after the bomber fight (story level ${CFG.BOMB.unlockAt}; from the start in Challenge, refilled every ${CFG.BOMB.challengeEvery} gates), one charge per level · a 124px round button takes the middle of the screen while a bomb is ready and a squad or mini-boss is within ${CFG.BOMB.showRange} units (and ${CFG.BOMB.linger}s after); B on a keyboard · orange #ffb43d stroked bomb with a blinking fuse spark, pops in (0.25s) then pulses (0.9s) · tap: the army spends ${CFG.BOMB.cost * 100}% of itself and everything within ${CFG.BOMB.radius} of the nearest enemies ahead (${CFG.BOMB.ahead[0]}–${CFG.BOMB.ahead[1]} units out) is destroyed; a mini-boss loses ${CFG.BOMB.bossDamage * 100}% of its hp; bullet enemies are immune · white and orange rings, a fire burst, the level-gate ripple, stomp + win sounds, a short killcam`;
 </script>
 </body>
 </html>

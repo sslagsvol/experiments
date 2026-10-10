@@ -8,7 +8,7 @@
 
 // The game's version: 0.MINOR.PATCH while in beta. Bump it on the release
 // branch (vw/vX.Y.Z) and add a matching heading in CHANGELOG.md. See PLAN.md.
-export const VERSION = '0.11.4';
+export const VERSION = '0.12.0';
 
 export const CFG = {
   TW: 2.0,                 // track half-width (world units)
@@ -81,8 +81,8 @@ export const CFG = {
   DRAG_SPAN: 0.6,          // fraction of screen width that sweeps the full track
   STEER_RESPONSE: 14,      // higher = snappier follow
 
-  GATE_H: 0.625,           // panel height (halved in round 44: less of the view blocked)
-  GATE_TEXT: { short: 0.5, long: 0.4 },   // label height × the panel's (labels of 5+ characters use long)
+  GATE_H: 0.8,             // panel height (round 44 halved it to 0.625; round 48 back up a little for legibility)
+  GATE_TEXT: { short: 0.6, long: 0.48 },  // label height × the panel's (labels of 5+ characters use long)
   ADD_HITS_PER_STEP: 4,    // bullets to raise a + / − gate by one
   MULT_START: 1.0,         // × gates start doing nothing…
   MULT_STEP: 0.1,          // …and climb in steps of 0.1…
@@ -170,8 +170,8 @@ export const CFG = {
   SHIELD_FULL_AT: 5,
   SHIELD_MID_DEPTH: 1.5,   // …plus a row through the middle of squads at least this deep, from level SHIELD_MID_AT
   SHIELD_MID_AT: 7,
-  SHIELD_HOVER: 2.5,       // shields never come closer than this in front of the army: they hover there, blocking
-  SHIELD_LINGER: 4,        // s they keep hovering after their squad is gone, then break off
+  SHIELD_HOVER: 1.2,       // shields never come closer than this in front of the army: they hover there, blocking
+  SHIELD_LINGER: 0,        // s they keep hovering after their squad is gone, then charge (0: at once)
   SHIELD_RUSH: 5,          // units/s while rushing to the front
   SHIELD_CHANCE: 0.35,     // a regular squad brings a shield line (level guards always do)
   // Burning: a brute with its outer shell (hp above BURN.shell × its hp) sets
@@ -184,6 +184,14 @@ export const CFG = {
   // a hop of `dist` units over `time` s, `height` high, untouchable mid-air.
   BOMBER_JUMP: { every: 1.2, first: 0.5, time: 0.45, dist: 3, height: 0.9, stop: 5 },   // first: the first jump comes within this many s of charging
   EDGE_WARN: { share: 0.1, window: 1.5 },   // "Watch the edges!" the first time this share of the army falls off within window s
+  // The bomb (unlocked after the bomber fight, story level BOMB.unlockAt; from the
+  // start in Challenge): one charge per level (Challenge: refilled every
+  // `challengeEvery` gates). It costs `cost` of the army and destroys every
+  // enemy within `radius` of the nearest enemies just ahead (centered
+  // between ahead[0] and ahead[1] units in front of the army); a mini-boss loses
+  // `bossDamage` of its hp. The button shows when a squad or boss is within
+  // `showRange` and stays up `linger` s after.
+  BOMB: { unlockAt: 5, cost: 0.2, ahead: [2, 7], radius: 2.8, bossDamage: 0.25, showRange: 7.5, linger: 1.5, challengeEvery: 10 },
   COMBO_CHANCE: 0.25,      // a regular squad is a set piece instead: shields guarding bombers, or grunts screening brutes
   // Bullet enemies (v0.11.0): immune to fire. A warning line marks the lane,
   // then it crosses at player-bullet speed and cuts through a small group.

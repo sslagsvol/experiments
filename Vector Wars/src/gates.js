@@ -30,7 +30,8 @@ void main() {
   float fill = 0.05 + uFlash * 0.25;
   float txt = texture2D(uTex, vUv).r;
   float bar = (vUv.y > 0.04 && vUv.y < 0.1 && vUv.x < uCharge) ? 1.0 : 0.0;
-  vec3 ink = mix(uColor * 0.55, vec3(0.9), 0.35);
+  // Near-white, kept under the bloom threshold so the letters stay crisp.
+  vec3 ink = mix(vec3(0.5), uColor * 0.5, 0.18);
   vec3 c = uColor * (border * 0.9 + halo + fill) * (1.0 - txt) + ink * txt + vec3(1.2) * bar;
   gl_FragColor = vec4(c * uFade, 1.0);
 }`;

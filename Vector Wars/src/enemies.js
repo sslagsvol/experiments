@@ -253,6 +253,39 @@ export class EnemyForce {
     }
   }
 
+  // World distance of the nearest enemy (bullet enemies aside) at or past
+  // wFront, within `lane` of x; Infinity if none.
+  nearestAhead(x, wFront, lane) {
+    let best = Infinity;
+    for (const s of this.squads) {
+      if (s.n <= 0 || s.bolt) continue;
+      for (const i of s.units) if (this.alive[i] && this.owner[i] === s.id && this.w[i] >= wFront && this.w[i] < best && Math.abs(this.x[i] - x) < lane) best = this.w[i];
+    }
+    return best;
+  }
+
+  // The bomb: every enemy within r of (x, w) dies, except bullet enemies
+  // (immune); a mini-boss loses bossDamage of its hp instead. Returns
+  // [{ t, s, boss }] for each unit destroyed.
+  blast(x, w, r, bossDamage) {
+    const out = [];
+    for (const s of this.squads) {
+      if (s.n <= 0 || s.bolt) continue;
+      for (const i of s.units) {
+        if (!this.alive[i] || this.owner[i] !== s.id) continue;
+        const dx = this.x[i] - x, dw = this.w[i] - w, rr = r + (s.boss ? 0.6 : 0);
+        if (dx * dx + dw * dw > rr * rr) continue;
+        const t = TYPE_LIST[this.type[i]];
+        this.flash[i] = 1;
+        if (s.boss) { this.hp[i] -= s.hpMax * bossDamage; if (this.hp[i] > 0) continue; }
+        this.kill(i, s);
+        out.push({ t, s, boss: !!s.boss });
+      }
+      this.bounds(s);
+    }
+    return out;
+  }
+
   // Removes every unit except mini-bosses (an extra life: the fight goes on,
   // its minions are gone). A boss's escort goes too, so it's exposed.
   clearMinions() {

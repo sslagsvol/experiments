@@ -46,10 +46,16 @@ html, body {
 /* Live score, top left. On pace for the top 3 of the board (.top): it
    doubles in size and a medal badge in that rank's board color appears;
    moving up a place pops it. */
-#dist {
+#score-box {
   position: absolute;
   left: calc(16px + env(safe-area-inset-left));
   top: calc(12px + env(safe-area-inset-top));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+#dist {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -584,3 +590,53 @@ body.kb .touch-only { display: none; }
 #over-quit { margin-top: 18px; pointer-events: auto; }
 .btn.danger { color: #ff8cc6; border-color: var(--enemy); text-shadow: 0 0 8px rgba(255, 61, 154, 0.7); }
 .pause-actions.hidden { display: none; }   /* .pause-actions sets display after .hidden */
+
+/* Level tag under the live score ("Level 3"; Challenge: "Gate 12"), with a
+   small bomb mark while a bomb is ready (hud.setLevel). */
+#level-tag {
+  font-size: 13px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--text);
+  opacity: .75;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#level-tag:empty { display: none; }
+#level-tag .bomb-mark { width: 15px; height: 15px; }
+#level-tag .bomb-mark svg, #bomb-btn svg { fill: none; stroke: #ffb43d; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 4px rgba(255, 140, 40, 0.8)); }
+
+/* The bomb: a big round button that takes the middle of the screen when a
+   squad or mini-boss closes in and a bomb is ready (B on a keyboard). */
+#bomb-btn {
+  position: fixed;
+  left: 50%;
+  top: 44%;
+  translate: -50% -50%;
+  width: 124px;
+  height: 124px;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 2px solid #ffb43d;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 140, 40, 0.18), rgba(4, 5, 26, 0.7) 70%);
+  box-shadow: 0 0 18px rgba(255, 140, 40, 0.6), inset 0 0 14px rgba(255, 140, 40, 0.35);
+  color: #ffd9a0;
+  font-family: 'Share Tech Mono', ui-monospace, monospace;
+  font-size: 14px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 20;
+}
+#bomb-btn.show { display: flex; animation: bomb-in 0.25s ease-out, bomb-pulse 0.9s ease-in-out 0.25s infinite; }
+#bomb-btn svg { width: 64px; height: 64px; }
+#bomb-btn .spark { animation: blink 0.3s steps(2, start) infinite; }
+#bomb-btn:active { scale: 0.92; }
+@keyframes bomb-in { from { scale: 0.4; opacity: 0; } to { scale: 1; opacity: 1; } }
+@keyframes bomb-pulse { 50% { box-shadow: 0 0 34px rgba(255, 140, 40, 0.95), inset 0 0 20px rgba(255, 140, 40, 0.5); } }
