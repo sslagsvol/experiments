@@ -190,7 +190,7 @@ html, body {
   position: absolute;
   left: 8px;
   right: 8px;
-  top: calc(84px + env(safe-area-inset-top));   /* below the score, level tag and bomb meter */
+  top: calc(116px + env(safe-area-inset-top));   /* below the score, level tag and bomb button */
   font-size: 11px;
   color: var(--text);
   text-shadow: none;
@@ -604,50 +604,33 @@ body.kb .touch-only { display: none; }
   gap: 8px;
 }
 #level-tag:empty { display: none; }
-/* Bomb meter (after the bomb unlocks): a bomb per charge held (dim when
-   empty), then pips toward the next one; flashes when one is earned. */
-#bomb-meter { display: none; align-items: center; gap: 8px; opacity: .7; }
-#bomb-meter.show { display: flex; }
-#bomb-meter.earned { animation: meter-earn 1.2s ease-out; }
-@keyframes meter-earn { 0%, 40% { opacity: 1; scale: 1.25; } 100% { opacity: .7; scale: 1; } }
-#bomb-meter .bombs { display: flex; gap: 3px; }
-.bomb-mark { width: 15px; height: 15px; }
-.bomb-mark.empty { opacity: .25; }
-#bomb-meter .pips { display: flex; gap: 3px; }
-#bomb-meter .pips i { width: 5px; height: 5px; border-radius: 50%; border: 1px solid #ffb43d; opacity: .5; }
-#bomb-meter .pips i.on { background: #ffb43d; opacity: 1; box-shadow: 0 0 4px rgba(255, 140, 40, 0.8); }
-.bomb-mark svg, #bomb-btn svg { fill: none; stroke: #ffb43d; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 4px rgba(255, 140, 40, 0.8)); }
-
-/* The bomb: a big round button that takes the middle of the screen when a
-   squad or mini-boss closes in and a bomb is ready (B on a keyboard). */
+/* The bomb button (after the bomb unlocks), under the level tag: an outline
+   ring that fills with orange as enemies are shot down (hud.setBomb sets its
+   dash length); full,
+   the button fills in and pulses: tap it (or press B). */
 #bomb-btn {
-  position: fixed;
-  left: 50%;
-  top: 44%;
-  translate: -50% -50%;
-  width: 124px;
-  height: 124px;
+  position: relative;
+  width: 46px;
+  height: 46px;
+  margin-top: 2px;
+  padding: 0;
   display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  border: 2px solid #ffb43d;
+  border: none;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 140, 40, 0.18), rgba(4, 5, 26, 0.7) 70%);
-  box-shadow: 0 0 18px rgba(255, 140, 40, 0.6), inset 0 0 14px rgba(255, 140, 40, 0.35);
-  color: #ffd9a0;
-  font-family: 'Share Tech Mono', ui-monospace, monospace;
-  font-size: 14px;
-  letter-spacing: .2em;
-  text-transform: uppercase;
+  background: rgba(4, 5, 26, 0.45);
   pointer-events: auto;
-  cursor: pointer;
-  z-index: 20;
+  cursor: default;
 }
-#bomb-btn.show { display: flex; animation: bomb-in 0.25s ease-out, bomb-pulse 0.9s ease-in-out 0.25s infinite; }
-#bomb-btn svg { width: 64px; height: 64px; }
-#bomb-btn .spark { animation: blink 0.3s steps(2, start) infinite; }
-#bomb-btn:active { scale: 0.92; }
-@keyframes bomb-in { from { scale: 0.4; opacity: 0; } to { scale: 1; opacity: 1; } }
-@keyframes bomb-pulse { 50% { box-shadow: 0 0 34px rgba(255, 140, 40, 0.95), inset 0 0 20px rgba(255, 140, 40, 0.5); } }
+#bomb-btn.show { display: block; }
+#bomb-btn .ring { position: absolute; inset: 0; width: 100%; height: 100%; rotate: -90deg; fill: none; }
+#bomb-btn .ring .track { stroke: rgba(255, 180, 61, 0.22); stroke-width: 2.5; }
+#bomb-btn .ring .fill { stroke: #ffb43d; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 0 126; filter: drop-shadow(0 0 3px rgba(255, 140, 40, 0.8)); transition: stroke-dasharray 0.25s ease-out; }
+#bomb-btn .icon { position: absolute; inset: 9px; width: 28px; height: 28px; fill: none; stroke: #ffb43d; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; opacity: .45; }
+#bomb-btn .icon .spark { display: none; }
+#bomb-btn.ready { cursor: pointer; background: radial-gradient(circle, rgba(255, 170, 60, 0.95), rgba(255, 110, 20, 0.85) 70%); box-shadow: 0 0 14px rgba(255, 140, 40, 0.8); animation: bomb-ready 1s ease-in-out infinite; }
+#bomb-btn.ready .icon { stroke: #fff; opacity: 1; }
+#bomb-btn.ready .icon .spark { display: inline; animation: blink 0.3s steps(2, start) infinite; }
+#bomb-btn.fresh { animation: bomb-in 0.5s ease-out, bomb-ready 1s ease-in-out 0.5s infinite; }
+#bomb-btn.ready:active { scale: 0.9; }
+@keyframes bomb-in { 0% { scale: 1.6; } 100% { scale: 1; } }
+@keyframes bomb-ready { 50% { box-shadow: 0 0 26px rgba(255, 140, 40, 1); } }

@@ -78,7 +78,7 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 
 ## 4. Roadmap
 
-**Built so far (v0.7–v0.12):** parallax and grid patterns, keyboard controls, World 1 (levels 1–10: an authored level 1, new-enemy levels with mini-bosses on 2 / 4 / 6, a sprint-into-gauntlet on 5, a sprint on 8), five enemy types plus bullets (grunt, drone, bomber that jumps, burning brute, shield; immune bullets), mini-boss moves, spawning, burning and reinforcement gates, an extra life, the **bomb** (v0.12.0: unlocked after the bomber fight, one per level, costs 20% of the army, wipes a small area ahead), Challenge mode (locked until World 1), the debug panel. Details by level: `LEVELS.md`; by round: `CHANGELOG.md`.
+**Built so far (v0.7–v0.12):** parallax and grid patterns, keyboard controls, World 1 (levels 1–10: an authored level 1, new-enemy levels with mini-bosses on 2 / 4 / 6, a sprint-into-gauntlet on 5, a sprint on 8), five enemy types plus bullets (grunt, drone, bomber that jumps, burning brute, shield; immune bullets), mini-boss moves, spawning, burning and reinforcement gates, an extra life, the **bomb** (v0.12.0: unlocked after the bomber fight; one at a time, a top-left button whose ring refills as you shoot enemies down; costs 20% of the army, wipes a small area ahead), Challenge mode (locked until World 1), the debug panel. Details by level: `LEVELS.md`; by round: `CHANGELOG.md`.
 
 ### Next up (prioritized, round 48)
 1. **HIGH: the level 6–7 wall.** Playtesters can't get past level 6 and scores plateau around 200k. Bot findings (v0.11.4 / v0.12.0):
@@ -87,7 +87,7 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
    - **Levels 7–9:** squads with specialists bring up to 12 shields (2 rows + a middle row, 30 hp each) in front of burning brutes; armies bleed out behind them.
    - **Score** is mostly kills (distance was about 8k of a level-9 run), so stalling at 6–7 caps it, whatever the player does.
    - **Levers, in order:** (a) level 6: team 40 → 55, strike-team brute clusters arrive shell-less (no fire) like the boss's own; (b) brutes in squads: fewer (est 45 → 60) and a smaller stomp (max 60 → 30); (c) shields: at most 8 a squad, the middle row from level 9; (d) a pulsing warning ring while a mini-boss is within burn range, so the touch-is-game-over rule reads; (e) a level-clear bonus (e.g. 5,000 × level) so progress, not just kills, drives the score. Bot-test a full run from level 1 to 10 after each.
-2. **Bomb follow-ups** (v0.12.0 shipped the core). Playtest the trade (20% for an area wipe); maybe a world-boss reward (2 charges or a bigger blast); a "last stand" auto-detonate is still open.
+2. **Bomb follow-ups** (v0.12.0 shipped the core). Playtest the trade (20% for an area wipe) and the refill pace (5 squads' worth); maybe a world-boss reward (a bigger blast); a "last stand" auto-detonate is still open.
 3. **World boss (level 10).** World 1 ends on a banner today. A real finale: a big multi-phase wireframe boss (slams, spawns, a weak point), the world-complete moment, and the bridge into endless.
 4. **Endless pacing (10+).** `ENDLESS_GROWTH` 1.3 a level is still a cliff (bots wiped early in 10–11). Gentler growth plus new mixes per level so endless lasts minutes, not seconds.
 5. **Level-complete menu and army snapshot** (`LEVELS.md` section 8): a short pause between levels with the army and what's next.
@@ -169,4 +169,4 @@ The game is in **beta**, so versions are **0.MINOR.PATCH**.
 | 0.11.2 | 2026-10-09 | PR #18 (`f5245f0`) | Burning brutes (shell breaks at half hp), burning mini-bosses whose touch ends the run, shields at level 3 that hover in front, level 5 sprint-into-gauntlet, bullets at level 9, "Watch the edges!" |
 | 0.11.3 | 2026-10-09 | direct push to main (`3d3fdcb`) | Jumping bombers (untouchable mid-air); shields guard specialists, never grunts |
 | 0.11.4 | 2026-10-09 | PR #19 (`e623e7b`) | Level 5 finale waves about 15% smaller; debug mode starts muted |
-| 0.12.0 | (this branch) | `vw/v0.12.0` | The bomb power-up; level tag under the score; legible gate labels; shields hover closer and charge when their squad is gone; the level 6–7 wall analyzed and planned |
+| 0.12.0 | (this branch) | `vw/v0.12.0` | The bomb power-up (top-left button, ring refills with kills); level tag under the score; legible gate labels; shields hover closer and charge when their squad is gone; the level 6–7 wall analyzed and planned |

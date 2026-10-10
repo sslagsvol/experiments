@@ -13,7 +13,6 @@ export class Hud {
   constructor() {
     this.dist = document.getElementById('dist');
     this.levelTag = document.getElementById('level-tag');
-    this.bombMeter = document.getElementById('bomb-meter');
     this.bombBtn = document.getElementById('bomb-btn');
     this.score = document.getElementById('score');
     this.badge = document.getElementById('rank-badge');
@@ -161,25 +160,18 @@ export class Hud {
     this.levelTag.textContent = text;
   }
 
-  // Under the level tag, once the bomb is unlocked: a bomb per charge held
-  // (dim when empty) and pips toward the next one. m = { charges, max, pips,
-  // earn, flash } or null to hide.
-  setBombMeter(m) {
-    const key = m ? `${m.charges}/${m.pips}/${m.flash}` : '';
-    if (key === this.last.meter) return;
-    this.last.meter = key;
-    this.bombMeter.classList.toggle('show', !!m);
+  // The bomb button under the level tag, once unlocked: its ring fills with
+  // the charge (0..1), and at 1 the button lights up to be tapped. null hides it.
+  setBomb(m) {
+    const key = m ? `${Math.round(m.charge * 100)}/${m.fresh}` : '';
+    if (key === this.last.bomb) return;
+    this.last.bomb = key;
+    this.bombBtn.classList.toggle('show', !!m);
     if (!m) return;
-    this.bombMeter.classList.toggle('earned', m.flash);
-    const icon = this.bombBtn.querySelector('svg').outerHTML;
-    this.bombMeter.innerHTML = `<span class="bombs">${Array.from({ length: m.max }, (_, k) => k).map((k) => `<span class="bomb-mark${k < m.charges ? '' : ' empty'}">${icon}</span>`).join('')}</span>`
-      + `<span class="pips">${Array.from({ length: m.earn }, (_, k) => `<i class="${k < m.pips ? 'on' : ''}"></i>`).join('')}</span>`;
-  }
-
-  setBomb(on) {
-    if (on === this.last.bomb) return;
-    this.last.bomb = on;
-    this.bombBtn.classList.toggle('show', on);
+    const c = 2 * Math.PI * 20;   // the ring's circumference (r = 20 in its 44-unit viewBox)
+    this.bombBtn.querySelector('.ring .fill').style.strokeDasharray = `${(c * m.charge).toFixed(1)} ${c.toFixed(1)}`;
+    this.bombBtn.classList.toggle('ready', m.charge >= 1);
+    this.bombBtn.classList.toggle('fresh', !!m.fresh);
   }
 
   // Mini-boss health, 0..1 (negative hides the bar).

@@ -37,7 +37,7 @@
   <div id="score-box">
     <div id="dist"><span id="score">0</span><span id="rank-badge"></span></div>
     <div id="level-tag"></div>
-    <div id="bomb-meter" aria-label="Bombs"></div>
+    <button id="bomb-btn" type="button" aria-label="Bomb (B)"><svg class="ring" viewBox="0 0 44 44" aria-hidden="true"><circle class="track" cx="22" cy="22" r="20"/><circle class="fill" cx="22" cy="22" r="20"/></svg><svg class="icon" viewBox="0 0 64 64" aria-hidden="true"><circle class="body" cx="27" cy="39" r="17"/><path class="shine" d="M17 34 a11 11 0 0 1 7 -8"/><path class="cap" d="M36 25 l5 -5 l5 5 l-5 5 z"/><path class="fuse" d="M44 21 q6 -8 12 -6"/><g class="spark"><path d="M56 15 l0 -7 M56 15 l6 -3 M56 15 l6 4 M56 15 l-5 -4"/></g></svg></button>
   </div>
   <div id="best">Best 0</div>
   <button id="mute" type="button" aria-label="Mute sound" aria-pressed="false">
@@ -69,7 +69,6 @@
   <div class="version"></div>
 </div>
 
-<button id="bomb-btn" type="button" aria-label="Bomb (B)"><svg viewBox="0 0 64 64" aria-hidden="true"><circle class="body" cx="27" cy="39" r="17"/><path class="shine" d="M17 34 a11 11 0 0 1 7 -8"/><path class="cap" d="M36 25 l5 -5 l5 5 l-5 5 z"/><path class="fuse" d="M44 21 q6 -8 12 -6"/><g class="spark"><path d="M56 15 l0 -7 M56 15 l6 -3 M56 15 l6 4 M56 15 l-5 -4"/></g></svg><span>Bomb</span></button>
 
 <div id="over" class="overlay hidden">
   <h2>Swarm lost</h2>

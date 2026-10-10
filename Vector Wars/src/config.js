@@ -185,15 +185,13 @@ export const CFG = {
   BOMBER_JUMP: { every: 1.2, first: 0.5, time: 0.45, dist: 3, height: 0.9, stop: 5 },   // first: the first jump comes within this many s of charging
   EDGE_WARN: { share: 0.1, window: 1.5 },   // "Watch the edges!" the first time this share of the army falls off within window s
   // The bomb (unlocked after the bomber fight, story level BOMB.unlockAt; from the
-  // start in Challenge): one charge per level (Challenge: refilled every
-  // `challengeEvery` gates). It costs `cost` of the army and destroys every
+  // start in Challenge): one at a time. Its button (top left) starts full; after
+  // a blast its ring refills as you shoot enemies down, `earn` squads' worth
+  // (each kill counts 1 / its squad's size). It costs `cost` of the army and destroys every
   // enemy within `radius` of the nearest enemies just ahead (centered
   // between ahead[0] and ahead[1] units in front of the army); a mini-boss loses
-  // `bossDamage` of its hp. The button shows when a squad or boss is within
-  // `showRange` and stays up `linger` s after.
-  // Earning more: every `earn` squads shot down completely (not by the bomb)
-  // add a bomb, up to `max` held.
-  BOMB: { unlockAt: 5, cost: 0.2, ahead: [2, 7], radius: 2.8, bossDamage: 0.25, showRange: 7.5, linger: 1.5, challengeEvery: 10, earn: 5, max: 2 },
+  // `bossDamage` of its hp.
+  BOMB: { unlockAt: 5, cost: 0.2, ahead: [2, 7], radius: 2.8, bossDamage: 0.25, earn: 5 },
   COMBO_CHANCE: 0.25,      // a regular squad is a set piece instead: shields guarding bombers, or grunts screening brutes
   // Bullet enemies (v0.11.0): immune to fire. A warning line marks the lane,
   // then it crosses at player-bullet speed and cuts through a small group.

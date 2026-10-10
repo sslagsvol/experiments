@@ -164,6 +164,7 @@ export class EnemyForce {
       s.units.push(i);
       s.n++;
     });
+    s.n0 = s.n;   // size at spawn (a kill fills the bomb by 1 / n0 of a squad)
     this.squads.push(s);
     this.bounds(s);
     return s;
