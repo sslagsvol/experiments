@@ -63,10 +63,10 @@ export const LEVEL_1 = {
 // battles are massive by levels 5–7.
 // Level 5: sprint into gauntlet. A huge grunt wall, then specialists.
 const RUSH_FINALE = [
-  { kind: 'wall', mix: [['grunt', 1]], threat: 0.56 },                         // a huge wall of grunts
-  { kind: 'skirmish', mix: [['grunt', 0.6], ['drone', 0.4]], threat: 0.4 },    // drone skirmishers
-  { kind: 'blob', mix: [['bomber', 1]], threat: 0.34, shields: true },          // bombers behind shields
-  { kind: 'waves', mix: [['grunt', 0.8], ['drone', 0.2]], threat: 0.52 },      // the last stand
+  { kind: 'wall', mix: [['grunt', 1]], threat: 0.48 },                         // a huge wall of grunts
+  { kind: 'skirmish', mix: [['grunt', 0.6], ['drone', 0.4]], threat: 0.34 },   // drone skirmishers
+  { kind: 'blob', mix: [['bomber', 1]], threat: 0.29, shields: true },          // bombers behind shields
+  { kind: 'waves', mix: [['grunt', 0.8], ['drone', 0.2]], threat: 0.44 },      // the last stand
 ];
 
 export const LEVELS = {

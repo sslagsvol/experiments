@@ -8,7 +8,7 @@
 
 // The game's version: 0.MINOR.PATCH while in beta. Bump it on the release
 // branch (vw/vX.Y.Z) and add a matching heading in CHANGELOG.md. See PLAN.md.
-export const VERSION = '0.11.3';
+export const VERSION = '0.11.4';
 
 export const CFG = {
   TW: 2.0,                 // track half-width (world units)
