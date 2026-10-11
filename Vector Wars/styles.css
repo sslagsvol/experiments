@@ -218,6 +218,22 @@ html, body {
 /* Game over sits on a darker backdrop so the recap and board read over the scene. */
 #over { background: radial-gradient(ellipse at center, rgba(4, 5, 26, 0.62), rgba(4, 5, 26, 0.85)); }
 
+/* Game over, pause and extra life scroll on short phones: content stays
+   centered when it fits (auto margins) and scrolls from the top when it
+   doesn't. main.js keeps the game's own touch handling off them. */
+#over, #pause, #continue {
+  pointer-events: auto;
+  justify-content: flex-start;
+  overflow-y: auto;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  padding-top: calc(18px + env(safe-area-inset-top));
+  padding-bottom: calc(18px + env(safe-area-inset-bottom));
+}
+#over > *, #continue > * { flex-shrink: 0; }
+#over > :first-child, #continue > :first-child { margin-top: auto; }
+#over > :last-child, #continue > :last-child { margin-bottom: auto; }
+
 .overlay h1 {
   margin: 0 0 8px;
   font-family: 'Audiowide', sans-serif;

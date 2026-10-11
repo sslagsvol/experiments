@@ -55,6 +55,13 @@ const pauseEl = document.getElementById('pause');
 pauseBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); setPaused(true); });
 // Taps on the menu never reach the game (no steering, no stray taps on resume).
 pauseEl.addEventListener('pointerdown', (e) => e.stopPropagation());
+// Pause, game over and extra life scroll on short phones: keep the game's
+// touch blocking (which stops page scrolling mid-run) off them.
+for (const id of ['pause', 'over', 'continue']) document.getElementById(id).addEventListener('touchmove', (e) => e.stopPropagation(), { passive: true });
+// Game over: a finished tap (a click, which a scroll never makes) retries.
+const overEl = document.getElementById('over');
+overEl.addEventListener('pointerdown', (e) => e.stopPropagation());
+overEl.addEventListener('click', () => { if (G.state === 'over' && time - G.overAt > 0.6 && hud.canRetry()) retryRun(); });
 document.getElementById('resume').addEventListener('click', () => setPaused(false));
 // Quit asks first; the confirm replaces the Continue / Quit buttons.
 const quitConfirm = document.getElementById('quit-confirm'), pauseActions = pauseEl.querySelector('.pause-actions');

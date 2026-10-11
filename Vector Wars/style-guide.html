@@ -102,7 +102,7 @@
         <div id="recap" class="recap"></div>
         <p class="blink">Tap to retry</p><button type="button" class="btn" style="margin-top:18px">Quit</button></div></div>
       <h3>Game-over recap</h3><div class="var">renderRecap() · #recap .score · .kills · .row · #retry · #over-quit</div>
-      <div class="meta">Tap (or Space) retries the same mode at once; <b>Quit</b> (a plain .btn under the retry line, Q, no confirm) goes to the title. Both appear once the board check is done. The real recap from src/hud.js with sample stats. Score = distance × CFG.SCORE_PER_DIST + each enemy defeated × its hp × CFG.SCORE_PER_HP · numbers count up over 0.9s · sprites idle (grunts bob, drones sway, bombers pulse, brutes turn)</div>
+      <div class="meta">On short phones the screen scrolls (as do pause and extra life): centered when it fits, scrolling from the top when not. A finished tap (a click, never a scroll) or Space retries the same mode at once; <b>Quit</b> (a plain .btn under the retry line, Q, no confirm) goes to the title. Both appear once the board check is done. The real recap from src/hud.js with sample stats. Score = distance × CFG.SCORE_PER_DIST + each enemy defeated × its hp × CFG.SCORE_PER_HP · numbers count up over 0.9s · sprites idle (grunts bob, drones sway, bombers pulse, brutes turn)</div>
     </div>
     <div class="card">
       <div class="stage" style="padding:16px 8px"><div id="sg-board"></div></div>
