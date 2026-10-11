@@ -29,6 +29,8 @@ export class Hud {
     this.titleLogo = document.getElementById('title-logo');
     this.titleBoard = document.getElementById('title-board');
     this.entryEl = document.getElementById('entry');
+    this.entryScreen = document.getElementById('entry-screen');
+    this.savedNote = document.getElementById('saved-note');
     this.retry = document.getElementById('retry');
     this.overQuit = document.getElementById('over-quit');
     this.pauseBtn = document.getElementById('pause-btn');
@@ -103,12 +105,13 @@ export class Hud {
   }
 
   // Game over: the recap shows at once; retry stays locked until the board
-  // check finishes (allowRetry) or initials are saved (showBoard).
+  // check finishes (allowRetry) or initials are saved (entryDone).
   showOver(stats) {
     this.over.classList.toggle('hidden', !stats);
     if (this.stopRecap) { this.stopRecap(); this.stopRecap = null; }
     if (this.entry) { this.entry.close(); this.entry = null; }
-    this.entryEl.classList.add('hidden');
+    this.entryScreen.classList.add('hidden');
+    this.savedNote.classList.add('hidden');
     this.retry.classList.add('hidden');
     this.overQuit.classList.add('hidden');
     this.retryAt = Infinity;
@@ -123,9 +126,13 @@ export class Hud {
 
   canRetry() { return !this.entry && performance.now() - this.retryAt > 600; }
 
-  // Made the board: entry = { rank, onStep(), onSubmit(initials) }.
+  // Made the board: the initials get their own screen (the game-over screen
+  // waits behind it). entry = { rank, score, onStep(), onSubmit(initials) }.
   offerEntry(entry) {
-    this.entryEl.classList.remove('hidden');
+    this.over.classList.add('hidden');
+    this.entryScreen.classList.remove('hidden');
+    this.entryScreen.scrollTop = 0;
+    document.getElementById('entry-score').textContent = commas(entry.score);
     this.entry = new InitialsEntry(this.entryEl, entry.rank, (initials) => {
       this.entry.close();
       this.entry = null;
@@ -139,11 +146,13 @@ export class Hud {
     this.retryAt = Infinity;
   }
 
-  // Replaces the recap with the high score board (after entering initials).
-  showBoard(scores, highlight) {
-    if (this.stopRecap) { this.stopRecap(); this.stopRecap = null; }
-    this.entryEl.classList.add('hidden');
-    renderBoard(this.recap, scores, highlight);
+  // Initials saved: back to the regular game-over screen, with where it placed.
+  entryDone(index) {
+    this.entryScreen.classList.add('hidden');
+    this.over.classList.remove('hidden');
+    this.over.scrollTop = 0;
+    this.savedNote.textContent = index >= 0 ? `Saved · ${ordinal(index)} place on the board` : 'Saved';
+    this.savedNote.classList.remove('hidden');
     this.allowRetry();
   }
 

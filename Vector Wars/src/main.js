@@ -57,10 +57,11 @@ pauseBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); setPaused
 pauseEl.addEventListener('pointerdown', (e) => e.stopPropagation());
 // Pause, game over and extra life scroll on short phones: keep the game's
 // touch blocking (which stops page scrolling mid-run) off them.
-for (const id of ['pause', 'over', 'continue']) document.getElementById(id).addEventListener('touchmove', (e) => e.stopPropagation(), { passive: true });
+for (const id of ['pause', 'over', 'continue', 'entry-screen']) document.getElementById(id).addEventListener('touchmove', (e) => e.stopPropagation(), { passive: true });
 // Game over: a finished tap (a click, which a scroll never makes) retries.
 const overEl = document.getElementById('over');
 overEl.addEventListener('pointerdown', (e) => e.stopPropagation());
+document.getElementById('entry-screen').addEventListener('pointerdown', (e) => e.stopPropagation());
 overEl.addEventListener('click', () => { if (G.state === 'over' && time - G.overAt > 0.6 && hud.canRetry()) retryRun(); });
 document.getElementById('resume').addEventListener('click', () => setPaused(false));
 // Quit asks first; the confirm replaces the Continue / Quit buttons.
@@ -1173,8 +1174,8 @@ function endRun() {
   sfx.play('lose');
   world.addRipple(G.ax, G.dist, ANIM.rippleDeath, time);
   sparks.emit(G.ax, 0.3, G.dist, COLORS.you, 80, 5);
-  // Recap first; then check the (global) board. Made the top 10? Enter
-  // initials, then the board replaces the recap.
+  // Recap first; then check the (global) board. Made the top 10? The initials
+  // get their own screen, then the game-over screen comes back.
   const run = G;
   hud.showOver(stats);
   refreshBoard().then((list) => {
@@ -1183,6 +1184,7 @@ function endRun() {
     if (rank < 0) { hud.allowRetry(); return; }
     hud.offerEntry({
       rank,
+      score,
       onStep: () => sfx.play('gateTick'),
       onSubmit: async (initials) => {
         sfx.play('maxMult');
@@ -1191,7 +1193,7 @@ function endRun() {
         board = saved.list;
         best = board[0]?.score || 0;
         hud.setBest(best);
-        if (G === run) hud.showBoard(board, saved.index);
+        if (G === run) hud.entryDone(saved.index);
       },
     });
   });

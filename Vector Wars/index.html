@@ -73,9 +73,15 @@
 <div id="over" class="overlay hidden">
   <h2>Swarm lost</h2>
   <div id="recap" class="recap"></div>
-  <div id="entry" class="hidden"></div>
+  <p id="saved-note" class="saved-note hidden"></p>
   <p id="retry" class="blink">Tap to retry</p>
   <button id="over-quit" type="button" class="btn hidden">Quit</button>
+</div>
+
+<!-- Made the board: initials get their own screen, then the game-over screen. -->
+<div id="entry-screen" class="overlay hidden">
+  <div class="recap"><div class="score"><span class="label">Score</span><span class="big" id="entry-score">0</span></div></div>
+  <div id="entry"></div>
 </div>
 
 <div id="continue" class="overlay hidden">

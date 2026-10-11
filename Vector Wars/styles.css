@@ -221,7 +221,7 @@ html, body {
 /* Game over, pause and extra life scroll on short phones: content stays
    centered when it fits (auto margins) and scrolls from the top when it
    doesn't. main.js keeps the game's own touch handling off them. */
-#over, #pause, #continue {
+#over, #pause, #continue, #entry-screen {
   pointer-events: auto;
   justify-content: flex-start;
   overflow-y: auto;
@@ -230,9 +230,13 @@ html, body {
   padding-top: calc(18px + env(safe-area-inset-top));
   padding-bottom: calc(18px + env(safe-area-inset-bottom));
 }
-#over > *, #continue > * { flex-shrink: 0; }
-#over > :first-child, #continue > :first-child { margin-top: auto; }
-#over > :last-child, #continue > :last-child { margin-bottom: auto; }
+#over > *, #continue > *, #entry-screen > * { flex-shrink: 0; }
+#over > :first-child, #continue > :first-child, #entry-screen > :first-child { margin-top: auto; }
+#over > :last-child, #continue > :last-child, #entry-screen > :last-child { margin-bottom: auto; }
+/* The initials screen (made the board): the score, then the entry. */
+#entry-screen { background: radial-gradient(ellipse at center, rgba(4, 5, 26, 0.7), rgba(4, 5, 26, 0.92)); animation: pause-in 0.2s ease-out; }
+#entry-screen .recap { margin-bottom: 4px; }
+.saved-note { margin: 10px 0 0; font-size: 13px; letter-spacing: .1em; color: var(--hud); }
 
 .overlay h1 {
   margin: 0 0 8px;
@@ -299,7 +303,7 @@ html, body {
 @keyframes board-me { to { color: #fff; text-shadow: 0 0 12px #fff; } }
 
 /* ---- Initials entry ---- */
-#entry { pointer-events: auto; margin-top: 10px; }
+#entry { pointer-events: auto; margin-top: 6px; }
 .entry-title {
   font-family: 'Audiowide', sans-serif;
   font-size: 20px;
