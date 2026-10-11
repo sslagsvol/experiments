@@ -46,10 +46,16 @@ html, body {
 /* Live score, top left. On pace for the top 3 of the board (.top): it
    doubles in size and a medal badge in that rank's board color appears;
    moving up a place pops it. */
-#dist {
+#score-box {
   position: absolute;
   left: calc(16px + env(safe-area-inset-left));
   top: calc(12px + env(safe-area-inset-top));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+#dist {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -184,7 +190,7 @@ html, body {
   position: absolute;
   left: 8px;
   right: 8px;
-  top: calc(44px + env(safe-area-inset-top));
+  top: calc(64px + env(safe-area-inset-top));   /* below the score and level tag */
   font-size: 11px;
   color: var(--text);
   text-shadow: none;
@@ -211,6 +217,22 @@ html, body {
 
 /* Game over sits on a darker backdrop so the recap and board read over the scene. */
 #over { background: radial-gradient(ellipse at center, rgba(4, 5, 26, 0.62), rgba(4, 5, 26, 0.85)); }
+
+/* Game over, pause and extra life scroll on short phones: content stays
+   centered when it fits (auto margins) and scrolls from the top when it
+   doesn't. main.js keeps the game's own touch handling off them. */
+#over, #pause, #continue {
+  pointer-events: auto;
+  justify-content: flex-start;
+  overflow-y: auto;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  padding-top: calc(18px + env(safe-area-inset-top));
+  padding-bottom: calc(18px + env(safe-area-inset-bottom));
+}
+#over > *, #continue > * { flex-shrink: 0; }
+#over > :first-child, #continue > :first-child { margin-top: auto; }
+#over > :last-child, #continue > :last-child { margin-bottom: auto; }
 
 .overlay h1 {
   margin: 0 0 8px;
@@ -584,3 +606,48 @@ body.kb .touch-only { display: none; }
 #over-quit { margin-top: 18px; pointer-events: auto; }
 .btn.danger { color: #ff8cc6; border-color: var(--enemy); text-shadow: 0 0 8px rgba(255, 61, 154, 0.7); }
 .pause-actions.hidden { display: none; }   /* .pause-actions sets display after .hidden */
+
+/* Level tag under the live score ("Level 3"; Challenge: "Gate 12"), with a
+   small bomb mark while a bomb is ready (hud.setLevel). */
+#level-tag {
+  font-size: 13px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--text);
+  opacity: .75;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#level-tag:empty { display: none; }
+/* The bomb button (after the bomb unlocks), bottom left: an outline
+   ring that fills with orange as enemies are shot down (hud.setBomb sets its
+   dash length); full,
+   the button fills in and pulses: tap it (or press B). */
+#bomb-btn {
+  position: absolute;
+  left: calc(18px + env(safe-area-inset-left));
+  bottom: calc(64px + env(safe-area-inset-bottom));   /* above the army count row, clear of its +/− tags */
+  width: 88px;
+  height: 88px;
+  padding: 0;
+  display: none;
+  border: none;
+  border-radius: 50%;
+  background: rgba(4, 5, 26, 0.45);
+  pointer-events: auto;
+  cursor: default;
+}
+#bomb-btn.show { display: block; }
+#bomb-btn .ring { position: absolute; inset: 0; width: 100%; height: 100%; rotate: -90deg; fill: none; }
+#bomb-btn .ring .track { stroke: rgba(255, 180, 61, 0.22); stroke-width: 2.2; }
+#bomb-btn .ring .fill { stroke: #ffb43d; stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 0 126; filter: drop-shadow(0 0 3px rgba(255, 140, 40, 0.8)); transition: stroke-dasharray 0.25s ease-out; }
+#bomb-btn .icon { position: absolute; inset: 20%; width: 60%; height: 60%; fill: none; stroke: #ffb43d; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; opacity: .45; }
+#bomb-btn .icon .spark { display: none; }
+#bomb-btn.ready { cursor: pointer; background: radial-gradient(circle, rgba(255, 170, 60, 0.95), rgba(255, 110, 20, 0.85) 70%); box-shadow: 0 0 20px rgba(255, 140, 40, 0.8); animation: bomb-ready 1s ease-in-out infinite; }
+#bomb-btn.ready .icon { stroke: #fff; opacity: 1; }
+#bomb-btn.ready .icon .spark { display: inline; animation: blink 0.3s steps(2, start) infinite; }
+#bomb-btn.fresh { animation: bomb-in 0.5s ease-out, bomb-ready 1s ease-in-out 0.5s infinite; }
+#bomb-btn.ready:active { scale: 0.9; }
+@keyframes bomb-in { 0% { scale: 1.6; } 100% { scale: 1; } }
+@keyframes bomb-ready { 50% { box-shadow: 0 0 38px rgba(255, 140, 40, 1); } }

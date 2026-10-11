@@ -21,7 +21,8 @@ Round-by-round history of playtest feedback and what changed, grouped by release
 | 0.11.1 | round 44 | PR #17 |
 | 0.11.2 | round 45 | PR #18 |
 | 0.11.3 | round 46 | direct push to main (`3d3fdcb`, no PR) |
-| 0.11.4 | round 47 | `vw/v0.11.4` |
+| 0.11.4 | round 47 | PR #19 |
+| 0.12.0 | round 48 | `vw/v0.12.0` |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
@@ -431,3 +432,14 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 ## Round 47 — v0.11.4: level 5 finale eased (2026-10-09)
 - User playtest: "feeling great"; the end of level 5 is too tough. The four finale waves are about 15% smaller (`RUSH_FINALE` threats 0.56 / 0.40 / 0.34 / 0.52 → 0.48 / 0.34 / 0.29 / 0.44 × the best-case army).
 - **Debug mode starts muted** (`?debug`, which every test run uses). The mute button still works there, but only for that visit: the saved setting for normal play isn't touched (`sfx.persist`).
+
+## Round 48 — v0.12.0: the bomb, level tag, legible gates, shield charge, the level 6 wall (2026-10-10)
+- **The bomb** (`CFG.BOMB`, `detonate()`, `enemies.blast`): unlocked after the bomber fight (story level 5, banner "Bomb unlocked"; from the start in Challenge). First pass: one charge per level, a 124px button over the middle of the screen when enemies closed in (reworked below). Tap: the army spends 20% of itself and everything within 2.8 of the nearest enemies just ahead (2–7 units out) is destroyed; a mini-boss loses 25% of its hp; bullet enemies are immune. White and orange rings, a fire burst, the level-gate ripple, stomp + win, a short killcam. Bot: tapped the moment it shows, 53 kills for 70 units; half a second later, 108 for 56. (First tries: the blast sat 2 units ahead and hit empty track, 23 kills; then the button showed at 9 units, beyond the blast's reach, 1 kill.)
+- **Level tag** under the score, top left: "Level 6" (Challenge: "Gate 12"), with a small bomb mark while a bomb is ready (`#score-box`, `#level-tag`, `hud.setLevel`).
+- **Gate labels:** panels a bit taller (`GATE_H` 0.625 → 0.8), type taller (`GATE_TEXT` 0.5 / 0.4 → 0.6 / 0.48 of the panel), and the letters near-white and under the bloom threshold, so they read crisp instead of glowing (gates.js ink).
+- **Shields:** hover closer (`SHIELD_HOVER` 2.5 → 1.2) and charge the moment the units they guard are gone (`SHIELD_LINGER` 0), hitting for 2 units each (were harmless). Bot: hovered at 1.19; orphaned lines reached the army in about 1s.
+- **The level 6–7 wall** analyzed and put first on the roadmap (`PLAN.md` section 4, item 1): the level 6 strike team reaches the boss at about half strength (burning brute clusters), level 7 cut a 500 army to 110, shield stacks in front of burning brutes bleed armies out in 7–9, and the score is mostly kills, so stalling there caps it near 200k. Levers listed; not changed yet.
+- Style guide: in-game HUD (level tag), bomb button card, gate label ink.
+- **The bomb, reworked (user feedback: not over the middle, never more than one):** one bomb at a time, its button top left under the level tag (`#bomb-btn` in `#score-box`), shown once unlocked. An outline ring fills with orange as enemies are shot down (each kill is 1 / its squad's size; `BOMB.earn` 5 squads' worth fills it; a mini-boss down fills it at once); full, the button fills orange with a white bomb, pops and pulses, and a tap (or B) detonates it. It starts full at the unlock; no more per-level refill, center pop-up, pips or second bomb (`showRange`, `linger`, `challengeEvery`, `max` gone). Bot: tap cost 94 units and destroyed 131; the ring refilled in about 37s (24% at 10s, 60% at 20s). The ring's arc is set from its real circumference (`pathLength` didn't scale the dash). The debug line moved below the button.
+- **Bomb button moved to the bottom left and made bigger** (88px, was 46px top left; same ring, fill and pulse), sitting just above the army count row so it clears the +/− tags at phone width (checked at 375px). The debug line moved back up under the level tag.
+- **Pause, game over and extra life scroll on short phones** (their buttons were cut off): `overflow-y: auto` with content centered when it fits (auto margins), and the game's touch blocking (which stops the page scrolling mid-run) no longer catches drags on them. Game over now retries on a finished tap (a click), so starting a scroll can't retry. Checked at 375×460: the bottom buttons scroll into view on both screens; drags there aren't cancelled while drags on the game still are.

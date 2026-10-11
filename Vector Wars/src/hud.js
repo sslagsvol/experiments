@@ -12,6 +12,8 @@ const commas = (n) => Math.round(n).toLocaleString('en-US');
 export class Hud {
   constructor() {
     this.dist = document.getElementById('dist');
+    this.levelTag = document.getElementById('level-tag');
+    this.bombBtn = document.getElementById('bomb-btn');
     this.score = document.getElementById('score');
     this.badge = document.getElementById('rank-badge');
     this.best = document.getElementById('best');
@@ -149,6 +151,27 @@ export class Hud {
   setLab(pattern, parallax) {
     this.gridBtn.textContent = `Grid: ${pattern}`;
     this.parallaxBtn.textContent = `Parallax: ${parallax ? 'deep' : 'classic'}`;
+  }
+
+  // Under the score: "Level 3" (or "Gate 12").
+  setLevel(text) {
+    if (text === this.last.level) return;
+    this.last.level = text;
+    this.levelTag.textContent = text;
+  }
+
+  // The bomb button under the level tag, once unlocked: its ring fills with
+  // the charge (0..1), and at 1 the button lights up to be tapped. null hides it.
+  setBomb(m) {
+    const key = m ? `${Math.round(m.charge * 100)}/${m.fresh}` : '';
+    if (key === this.last.bomb) return;
+    this.last.bomb = key;
+    this.bombBtn.classList.toggle('show', !!m);
+    if (!m) return;
+    const c = 2 * Math.PI * 20;   // the ring's circumference (r = 20 in its 44-unit viewBox)
+    this.bombBtn.querySelector('.ring .fill').style.strokeDasharray = `${(c * m.charge).toFixed(1)} ${c.toFixed(1)}`;
+    this.bombBtn.classList.toggle('ready', m.charge >= 1);
+    this.bombBtn.classList.toggle('fresh', !!m.fresh);
   }
 
   // Mini-boss health, 0..1 (negative hides the bar).

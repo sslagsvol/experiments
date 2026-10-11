@@ -55,6 +55,13 @@ const pauseEl = document.getElementById('pause');
 pauseBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); setPaused(true); });
 // Taps on the menu never reach the game (no steering, no stray taps on resume).
 pauseEl.addEventListener('pointerdown', (e) => e.stopPropagation());
+// Pause, game over and extra life scroll on short phones: keep the game's
+// touch blocking (which stops page scrolling mid-run) off them.
+for (const id of ['pause', 'over', 'continue']) document.getElementById(id).addEventListener('touchmove', (e) => e.stopPropagation(), { passive: true });
+// Game over: a finished tap (a click, which a scroll never makes) retries.
+const overEl = document.getElementById('over');
+overEl.addEventListener('pointerdown', (e) => e.stopPropagation());
+overEl.addEventListener('click', () => { if (G.state === 'over' && time - G.overAt > 0.6 && hud.canRetry()) retryRun(); });
 document.getElementById('resume').addEventListener('click', () => setPaused(false));
 // Quit asks first; the confirm replaces the Continue / Quit buttons.
 const quitConfirm = document.getElementById('quit-confirm'), pauseActions = pauseEl.querySelector('.pause-actions');
@@ -69,6 +76,9 @@ const overQuit = document.getElementById('over-quit');
 overQuit.addEventListener('pointerdown', (e) => e.stopPropagation());
 overQuit.addEventListener('click', () => { if (G.state === 'over' && !hud.entering) newRun(); });
 const retryRun = () => { newRun(); startPlay(mode); };
+// The bomb button (taps on it never reach the game).
+const bombBtn = document.getElementById('bomb-btn');
+bombBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); detonate(); });
 // Extra life: continue the mini-boss fight, or retreat.
 const continueEl = document.getElementById('continue');
 continueEl.addEventListener('pointerdown', (e) => e.stopPropagation());
@@ -102,6 +112,8 @@ window.addEventListener('keydown', (e) => {
   } else if (k === 'q') {
     if (G.paused) { if (quitConfirm.classList.contains('hidden')) askQuit(true); else quitRun(); }
     else if (G.state === 'over' && !hud.entering) newRun();
+  } else if (k === 'b') {
+    detonate();
   } else if (k === 'm') {
     sfx.unlock(); sfx.setMuted(!sfx.muted); syncMute();
   } else if (k === 'g') {
@@ -218,6 +230,7 @@ function newRun() {
     marks: [],       // track-speed changes placed on the track: { wz, speed }
     best: 0,         // best-case army through this level's gates (sizes a sprint finale)
     lives: 1,        // one extra life per run: continue a lost mini-boss fight
+    bomb: { on: mode === 'challenge', charge: 1, readyAt: -9 },   // the bomb power-up: charge 0..1, ready at 1
     edge: { t: -9, n: 0, of: 1 },   // units fallen off the edge in the current window
     edgeWarned: false,
     held: false,     // the extra-life prompt is up (the game is frozen)   // s until the next bullet-enemy volley (once they're unlocked)
@@ -671,6 +684,41 @@ function edgeWatch() {
   if (e.n >= Math.max(3, w.share * e.of)) { G.edgeWarned = true; hud.toast('Watch the edges!'); }
 }
 
+// The bomb: one at a time. Its ring refills as enemies are shot down (each
+// kill is 1 / its squad's size; BOMB.earn squads' worth fills it).
+function bombReady() { return G.bomb.on && G.bomb.charge >= 1 && G.state === 'play' && !G.held && army.N > 0; }
+function bombCharge(s) {
+  if (!G.bomb.on || G.bomb.charge >= 1) return;
+  G.bomb.charge = Math.min(1, G.bomb.charge + 1 / (Math.max(1, s.n0 || 1) * CFG.BOMB.earn));
+  if (G.bomb.charge >= 1) { G.bomb.readyAt = G.ui; sfx.play('maxMult', { gain: 0.5 }); }
+}
+
+// Detonate: the army spends BOMB.cost of itself to destroy everything in a
+// small area just ahead of it.
+function detonate() {
+  if (!bombReady() || G.paused) return;
+  // Centered just past the nearest enemies in front (within ahead[0]..ahead[1]).
+  const B = CFG.BOMB, x = army.cx, front = G.dist - army.front;
+  const near = enemies.nearestAhead(x, front, CFG.TW);
+  const w = front + Math.max(B.ahead[0], Math.min(B.ahead[1], near - front + B.radius * 0.6)), z = G.dist - w;
+  G.bomb.charge = 0;
+  const cost = Math.floor(army.N * B.cost);
+  if (cost > 0) { army.kill(cost, unitLost); noteLoss(cost); G.stats.bombed = (G.stats.bombed || 0) + cost; }
+  for (const hit of enemies.blast(x, w, B.radius, B.bossDamage)) {
+    if (hit.boss) bossDown(hit.s, x, w);
+    else { G.stats.kills[hit.t.id]++; if (hit.s.n === 0) squadWiped(hit.s); }
+  }
+  army.blast(x, z, B.radius * 0.6);
+  sparks.ring(x, 0.3, w, B.radius, COLORS.white, 70);
+  sparks.ring(x, 0.6, w, B.radius * 0.7, COLORS.burn, 50);
+  sparks.emit(x, 0.5, w, COLORS.burn, 140, 7);
+  world.addRipple(x, w, ANIM.rippleLevel, time);
+  sfx.play('stomp', { gain: 1 });
+  sfx.play('win');
+  G.shake = Math.max(G.shake, 0.4);
+  G.killcamT = Math.max(G.killcamT, 0.8);
+}
+
 // Boss moves and bullet events from enemies.update.
 function enemyEvent(e) {
   const gap = e.w - G.dist + army.front;   // how far ahead of the army's front row
@@ -828,6 +876,9 @@ function levelUp(g) {
   G.levelSpeed = def.speed || 1;
   if (G.level >= WORLD_END) G.levelSpeed = Math.min(CFG.ENDLESS_SPEED_MAX, 1 + CFG.ENDLESS_SPEED * (G.level - WORLD_END + 1));
   const fireUp = fireMul() > fireBefore;
+  // The bomb: unlocked (full) after the bomber fight.
+  const bombNew = !G.bomb.on && G.level >= CFG.BOMB.unlockAt;
+  if (bombNew) Object.assign(G.bomb, { on: true, charge: 1, readyAt: G.ui });
   if (def.kind === 'bonus') {
     // New-enemy level: the army "condenses" to a small, bright team (shown as
     // a level-up, not a loss) to face the giant of the next enemy type. The
@@ -849,7 +900,8 @@ function levelUp(g) {
     hud.toast(title, 'Challenge mode unlocked');
     return;
   }
-  if (key) hud.levelBanner(title, null, ['New enemy:', ENEMY_TYPES[key]]);
+  if (bombNew) hud.levelBanner(title, null, ['Bomb unlocked', null]);
+  else if (key) hud.levelBanner(title, null, ['New enemy:', ENEMY_TYPES[key]]);
   else hud.levelBanner(title, null);
 }
 
@@ -932,6 +984,7 @@ function breakGatesBefore(w) {
 // A mini-boss destroyed: a big burst, a short killcam, and its points.
 function bossDown(s, x, w) {
   if (G.bonus) G.bonus.killed = true;
+  if (G.bomb.on && G.bomb.charge < 1) { G.bomb.charge = 1; G.bomb.readyAt = G.ui; }   // a mini-boss down refills the bomb
   G.stats.bossPts += s.hpMax * CFG.SCORE_PER_HP;
   sparks.ring(x, 0.6, w, 2.2, COLORS.white, 60);
   sparks.emit(x, 0.8, w, COLORS.enemyHot, 120, 7);
@@ -1015,7 +1068,7 @@ function bulletTest(x, oldW, newW) {
   const hit = enemies.hitTest(x, oldW, newW);
   if (hit) {
     sparks.emit(x, 0.2, newW, COLORS.enemy, hit.killed ? 3 : 1, 2);
-    if (hit.killed) { G.stats.kills[hit.t.id]++; sfx.play('pop'); } else if (!hit.shielded) sfx.play('hit');
+    if (hit.killed) { G.stats.kills[hit.t.id]++; sfx.play('pop'); if (!hit.boss) bombCharge(hit.s); } else if (!hit.shielded) sfx.play('hit');
     if (hit.shielded) sfx.play('hit', { pitch: 0.45 });   // dull tick: bounced off the shield
     if (hit.killed && hit.boss) bossDown(hit.s, x, newW);
     else if (hit.killed && hit.s.n === 0) squadWiped(hit.s);
@@ -1300,6 +1353,9 @@ function syncHud(realDt) {
   const score = G.state === 'title' ? 0 : runStats().score;
   const rank = G.state === 'play' ? rankFor(score, board) : -1;
   if (hud.setScore(score, rank <= 2 ? rank : -1)) sfx.play('maxMult');
+  hud.setLevel(G.state === 'title' ? '' : CLASSIC() ? `Gate ${G.gateIdx}` : `Level ${G.level}`);
+  // The bomb button under it, once unlocked: its ring fills, then it lights up.
+  hud.setBomb(G.state !== 'title' && G.bomb.on ? { charge: G.bomb.charge, fresh: G.ui - G.bomb.readyAt < 1 } : null);
   // Gain / loss totals stay up while changes keep coming, then fade.
   G.ui += realDt;
   for (const tally of [G.gain, G.loss]) if (tally.n > 0 && G.ui - tally.t > 1.2) tally.n = 0;
