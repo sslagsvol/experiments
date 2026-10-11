@@ -7,7 +7,7 @@ import { Army } from './crowd.js';
 import { EnemyForce } from './enemies.js';
 import { squadMix, mixEst, TYPE_LIST, ENEMY_TYPES, UNLOCK_AT } from './enemyFormations.js';
 import { GatePool, FONT, gateColor } from './gates.js';
-import { Bullets, Sparks, Fallers, Fizzles } from './fx.js';
+import { Bullets, Sparks, Fallers, Fizzles, Lasers } from './fx.js';
 import { UNIT_SPACING } from './formations.js';
 import { DragInput, KeyInput } from './input.js';
 import { Hud } from './hud.js';
@@ -34,6 +34,7 @@ const army = new Army(world.scene, world.pointScale);
 const enemies = new EnemyForce(world.scene, world.pointScale);
 const gates = new GatePool(world.scene);
 const bullets = new Bullets(world.scene);
+const lasers = new Lasers(world.scene);
 const sparks = new Sparks(world.scene, world.pointScale);
 const fallers = new Fallers(world.scene, world.pointScale, UNIT_SPACING * 1.3);
 const fizzles = new Fizzles(world.scene, world.pointScale, UNIT_SPACING * 1.3);
@@ -80,6 +81,7 @@ const retryRun = () => { newRun(); startPlay(mode); };
 // The bomb button (taps on it never reach the game).
 const bombBtn = document.getElementById('bomb-btn');
 bombBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); detonate(); });
+document.getElementById('focus-btn').addEventListener('pointerdown', (e) => { e.stopPropagation(); focusFire(); });
 // Extra life: continue the mini-boss fight, or retreat.
 const continueEl = document.getElementById('continue');
 continueEl.addEventListener('pointerdown', (e) => e.stopPropagation());
@@ -115,6 +117,8 @@ window.addEventListener('keydown', (e) => {
     else if (G.state === 'over' && !hud.entering) newRun();
   } else if (k === 'b') {
     detonate();
+  } else if (k === 'f') {
+    focusFire();
   } else if (k === 'm') {
     sfx.unlock(); sfx.setMuted(!sfx.muted); syncMute();
   } else if (k === 'g') {
@@ -199,6 +203,7 @@ function newRun() {
   gates.clear();
   enemies.reset();
   bullets.clear();
+  lasers.clear();
   sparks.clear();
   fallers.clear();
   fizzles.clear();
@@ -232,6 +237,7 @@ function newRun() {
     best: 0,         // best-case army through this level's gates (sizes a sprint finale)
     lives: 1,        // one extra life per run: continue a lost mini-boss fight
     bomb: { on: mode === 'challenge', charge: 1, readyAt: -9 },   // the bomb power-up: charge 0..1, ready at 1
+    focus: { on: mode === 'challenge', charge: 1, readyAt: -9, until: -1, acc: 0 },   // focus fire: charge 0..1; firing while time < until
     edge: { t: -9, n: 0, of: 1 },   // units fallen off the edge in the current window
     edgeWarned: false,
     held: false,     // the extra-life prompt is up (the game is frozen)   // s until the next bullet-enemy volley (once they're unlocked)
@@ -710,6 +716,47 @@ function bombCharge(s) {
   if (G.bomb.charge >= 1) { G.bomb.readyAt = G.ui; sfx.play('maxMult', { gain: 0.5 }); }
 }
 
+// Focus fire: like the bomb, one charge that refills as enemies are shot down
+// (FOCUS.earn squads' worth). Fired, it locks up to FOCUS.beams lasers onto the
+// nearest enemies ahead for FOCUS.time s, each landing FOCUS.rate hits/s.
+const focusing = () => G.focus.on && time < G.focus.until && G.state === 'play';
+function focusReady() { return G.focus.on && G.focus.charge >= 1 && !focusing() && G.state === 'play' && !G.held && army.N > 0; }
+function focusCharge(s) {
+  if (!G.focus.on || G.focus.charge >= 1 || focusing()) return;
+  G.focus.charge = Math.min(1, G.focus.charge + 1 / (Math.max(1, s.n0 || 1) * CFG.FOCUS.earn));
+  if (G.focus.charge >= 1) { G.focus.readyAt = G.ui; sfx.play('maxMult', { gain: 0.4, pitch: 1.2 }); }
+}
+function focusFire() {
+  if (!focusReady() || G.paused) return;
+  Object.assign(G.focus, { charge: 0, until: time + CFG.FOCUS.time, acc: 0 });
+  sfx.play('zap', { pitch: 1.4, gain: 0.6 });
+}
+function focusUpdate(dt) {
+  if (!focusing() || army.N <= 0) { if (lasers.n) lasers.clear(); return; }
+  const F = CFG.FOCUS, front = G.dist - army.front;
+  let targets = enemies.nearestTargets(army.cx, front, F.range, F.beams);
+  // Each beam lands its hits; a target that dies is replaced next tick.
+  for (G.focus.acc += dt * F.rate; G.focus.acc >= 1; G.focus.acc--) {
+    for (const { i, s } of targets) {
+      if (!enemies.alive[i] || enemies.owner[i] !== s.id) continue;
+      const hit = enemies.hitUnit(i, s), x = enemies.x[i], w = enemies.w[i];
+      sparks.emit(x, 0.25, w, COLORS.you, hit.killed ? 4 : 1, 2);
+      if (!hit.killed) continue;
+      G.stats.kills[hit.t.id]++;
+      sfx.play('pop');
+      if (hit.boss) bossDown(s, x, w);
+      else { bombCharge(s); if (s.n === 0) squadWiped(s); }
+    }
+    targets = enemies.nearestTargets(army.cx, front, F.range, F.beams);
+  }
+  // Draw: thin glowing lines from the front rank to each target.
+  const segs = targets.map(({ i }, k) => {
+    const t = TYPE_LIST[enemies.type[i]], ox = (k - (targets.length - 1) / 2) * Math.min(0.3, army.halfW * 0.4);
+    return [army.cx + ox, 0.25, army.front, enemies.x[i], 0.14 * t.size * enemies.big[i] + enemies.lift[i], G.dist - enemies.w[i], 0.85 + 0.15 * Math.sin(time * 40 + k)];
+  });
+  lasers.set(segs);
+}
+
 // Detonate: the army spends BOMB.cost of itself to destroy everything in a
 // small area just ahead of it.
 function detonate() {
@@ -897,6 +944,9 @@ function levelUp(g) {
   // The bomb: unlocked (full) after the bomber fight.
   const bombNew = !G.bomb.on && G.level >= CFG.BOMB.unlockAt;
   if (bombNew) Object.assign(G.bomb, { on: true, charge: 1, readyAt: G.ui });
+  // Focus fire: unlocked (full) after level 2's boss.
+  const focusNew = !G.focus.on && G.level >= CFG.FOCUS.unlockAt;
+  if (focusNew) Object.assign(G.focus, { on: true, charge: 1, readyAt: G.ui });
   if (def.kind === 'bonus') {
     // New-enemy level: the army "condenses" to a small, bright team (shown as
     // a level-up, not a loss) to face the giant of the next enemy type. The
@@ -918,9 +968,12 @@ function levelUp(g) {
     hud.toast(title, 'Challenge mode unlocked');
     return;
   }
-  if (bombNew) hud.levelBanner(title, null, ['Bomb unlocked', null]);
-  else if (key) hud.levelBanner(title, null, ['New enemy:', ENEMY_TYPES[key]]);
-  else hud.levelBanner(title, null);
+  // Follow-up banners, one after another: what unlocked, then the new enemy.
+  const then = [];
+  if (focusNew) then.push(['Focus fire unlocked', null]);
+  if (bombNew) then.push(['Bomb unlocked', null]);
+  if (key) then.push(['New enemy:', ENEMY_TYPES[key]]);
+  hud.levelBanner(title, null, then);
 }
 
 // Leaving a bonus level: your army comes back. If the mini-boss died, the
@@ -1002,7 +1055,8 @@ function breakGatesBefore(w) {
 // A mini-boss destroyed: a big burst, a short killcam, and its points.
 function bossDown(s, x, w) {
   if (G.bonus) G.bonus.killed = true;
-  if (G.bomb.on && G.bomb.charge < 1) { G.bomb.charge = 1; G.bomb.readyAt = G.ui; }   // a mini-boss down refills the bomb
+  if (G.bomb.on && G.bomb.charge < 1) { G.bomb.charge = 1; G.bomb.readyAt = G.ui; }   // a mini-boss down refills the bomb…
+  if (G.focus.on && G.focus.charge < 1 && !focusing()) { G.focus.charge = 1; G.focus.readyAt = G.ui; }   // …and focus fire
   G.stats.bossPts += s.hpMax * CFG.SCORE_PER_HP;
   sparks.ring(x, 0.6, w, 2.2, COLORS.white, 60);
   sparks.emit(x, 0.8, w, COLORS.enemyHot, 120, 7);
@@ -1086,7 +1140,7 @@ function bulletTest(x, oldW, newW) {
   const hit = enemies.hitTest(x, oldW, newW);
   if (hit) {
     sparks.emit(x, 0.2, newW, COLORS.enemy, hit.killed ? 3 : 1, 2);
-    if (hit.killed) { G.stats.kills[hit.t.id]++; sfx.play('pop'); if (!hit.boss) bombCharge(hit.s); } else if (!hit.shielded) sfx.play('hit');
+    if (hit.killed) { G.stats.kills[hit.t.id]++; sfx.play('pop'); if (!hit.boss) { bombCharge(hit.s); focusCharge(hit.s); } } else if (!hit.shielded) sfx.play('hit');
     if (hit.shielded) sfx.play('hit', { pitch: 0.45 });   // dull tick: bounced off the shield
     if (hit.killed && hit.boss) bossDown(hit.s, x, newW);
     else if (hit.killed && hit.s.n === 0) squadWiped(hit.s);
@@ -1167,6 +1221,7 @@ function onHit(t, x, z, leaked, boss = false) {
 
 function endRun() {
   const stats = runStats(), { score } = stats;
+  lasers.clear();
   G.state = 'over';
   G.overAt = time;
   hud.setPauseButton(false);
@@ -1232,6 +1287,7 @@ function update(dt, realDt) {
     for (const e of enemies.events.splice(0)) enemyEvent(e);
     bossSpew(dt);
     bossGifts();
+    focusUpdate(dt);
     // Gift gates keep rushing after they're crossed (or missed) so they pass
     // behind the team and are released: the track is stopped in boss fights.
     for (const g of gates.active) if (g.rush) g.wz -= g.rush * dt;
@@ -1375,6 +1431,9 @@ function syncHud(realDt) {
   hud.setLevel(G.state === 'title' ? '' : CLASSIC() ? `Gate ${G.gateIdx}` : `Level ${G.level}`);
   // The bomb button under it, once unlocked: its ring fills, then it lights up.
   hud.setBomb(G.state !== 'title' && G.bomb.on ? { charge: G.bomb.charge, fresh: G.ui - G.bomb.readyAt < 1 } : null);
+  // Focus fire's button (bottom right): while firing, its ring drains with the time left.
+  const fz = focusing();
+  hud.setFocus(G.state !== 'title' && G.focus.on ? { charge: fz ? (G.focus.until - time) / CFG.FOCUS.time : G.focus.charge, fresh: G.ui - G.focus.readyAt < 1, active: fz } : null);
   // Gain / loss totals stay up while changes keep coming, then fade.
   G.ui += realDt;
   for (const tally of [G.gain, G.loss]) if (tally.n > 0 && G.ui - tally.t > 1.2) tally.n = 0;

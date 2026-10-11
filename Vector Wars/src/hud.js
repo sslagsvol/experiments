@@ -14,6 +14,7 @@ export class Hud {
     this.dist = document.getElementById('dist');
     this.levelTag = document.getElementById('level-tag');
     this.bombBtn = document.getElementById('bomb-btn');
+    this.focusBtn = document.getElementById('focus-btn');
     this.score = document.getElementById('score');
     this.badge = document.getElementById('rank-badge');
     this.best = document.getElementById('best');
@@ -171,16 +172,23 @@ export class Hud {
 
   // The bomb button under the level tag, once unlocked: its ring fills with
   // the charge (0..1), and at 1 the button lights up to be tapped. null hides it.
-  setBomb(m) {
-    const key = m ? `${Math.round(m.charge * 100)}/${m.fresh}` : '';
-    if (key === this.last.bomb) return;
-    this.last.bomb = key;
-    this.bombBtn.classList.toggle('show', !!m);
+  setBomb(m) { this.setPower(this.bombBtn, 'bomb', m); }
+
+  // Focus fire's twin button, bottom right; m.active while the lasers fire
+  // (the ring then shows the time left).
+  setFocus(m) { this.setPower(this.focusBtn, 'focus', m); }
+
+  setPower(btn, name, m) {
+    const key = m ? `${Math.round(m.charge * 100)}/${m.fresh}/${m.active}` : '';
+    if (key === this.last[name]) return;
+    this.last[name] = key;
+    btn.classList.toggle('show', !!m);
     if (!m) return;
     const c = 2 * Math.PI * 20;   // the ring's circumference (r = 20 in its 44-unit viewBox)
-    this.bombBtn.querySelector('.ring .fill').style.strokeDasharray = `${(c * m.charge).toFixed(1)} ${c.toFixed(1)}`;
-    this.bombBtn.classList.toggle('ready', m.charge >= 1);
-    this.bombBtn.classList.toggle('fresh', !!m.fresh);
+    btn.querySelector('.ring .fill').style.strokeDasharray = `${(c * Math.max(0, m.charge)).toFixed(1)} ${c.toFixed(1)}`;
+    btn.classList.toggle('ready', m.charge >= 1 && !m.active);
+    btn.classList.toggle('active', !!m.active);
+    btn.classList.toggle('fresh', !!m.fresh && !m.active);
   }
 
   // Mini-boss health, 0..1 (negative hides the bar).
@@ -207,7 +215,9 @@ export class Hud {
     this.toast(title);
     cancelAnimationFrame(this.foeRaf);
     clearTimeout(this.thenTimer);
-    if (then) this.thenTimer = setTimeout(() => this.levelBanner(...then), 1700);
+    // then: one follow-up [title, newType], or a list of them shown in turn.
+    const queue = !then || !then.length ? [] : Array.isArray(then[0]) ? then : [then];
+    if (queue.length) this.thenTimer = setTimeout(() => this.levelBanner(...queue[0], queue.length > 1 ? queue.slice(1) : null), 1700);
     if (!newType) return;
     this.toastEl.classList.add('foe');
     const c = this.toastEl.querySelector('.t3'), ctx = c.getContext('2d'), t0 = performance.now();

@@ -197,6 +197,12 @@ export const CFG = {
   // enemy within `radius` of the nearest enemies just ahead (centered
   // between ahead[0] and ahead[1] units in front of the army); a mini-boss loses
   // `bossDamage` of its hp.
+  // Focus fire (unlocked after level 2's boss, story level FOCUS.unlockAt; from
+  // the start in Challenge): like the bomb, one charge that refills as enemies
+  // are shot down (`earn` squads' worth). For `time` s, up to `beams` lasers lock
+  // onto the nearest enemies within `range` ahead, each landing `rate` hits/s
+  // (a hit = one bullet's damage), retargeting as targets die.
+  FOCUS: { unlockAt: 3, earn: 3, time: 4, beams: 5, rate: 10, range: 16 },
   BOMB: { unlockAt: 5, cost: 0.2, ahead: [2, 7], radius: 2.8, bossDamage: 0.25, earn: 5 },
   COMBO_CHANCE: 0.25,      // a regular squad is a set piece instead: shields guarding bombers, or grunts screening brutes
   // Bullet enemies (v0.11.0): immune to fire. A warning line marks the lane,

@@ -510,18 +510,45 @@ export class EnemyForce {
         const t = TYPE_LIST[this.type[i]];
         if (this.jumpU[i] >= 0) continue;   // a bomber mid-jump: untouchable
         if (Math.abs(this.x[i] - x) < ri * (t.hitW || 1) && this.w[i] >= oldW - ri && this.w[i] <= newW + ri) {
-          // A mini-boss is shielded while its escort lives: the bullet is
-          // stopped, but does nothing.
-          if (s.boss && s.escort && s.escort.n > 0) { this.flash[i] = 0.3; return { s, t, killed: false, boss: true, shielded: true }; }
-          this.flash[i] = 1;
-          if (--this.hp[i] > 0) return { s, t, killed: false, boss: !!s.boss };
-          this.kill(i, s);
-          this.bounds(s);
-          return { s, t, killed: true, boss: !!s.boss };
+          return this.hitUnit(i, s);
         }
       }
     }
     return null;
+  }
+
+  // One hit on unit i of squad s (a bullet or a focus-fire laser). A
+  // mini-boss is shielded while its escort lives: the hit is stopped, but
+  // does nothing.
+  hitUnit(i, s) {
+    const t = TYPE_LIST[this.type[i]];
+    if (s.boss && s.escort && s.escort.n > 0) { this.flash[i] = 0.3; return { s, t, killed: false, boss: true, shielded: true }; }
+    this.flash[i] = 1;
+    if (--this.hp[i] > 0) return { s, t, killed: false, boss: !!s.boss };
+    this.kill(i, s);
+    this.bounds(s);
+    return { s, t, killed: true, boss: !!s.boss };
+  }
+
+  // Focus fire: up to k live units nearest (x, wFront) that are ahead of it
+  // and within range, as [{ i, s }] nearest first. Bullet enemies (immune)
+  // and bombers mid-jump are skipped.
+  nearestTargets(x, wFront, range, k) {
+    const out = [];
+    for (const s of this.squads) {
+      if (s.n <= 0 || s.bolt || s.minW > wFront + range) continue;
+      for (const i of s.units) {
+        if (!this.alive[i] || this.owner[i] !== s.id || this.jumpU[i] >= 0) continue;
+        const dw = this.w[i] - wFront;
+        if (dw < -0.5 || dw > range) continue;
+        const d = dw * dw + (this.x[i] - x) ** 2;
+        if (out.length < k) out.push({ i, s, d });
+        else if (d < out[k - 1].d) out[k - 1] = { i, s, d };
+        else continue;
+        out.sort((a, b) => a.d - b.d);
+      }
+    }
+    return out;
   }
 
   // True while any charging squad still has units left.
