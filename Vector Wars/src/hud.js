@@ -14,6 +14,7 @@ export class Hud {
     this.dist = document.getElementById('dist');
     this.levelTag = document.getElementById('level-tag');
     this.bombBtn = document.getElementById('bomb-btn');
+    this.focusBtn = document.getElementById('focus-btn');
     this.score = document.getElementById('score');
     this.badge = document.getElementById('rank-badge');
     this.best = document.getElementById('best');
@@ -29,6 +30,8 @@ export class Hud {
     this.titleLogo = document.getElementById('title-logo');
     this.titleBoard = document.getElementById('title-board');
     this.entryEl = document.getElementById('entry');
+    this.entryScreen = document.getElementById('entry-screen');
+    this.savedNote = document.getElementById('saved-note');
     this.retry = document.getElementById('retry');
     this.overQuit = document.getElementById('over-quit');
     this.pauseBtn = document.getElementById('pause-btn');
@@ -103,12 +106,13 @@ export class Hud {
   }
 
   // Game over: the recap shows at once; retry stays locked until the board
-  // check finishes (allowRetry) or initials are saved (showBoard).
+  // check finishes (allowRetry) or initials are saved (entryDone).
   showOver(stats) {
     this.over.classList.toggle('hidden', !stats);
     if (this.stopRecap) { this.stopRecap(); this.stopRecap = null; }
     if (this.entry) { this.entry.close(); this.entry = null; }
-    this.entryEl.classList.add('hidden');
+    this.entryScreen.classList.add('hidden');
+    this.savedNote.classList.add('hidden');
     this.retry.classList.add('hidden');
     this.overQuit.classList.add('hidden');
     this.retryAt = Infinity;
@@ -123,9 +127,13 @@ export class Hud {
 
   canRetry() { return !this.entry && performance.now() - this.retryAt > 600; }
 
-  // Made the board: entry = { rank, onStep(), onSubmit(initials) }.
+  // Made the board: the initials get their own screen (the game-over screen
+  // waits behind it). entry = { rank, score, onStep(), onSubmit(initials) }.
   offerEntry(entry) {
-    this.entryEl.classList.remove('hidden');
+    this.over.classList.add('hidden');
+    this.entryScreen.classList.remove('hidden');
+    this.entryScreen.scrollTop = 0;
+    document.getElementById('entry-score').textContent = commas(entry.score);
     this.entry = new InitialsEntry(this.entryEl, entry.rank, (initials) => {
       this.entry.close();
       this.entry = null;
@@ -139,11 +147,13 @@ export class Hud {
     this.retryAt = Infinity;
   }
 
-  // Replaces the recap with the high score board (after entering initials).
-  showBoard(scores, highlight) {
-    if (this.stopRecap) { this.stopRecap(); this.stopRecap = null; }
-    this.entryEl.classList.add('hidden');
-    renderBoard(this.recap, scores, highlight);
+  // Initials saved: back to the regular game-over screen, with where it placed.
+  entryDone(index) {
+    this.entryScreen.classList.add('hidden');
+    this.over.classList.remove('hidden');
+    this.over.scrollTop = 0;
+    this.savedNote.textContent = index >= 0 ? `Saved · ${ordinal(index)} place on the board` : 'Saved';
+    this.savedNote.classList.remove('hidden');
     this.allowRetry();
   }
 
@@ -162,16 +172,23 @@ export class Hud {
 
   // The bomb button under the level tag, once unlocked: its ring fills with
   // the charge (0..1), and at 1 the button lights up to be tapped. null hides it.
-  setBomb(m) {
-    const key = m ? `${Math.round(m.charge * 100)}/${m.fresh}` : '';
-    if (key === this.last.bomb) return;
-    this.last.bomb = key;
-    this.bombBtn.classList.toggle('show', !!m);
+  setBomb(m) { this.setPower(this.bombBtn, 'bomb', m); }
+
+  // Focus fire's twin button, bottom right; m.active while the lasers fire
+  // (the ring then shows the time left).
+  setFocus(m) { this.setPower(this.focusBtn, 'focus', m); }
+
+  setPower(btn, name, m) {
+    const key = m ? `${Math.round(m.charge * 100)}/${m.fresh}/${m.active}` : '';
+    if (key === this.last[name]) return;
+    this.last[name] = key;
+    btn.classList.toggle('show', !!m);
     if (!m) return;
     const c = 2 * Math.PI * 20;   // the ring's circumference (r = 20 in its 44-unit viewBox)
-    this.bombBtn.querySelector('.ring .fill').style.strokeDasharray = `${(c * m.charge).toFixed(1)} ${c.toFixed(1)}`;
-    this.bombBtn.classList.toggle('ready', m.charge >= 1);
-    this.bombBtn.classList.toggle('fresh', !!m.fresh);
+    btn.querySelector('.ring .fill').style.strokeDasharray = `${(c * Math.max(0, m.charge)).toFixed(1)} ${c.toFixed(1)}`;
+    btn.classList.toggle('ready', m.charge >= 1 && !m.active);
+    btn.classList.toggle('active', !!m.active);
+    btn.classList.toggle('fresh', !!m.fresh && !m.active);
   }
 
   // Mini-boss health, 0..1 (negative hides the bar).
@@ -198,7 +215,9 @@ export class Hud {
     this.toast(title);
     cancelAnimationFrame(this.foeRaf);
     clearTimeout(this.thenTimer);
-    if (then) this.thenTimer = setTimeout(() => this.levelBanner(...then), 1700);
+    // then: one follow-up [title, newType], or a list of them shown in turn.
+    const queue = !then || !then.length ? [] : Array.isArray(then[0]) ? then : [then];
+    if (queue.length) this.thenTimer = setTimeout(() => this.levelBanner(...queue[0], queue.length > 1 ? queue.slice(1) : null), 1700);
     if (!newType) return;
     this.toastEl.classList.add('foe');
     const c = this.toastEl.querySelector('.t3'), ctx = c.getContext('2d'), t0 = performance.now();
@@ -288,6 +307,7 @@ export function renderRecap(el, stats, label = 'Score') {
     <div class="kills">${rows}</div>
     <div class="row"><span>Distance</span><span>+${commas(stats.distPts)}</span></div>
     ${stats.bossPts ? `<div class="row"><span>Mini-bosses</span><span>+${commas(stats.bossPts)}</span></div>` : ''}
+    ${stats.levelPts ? `<div class="row"><span>Levels cleared</span><span>+${commas(stats.levelPts)}</span></div>` : ''}
     <div class="row"><span>Peak swarm</span><span>${fmt(stats.peak)}</span></div>
     <div class="row small"><span>Lost</span><span>${lost}</span></div>`;
 

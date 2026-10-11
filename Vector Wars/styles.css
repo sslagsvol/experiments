@@ -221,7 +221,7 @@ html, body {
 /* Game over, pause and extra life scroll on short phones: content stays
    centered when it fits (auto margins) and scrolls from the top when it
    doesn't. main.js keeps the game's own touch handling off them. */
-#over, #pause, #continue {
+#over, #pause, #continue, #entry-screen {
   pointer-events: auto;
   justify-content: flex-start;
   overflow-y: auto;
@@ -230,9 +230,13 @@ html, body {
   padding-top: calc(18px + env(safe-area-inset-top));
   padding-bottom: calc(18px + env(safe-area-inset-bottom));
 }
-#over > *, #continue > * { flex-shrink: 0; }
-#over > :first-child, #continue > :first-child { margin-top: auto; }
-#over > :last-child, #continue > :last-child { margin-bottom: auto; }
+#over > *, #continue > *, #entry-screen > * { flex-shrink: 0; }
+#over > :first-child, #continue > :first-child, #entry-screen > :first-child { margin-top: auto; }
+#over > :last-child, #continue > :last-child, #entry-screen > :last-child { margin-bottom: auto; }
+/* The initials screen (made the board): the score, then the entry. */
+#entry-screen { background: radial-gradient(ellipse at center, rgba(4, 5, 26, 0.7), rgba(4, 5, 26, 0.92)); animation: pause-in 0.2s ease-out; }
+#entry-screen .recap { margin-bottom: 4px; }
+.saved-note { margin: 10px 0 0; font-size: 13px; letter-spacing: .1em; color: var(--hud); }
 
 .overlay h1 {
   margin: 0 0 8px;
@@ -299,7 +303,7 @@ html, body {
 @keyframes board-me { to { color: #fff; text-shadow: 0 0 12px #fff; } }
 
 /* ---- Initials entry ---- */
-#entry { pointer-events: auto; margin-top: 10px; }
+#entry { pointer-events: auto; margin-top: 6px; }
 .entry-title {
   font-family: 'Audiowide', sans-serif;
   font-size: 20px;
@@ -620,13 +624,13 @@ body.kb .touch-only { display: none; }
   gap: 8px;
 }
 #level-tag:empty { display: none; }
-/* The bomb button (after the bomb unlocks), bottom left: an outline
-   ring that fills with orange as enemies are shot down (hud.setBomb sets its
-   dash length); full,
-   the button fills in and pulses: tap it (or press B). */
-#bomb-btn {
+/* Power buttons: the bomb (bottom left, orange) and focus fire (bottom
+   right, cyan), shown once unlocked. An outline ring fills in their color as
+   enemies are shot down (hud.setPower sets its dash length); full, the button
+   fills in and pulses: tap it (B / F on a keyboard). Focus fire's ring drains
+   while its lasers fire (.active). */
+#bomb-btn, #focus-btn {
   position: absolute;
-  left: calc(18px + env(safe-area-inset-left));
   bottom: calc(64px + env(safe-area-inset-bottom));   /* above the army count row, clear of its +/− tags */
   width: 88px;
   height: 88px;
@@ -637,17 +641,25 @@ body.kb .touch-only { display: none; }
   background: rgba(4, 5, 26, 0.45);
   pointer-events: auto;
   cursor: default;
+  --pc: 255, 180, 61;      /* the button's color (RGB) */
+  --pc-deep: 255, 110, 20;
 }
-#bomb-btn.show { display: block; }
-#bomb-btn .ring { position: absolute; inset: 0; width: 100%; height: 100%; rotate: -90deg; fill: none; }
-#bomb-btn .ring .track { stroke: rgba(255, 180, 61, 0.22); stroke-width: 2.2; }
-#bomb-btn .ring .fill { stroke: #ffb43d; stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 0 126; filter: drop-shadow(0 0 3px rgba(255, 140, 40, 0.8)); transition: stroke-dasharray 0.25s ease-out; }
-#bomb-btn .icon { position: absolute; inset: 20%; width: 60%; height: 60%; fill: none; stroke: #ffb43d; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; opacity: .45; }
-#bomb-btn .icon .spark { display: none; }
-#bomb-btn.ready { cursor: pointer; background: radial-gradient(circle, rgba(255, 170, 60, 0.95), rgba(255, 110, 20, 0.85) 70%); box-shadow: 0 0 20px rgba(255, 140, 40, 0.8); animation: bomb-ready 1s ease-in-out infinite; }
-#bomb-btn.ready .icon { stroke: #fff; opacity: 1; }
+#bomb-btn { left: calc(18px + env(safe-area-inset-left)); }
+#focus-btn { right: calc(18px + env(safe-area-inset-right)); --pc: 70, 210, 255; --pc-deep: 20, 120, 255; }
+#bomb-btn.show, #focus-btn.show { display: block; }
+#bomb-btn .ring, #focus-btn .ring { position: absolute; inset: 0; width: 100%; height: 100%; rotate: -90deg; fill: none; }
+#bomb-btn .ring .track, #focus-btn .ring .track { stroke: rgba(var(--pc), 0.22); stroke-width: 2.2; }
+#bomb-btn .ring .fill, #focus-btn .ring .fill { stroke: rgb(var(--pc)); stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 0 126; filter: drop-shadow(0 0 3px rgba(var(--pc), 0.8)); transition: stroke-dasharray 0.25s ease-out; }
+#bomb-btn .icon, #focus-btn .icon { position: absolute; inset: 20%; width: 60%; height: 60%; fill: none; stroke: rgb(var(--pc)); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; opacity: .45; }
+#focus-btn .icon .dot { fill: rgb(var(--pc)); }
+#bomb-btn .icon .spark, #focus-btn .icon .spark { display: none; }
+#bomb-btn.ready, #focus-btn.ready { cursor: pointer; background: radial-gradient(circle, rgba(var(--pc), 0.95), rgba(var(--pc-deep), 0.85) 70%); box-shadow: 0 0 20px rgba(var(--pc), 0.8); animation: power-ready 1s ease-in-out infinite; }
+#bomb-btn.ready .icon, #focus-btn.ready .icon { stroke: #fff; opacity: 1; }
+#focus-btn.ready .icon .dot { fill: #fff; }
 #bomb-btn.ready .icon .spark { display: inline; animation: blink 0.3s steps(2, start) infinite; }
-#bomb-btn.fresh { animation: bomb-in 0.5s ease-out, bomb-ready 1s ease-in-out 0.5s infinite; }
-#bomb-btn.ready:active { scale: 0.9; }
-@keyframes bomb-in { 0% { scale: 1.6; } 100% { scale: 1; } }
-@keyframes bomb-ready { 50% { box-shadow: 0 0 38px rgba(255, 140, 40, 1); } }
+#focus-btn.active { box-shadow: 0 0 24px rgba(var(--pc), 0.9); }
+#focus-btn.active .icon { opacity: 1; animation: blink 0.15s steps(2, start) infinite; }
+#bomb-btn.fresh, #focus-btn.fresh { animation: power-in 0.5s ease-out, power-ready 1s ease-in-out 0.5s infinite; }
+#bomb-btn.ready:active, #focus-btn.ready:active { scale: 0.9; }
+@keyframes power-in { 0% { scale: 1.6; } 100% { scale: 1; } }
+@keyframes power-ready { 50% { box-shadow: 0 0 38px rgba(var(--pc), 1); } }

@@ -74,7 +74,7 @@ export const LEVELS = {
   3: { kind: 'normal', pieces: 6, div: true, moving: true },
   4: { kind: 'bonus', team: 35, boss: 'bomber', squads: 2 },
   5: { kind: 'sprint', pieces: 8, speed: 1.5, div: true, moving: true, split: true, finale: RUSH_FINALE },
-  6: { kind: 'bonus', team: 40, boss: 'brute', squads: 2 },
+  6: { kind: 'bonus', team: 55, boss: 'brute', squads: 2 },
   7: { kind: 'gauntlet', pieces: 6, div: true, moving: true, split: true },
   8: { kind: 'sprint', pieces: 8, speed: 1.5, div: true, moving: true },
   9: { kind: 'normal', pieces: 8, div: true, moving: true, split: true },

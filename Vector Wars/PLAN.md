@@ -3,7 +3,7 @@
 A crowd-runner in the style of the "army through gates" mobile ads, redesigned around what those games get wrong: fake choices, hidden numbers, no skill expression, and art that buries the numbers. One thumb, thousands of units, 60fps on a mid-range phone.
 
 - **Play:** `index.html`. The title screen offers **Story mode** (the levels, `LEVELS.md`) and **Challenge mode** (the classic fast random track with nearly every enemy unlocked, for high-score runs; both share the one leaderboard). Challenge is locked until World 1 is beaten in Story mode (open with `?debug`). URL options: `?debug` (overlay plus the `window.vectorWars` test hook), `?units=N` (starting army), `?seed=N` (a different track), `?grid=hex` (a grid pattern), `?classic` (the old fully random track, no level 1), `?debug&level=N` (start just before level N's gate). With `?debug`, the gear button (or the ` key) opens the **debug panel**: game speed, slow motion on/off, level skip, +units, low graphics, and live sliders for the difficulty values (Copy values gives a config.js snippet).
-- **Version:** **v0.12.0 beta** (`VERSION` in `src/config.js`, shown on the title and pause screens). See section 7.
+- **Version:** **v0.13.0 beta** (`VERSION` in `src/config.js`, shown on the title and pause screens). See section 7.
 - **Style guide:** `style-guide.html`, every color, sprite, formation, animation and sound. Visual or animation changes must update it (rule in `CLAUDE.md`).
 - **Sound lab:** `sound-lab.html`, every sound with detune (lower, same speed) and stretch (longer, same pitch), globally or per sound (`SFX.tune` / `SFX.stretch`).
 - **History:** `CHANGELOG.md`, the round-by-round log of playtest feedback and what changed.
@@ -78,10 +78,10 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 
 ## 4. Roadmap
 
-**Built so far (v0.7–v0.12):** parallax and grid patterns, keyboard controls, World 1 (levels 1–10: an authored level 1, new-enemy levels with mini-bosses on 2 / 4 / 6, a sprint-into-gauntlet on 5, a sprint on 8), five enemy types plus bullets (grunt, drone, bomber that jumps, burning brute, shield; immune bullets), mini-boss moves, spawning, burning and reinforcement gates, an extra life, the **bomb** (v0.12.0: unlocked after the bomber fight; one at a time, a big bottom-left button whose ring refills as you shoot enemies down; costs 20% of the army, wipes a small area ahead), Challenge mode (locked until World 1), the debug panel. Details by level: `LEVELS.md`; by round: `CHANGELOG.md`.
+**Built so far (v0.7–v0.12):** parallax and grid patterns, keyboard controls, World 1 (levels 1–10: an authored level 1, new-enemy levels with mini-bosses on 2 / 4 / 6, a sprint-into-gauntlet on 5, a sprint on 8), five enemy types plus bullets (grunt, drone, bomber that jumps, burning brute, shield; immune bullets), mini-boss moves, spawning, burning and reinforcement gates, an extra life, the **bomb** (v0.12.0: unlocked after the bomber fight; one at a time, a big bottom-left button whose ring refills as you shoot enemies down; costs 20% of the army, wipes a small area ahead), **focus fire** (v0.13.0: unlocked after level 2's boss; a bottom-right twin; 4s of up to 5 lasers on the nearest enemies), Challenge mode (locked until World 1), the debug panel. Details by level: `LEVELS.md`; by round: `CHANGELOG.md`.
 
 ### Next up (prioritized, round 48)
-1. **HIGH: the level 6–7 wall.** Playtesters can't get past level 6 and scores plateau around 200k. Bot findings (v0.11.4 / v0.12.0):
+1. **The level 6–7 wall.** *Built in v0.13.0 (below); tune by feel.* Playtesters can't get past level 6 and scores plateau around 200k. Bot findings (v0.11.4 / v0.12.0):
    - **Level 6 strike team** (40 units) reaches the brute boss with about 22: the pre-boss squads carry clusters of 4 burning brutes (14 hp, a stomp that kills up to 60, plus fire), and a team of 40 is one stomp from half dead. Then the boss burns within 6 units and its touch ends the run (no extra life for that).
    - **Level 7** (gauntlet, brutes join every wall and wedge): a 500-unit army fell to about 110.
    - **Levels 7–9:** squads with specialists bring up to 12 shields (2 rows + a middle row, 30 hp each) in front of burning brutes; armies bleed out behind them.
@@ -90,11 +90,22 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 2. **Bomb follow-ups** (v0.12.0 shipped the core). Playtest the trade (20% for an area wipe) and the refill pace (5 squads' worth); maybe a world-boss reward (a bigger blast); a "last stand" auto-detonate is still open.
 3. **World boss (level 10).** World 1 ends on a banner today. A real finale: a big multi-phase wireframe boss (slams, spawns, a weak point), the world-complete moment, and the bridge into endless.
 4. **Endless pacing (10+).** `ENDLESS_GROWTH` 1.3 a level is still a cliff (bots wiped early in 10–11). Gentler growth plus new mixes per level so endless lasts minutes, not seconds.
-5. **Level-complete menu and army snapshot** (`LEVELS.md` section 8): a short pause between levels with the army and what's next.
-6. **Separate Story and Challenge boards.** Needs a column or a second table in Supabase (SQL from the user).
+5. ~~**Level-complete menu and army snapshot**~~ *Dropped (user, round 49): levels keep flowing straight into the next.*
+6. ~~**Separate Story and Challenge boards.**~~ *Dropped (user, round 50).*
 7. **Damage over time** (the rest of the old burn-enemy idea): units that keep burning after a hit, put out by moving or a good gate. Brutes and bosses burn the army now; this would make fire linger on units.
 8. **Batch B: firepower rework.** Volley fire from the front ranks, linear damage with capped visible bullets: keeps big armies fast on phones and makes damage readable.
 9. **Phone pass.** Profile a 5,000-unit battle on a mid-range phone; check the HUD, bomb button and gates at phone sizes; haptics.
+
+### The level 6–7 wall (round 50, v0.13.0)
+Built (the user skipped the measure / playtest steps: tune by feel with the debug panel):
+- **Per-level difficulty for story** (`CFG.LEVEL_DIFFICULTY`, one entry per level, the last carrying on past World 1): squads, grunt screens, clusters and mini-boss hp scale by level instead of one flat `DIFFICULTY` (now Challenge only). Levels 6–9 eased (1.35 / 1.4 / 1.45 / 1.5; levels 2–5: 1.5 / 1.55 / 1.6 / 1.6). The debug panel's **Per level (story)** section has a slider per level for it and for the fire rate (`FIRE_LEVELS`), plus gate durability growth, endless growth and the level bonus; Copy values prints whole arrays.
+- **Level 6:** strike team 40 → 55; its brute clusters arrive shell-less (no fire); a pulsing fire ring marks a mini-boss close enough to burn and touch.
+- **Brutes:** fewer per squad (`est` 45 → 60), half the stomp (`aoe.max` 60 → 30).
+- **Shields:** at most 8 a squad (`SHIELD_MAX`), the middle row from level 9.
+- **Level-clear bonus:** 5,000 × the level cleared (`LEVEL_BONUS`), a "Levels cleared" recap row.
+- Bot check: from a level-6 start it cleared level 6 without the extra life and reached level 10 (it used to bleed out in 9).
+
+**Dropped (user, round 50):** separate Story / Challenge boards (item 6) and the level-complete screen (item 5).
 
 ### Ideas parked for later
 - **Track hazards:** saws, rollers, spike strips; narrow bridges and gaps; rail breaks.
@@ -169,4 +180,5 @@ The game is in **beta**, so versions are **0.MINOR.PATCH**.
 | 0.11.2 | 2026-10-09 | PR #18 (`f5245f0`) | Burning brutes (shell breaks at half hp), burning mini-bosses whose touch ends the run, shields at level 3 that hover in front, level 5 sprint-into-gauntlet, bullets at level 9, "Watch the edges!" |
 | 0.11.3 | 2026-10-09 | direct push to main (`3d3fdcb`) | Jumping bombers (untouchable mid-air); shields guard specialists, never grunts |
 | 0.11.4 | 2026-10-09 | PR #19 (`e623e7b`) | Level 5 finale waves about 15% smaller; debug mode starts muted |
-| 0.12.0 | (this branch) | `vw/v0.12.0` | The bomb power-up (bottom-left button, ring refills with kills); level tag under the score; legible gate labels; shields hover closer and charge when their squad is gone; the level 6–7 wall analyzed and planned |
+| 0.12.0 | 2026-10-11 | PR #20 (`688c9ca`) | The bomb power-up (bottom-left button, ring refills with kills); level tag under the score; legible gate labels; shields hover closer and charge when their squad is gone; the level 6–7 wall analyzed and planned |
+| 0.13.0 | (this branch) | `vw/v0.13.0` | Focus fire; initials on their own screen; the level 6–7 wall: per-level story difficulty (debug sliders), level 6 team 55 with shell-less brutes and a boss warning ring, fewer and softer brutes, shields capped at 8, a level-clear bonus |

@@ -7,20 +7,26 @@
 const STORE_KEY = 'vector-wars-debug';
 
 // [object key, key, min, max, step, note]. obj: 'cfg' = CFG, 'anim' = ANIM.
+// A key like 'LEVEL_DIFFICULTY.6' is one entry of an array.
 const TWEAKS = [
+  ['Per level (story)'],
+  ...[2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ['cfg', `LEVEL_DIFFICULTY.${n}`, 0.5, 3, 0.05, `level ${n}: squads, screens, clusters and boss hp × this${n === 10 ? ' (and past World 1)' : ''}`]),
+  ...[1, 2, 3, 4, 5, 6].map((n) => ['cfg', `FIRE_LEVELS.${n - 1}`, 0.1, 1.5, 0.05, `level ${n}${n === 6 ? '+' : ''}: fire rate ×`]),
+  ['cfg', 'GATE_DURABILITY_STEP', 0, 0.4, 0.01, 'gates: + toughness per level past the 1st'],
+  ['cfg', 'ENDLESS_GROWTH', 1, 1.6, 0.02, 'past World 1: squads × this per level'],
+  ['cfg', 'LEVEL_BONUS', 0, 20000, 500, 'points for clearing a level, × the level'],
   ['Pace'],
   ['cfg', 'SPEED', 4, 10, 0.1, 'forward speed (units/s)'],
   ['cfg', 'CHALLENGE_SPEED', 0.8, 2, 0.05, 'Challenge: track speed × at the start'],
   ['cfg', 'CHALLENGE_SPEED_STEP', 0, 0.1, 0.005, 'Challenge: + per gate'],
   ['Enemies'],
-  ['cfg', 'DIFFICULTY', 0.5, 3, 0.05, '× every squad, screen and boss hp (after level 1)'],
+  ['cfg', 'DIFFICULTY', 0.5, 3, 0.05, 'Challenge: × every squad and screen (story uses the per-level values above)'],
   ['cfg', 'DIFFICULTY_LEVEL_1', 0.5, 3, 0.05, '× level 1\'s squads'],
   ['cfg', 'ENEMY_THREAT_MIN', 0.1, 1.2, 0.05, 'squad strength vs best-case army, min'],
   ['cfg', 'ENEMY_THREAT_MAX', 0.1, 1.5, 0.05, '…max'],
   ['cfg', 'LEVEL_GUARD_THREAT', 0.2, 1.5, 0.05, 'the squad guarding each story level gate'],
   ['cfg', 'SCREEN_SHARE', 0, 0.5, 0.01, 'grunt walls in front of guards and bosses'],
   ['anim', 'gruntConverge', 0, 15, 0.5, 'grunts close ranks this far out'],
-  ['cfg', 'ENDLESS_GROWTH', 1, 1.6, 0.02, 'past World 1: squads × this per level'],
   ['New enemies'],
   ['cfg', 'SHIELD_CHANCE', 0, 1, 0.05, 'a squad brings a shield line'],
   ['cfg', 'COMBO_CHANCE', 0, 1, 0.05, 'a squad is a set piece instead'],
@@ -30,9 +36,13 @@ const TWEAKS = [
   ['cfg', 'BOSS_SPEED', 0.1, 1.5, 0.05, 'boss average advance (× charge speed)'],
   ['Gates'],
   ['cfg', 'GATE_DURABILITY', 0.5, 3, 0.05, 'bullets per gate step ×'],
-  ['cfg', 'GATE_DURABILITY_STEP', 0, 0.4, 0.01, '+ per level past the 1st'],
   ['cfg', 'GATE_DURABILITY_MAX', 1, 4, 0.1, 'cap on that climb'],
 ];
+
+// Read / write a tweak's value; 'NAME.i' is entry i of the array NAME.
+const getV = (obj, k) => { const [a, i] = k.split('.'); return i === undefined ? obj[a] : obj[a][+i]; };
+const setV = (obj, k, v) => { const [a, i] = k.split('.'); if (i === undefined) obj[a] = v; else obj[a][+i] = v; };
+const splitId = (id) => { const d = id.indexOf('.'); return [id.slice(0, d), id.slice(d + 1)]; };
 
 const fmt = (v, step) => (step < 1 ? v.toFixed(Math.max(0, -Math.floor(Math.log10(step)))) : String(v));
 
@@ -41,13 +51,13 @@ const fmt = (v, step) => (step < 1 ? v.toFixed(Math.max(0, -Math.floor(Math.log1
 // setSlowMo(on) }.
 export function createDebugPanel(objs, actions) {
   const defaults = {};
-  for (const [o, k] of TWEAKS) if (k) defaults[`${o}.${k}`] = objs[o][k];
+  for (const [o, k] of TWEAKS) if (k) defaults[`${o}.${k}`] = getV(objs[o], k);
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch { saved = {}; }
   const save = () => { try { localStorage.setItem(STORE_KEY, JSON.stringify(saved)); } catch { /* storage unavailable */ } };
   for (const [id, v] of Object.entries(saved.tweaks || {})) {
-    const [o, k] = id.split('.');
-    if (objs[o] && k in objs[o]) objs[o][k] = v;
+    const [o, k] = splitId(id);
+    if (objs[o] && k.split('.')[0] in objs[o]) setV(objs[o], k, v);
   }
   saved.tweaks = saved.tweaks || {};
 
@@ -95,18 +105,21 @@ export function createDebugPanel(objs, actions) {
     const row = document.createElement('label');
     row.className = 'dbg-row';
     row.title = note;
-    row.innerHTML = `<span>${k}<i class="dbg-v"></i></span><input type="range" min="${min}" max="${max}" step="${step}">`;
+    // Array entries get a short label: LEVEL_DIFFICULTY.6 → "Difficulty L6", FIRE_LEVELS.0 → "Fire L1".
+    const [name, idx] = k.split('.');
+    const label = idx === undefined ? k : name === 'LEVEL_DIFFICULTY' ? `Difficulty L${idx}` : name === 'FIRE_LEVELS' ? `Fire L${+idx + 1}${+idx === 5 ? '+' : ''}` : k;
+    row.innerHTML = `<span>${label}<i class="dbg-v"></i></span><input type="range" min="${min}" max="${max}" step="${step}">`;
     const input = row.querySelector('input'), out = row.querySelector('i');
     const show = () => {
-      const v = objs[o][k];
+      const v = getV(objs[o], k);
       input.value = v;
       out.textContent = fmt(v, step);
       row.classList.toggle('changed', Math.abs(v - defaults[id]) > step / 2);
     };
     input.addEventListener('input', () => {
-      objs[o][k] = parseFloat(input.value);
-      saved.tweaks[id] = objs[o][k];
-      if (Math.abs(objs[o][k] - defaults[id]) <= step / 2) delete saved.tweaks[id];
+      setV(objs[o], k, parseFloat(input.value));
+      saved.tweaks[id] = getV(objs[o], k);
+      if (Math.abs(saved.tweaks[id] - defaults[id]) <= step / 2) delete saved.tweaks[id];
       save();
       show();
     });
@@ -132,13 +145,19 @@ export function createDebugPanel(objs, actions) {
   low.onchange = () => { saved.low = low.checked; save(); actions.setLowGfx(low.checked); };
   if (saved.low) actions.setLowGfx(true);
   $('reset').onclick = () => {
-    for (const [id, v] of Object.entries(defaults)) { const [o, k] = id.split('.'); objs[o][k] = v; }
+    for (const [id, v] of Object.entries(defaults)) { const [o, k] = splitId(id); setV(objs[o], k, v); }
     saved.tweaks = {};
     save();
     inputs.forEach((f) => f());
   };
   $('copy').onclick = async () => {
-    const lines = Object.keys(saved.tweaks).map((id) => `  ${id.split('.')[1]}: ${saved.tweaks[id]},   // ${id.startsWith('anim') ? 'ANIM' : 'CFG'} (was ${defaults[id]})`);
+    // Plain values one per line; a changed array entry prints the whole array.
+    const lines = [], arrays = new Set();
+    for (const id of Object.keys(saved.tweaks)) {
+      const [o, k] = splitId(id), [name, i] = k.split('.');
+      if (i === undefined) lines.push(`  ${name}: ${saved.tweaks[id]},   // ${o === 'anim' ? 'ANIM' : 'CFG'} (was ${defaults[id]})`);
+      else if (!arrays.has(name)) { arrays.add(name); lines.push(`  ${name}: [${objs[o][name].join(', ')}],   // ${o === 'anim' ? 'ANIM' : 'CFG'}`); }
+    }
     const text = lines.length ? lines.join('\n') : '// no tweaks: everything matches config.js';
     try { await navigator.clipboard.writeText(text); $('copy').textContent = 'Copied'; } catch { prompt('Copy these values:', text); }
     setTimeout(() => { $('copy').textContent = 'Copy values'; }, 1200);

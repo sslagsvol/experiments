@@ -281,3 +281,51 @@ export class Fallers {
 
   clear() { this.life.fill(0); }
 }
+
+// Focus-fire lasers: up to `max` beams from the army to its targets, each a
+// bundle of three lines (a bright core and two dimmer edges a hair apart, so
+// bloom makes them read as glowing beams, not threads). One LineSegments draw
+// call; unused segments collapse to nothing.
+const LASER_STRANDS = [[0, 1], [-0.025, 0.55], [0.025, 0.55]];   // [x offset, brightness]
+
+export class Lasers {
+  constructor(scene, max = 8) {
+    this.max = max;
+    const segs = max * LASER_STRANDS.length;
+    this.pos = new Float32Array(segs * 6);
+    this.col = new Float32Array(segs * 6);
+    this.geo = new THREE.BufferGeometry();
+    this.posAttr = new THREE.BufferAttribute(this.pos, 3).setUsage(THREE.DynamicDrawUsage);
+    this.colAttr = new THREE.BufferAttribute(this.col, 3).setUsage(THREE.DynamicDrawUsage);
+    this.geo.setAttribute('position', this.posAttr);
+    this.geo.setAttribute('color', this.colAttr);
+    const lines = new THREE.LineSegments(this.geo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+    lines.frustumCulled = false;
+    scene.add(lines);
+    this.n = 0;
+  }
+
+  // beams: [[x0, y0, z0, x1, y1, z1, brightness], …] (render space).
+  set(beams) {
+    const c = COLORS.you;
+    this.n = Math.min(this.max, beams.length);
+    let k = 0;
+    for (let b = 0; b < this.n; b++) {
+      const s = beams[b];
+      for (const [ox, sb] of LASER_STRANDS) {
+        const j = k * 6, g = s[6] * sb;
+        this.pos[j] = s[0] + ox; this.pos[j + 1] = s[1]; this.pos[j + 2] = s[2];
+        this.pos[j + 3] = s[3] + ox; this.pos[j + 4] = s[4]; this.pos[j + 5] = s[5];
+        // Brighter (and whiter) at the target end, so it reads as fire.
+        this.col[j] = c[0] * 0.9 * g; this.col[j + 1] = c[1] * 0.9 * g; this.col[j + 2] = c[2] * 0.9 * g;
+        this.col[j + 3] = (c[0] + 1.2) * g; this.col[j + 4] = (c[1] + 1) * g; this.col[j + 5] = (c[2] + 0.6) * g;
+        k++;
+      }
+    }
+    this.posAttr.needsUpdate = true;
+    this.colAttr.needsUpdate = true;
+    this.geo.setDrawRange(0, k * 2);
+  }
+
+  clear() { this.set([]); }
+}

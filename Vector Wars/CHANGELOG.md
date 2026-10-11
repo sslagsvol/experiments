@@ -22,7 +22,8 @@ Round-by-round history of playtest feedback and what changed, grouped by release
 | 0.11.2 | round 45 | PR #18 |
 | 0.11.3 | round 46 | direct push to main (`3d3fdcb`, no PR) |
 | 0.11.4 | round 47 | PR #19 |
-| 0.12.0 | round 48 | `vw/v0.12.0` |
+| 0.12.0 | round 48 | PR #20 |
+| 0.13.0 | rounds 49–50 | `vw/v0.13.0` |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
@@ -443,3 +444,20 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **The bomb, reworked (user feedback: not over the middle, never more than one):** one bomb at a time, its button top left under the level tag (`#bomb-btn` in `#score-box`), shown once unlocked. An outline ring fills with orange as enemies are shot down (each kill is 1 / its squad's size; `BOMB.earn` 5 squads' worth fills it; a mini-boss down fills it at once); full, the button fills orange with a white bomb, pops and pulses, and a tap (or B) detonates it. It starts full at the unlock; no more per-level refill, center pop-up, pips or second bomb (`showRange`, `linger`, `challengeEvery`, `max` gone). Bot: tap cost 94 units and destroyed 131; the ring refilled in about 37s (24% at 10s, 60% at 20s). The ring's arc is set from its real circumference (`pathLength` didn't scale the dash). The debug line moved below the button.
 - **Bomb button moved to the bottom left and made bigger** (88px, was 46px top left; same ring, fill and pulse), sitting just above the army count row so it clears the +/− tags at phone width (checked at 375px). The debug line moved back up under the level tag.
 - **Pause, game over and extra life scroll on short phones** (their buttons were cut off): `overflow-y: auto` with content centered when it fits (auto margins), and the game's touch blocking (which stops the page scrolling mid-run) no longer catches drags on them. Game over now retries on a finished tap (a click), so starting a scroll can't retry. Checked at 375×460: the bottom buttons scroll into view on both screens; drags there aren't cancelled while drags on the game still are.
+
+## Round 49 — v0.13.0: planning (2026-10-11)
+- Planned the level 6–7 wall, separate Story / Challenge boards and a level-complete screen (`PLAN.md`); the user then dropped the level-complete screen and, in round 50, the board split.
+
+## Round 50 — v0.13.0: the level 6–7 wall (2026-10-11)
+- User: skip the measure / playtest steps; make the values that grow per level in story mode tunable.
+- **Per-level story difficulty** (`CFG.LEVEL_DIFFICULTY`, index = level, the last entry carrying on past World 1): squads, grunt screens, clusters and mini-boss hp now scale by level (`difficulty()` in main.js) instead of the flat `DIFFICULTY` 1.6, which is now Challenge only. Levels 2–10: 1.5, 1.55, 1.6, 1.6, **1.35, 1.4, 1.45, 1.5**, 1.55.
+- **Debug panel: Per level (story)** section: a slider per level for difficulty (L2–L10) and fire rate (L1–L6+), plus gate durability growth, endless growth and the level bonus. Array entries are tweakable (`'LEVEL_DIFFICULTY.6'`), and Copy values prints the whole array.
+- **Level 6:** strike team 40 → 55; brute clusters riding with its squads arrive shell-less (no fire); a pulsing fire ring (every 0.45s) marks a mini-boss within burn range (its touch ends the run).
+- **Brutes:** `est` 45 → 60 (fewer per squad), stomp `aoe.max` 60 → 30.
+- **Shields:** `SHIELD_MAX` 8 a squad; the middle row from level 9 (`SHIELD_MID_AT` 7 → 9).
+- **Level-clear bonus:** `LEVEL_BONUS` 5,000 × the level cleared, a "Levels cleared" row in the recap.
+- **Fixed:** steering divided the drag by the window width, so a zero-width (background) tab turned the army's position into NaN; units then couldn't respawn (an extra life or a Regroup ended the run). Real devices always have a width, but it's guarded now.
+- Bot: from a level-6 start (300 units) it cleared level 6 without the extra life (team 55 → 6 at the boss, back to 49 through gifts) and reached level 10, dying to the endless ramp at 211k (it used to bleed out in level 9).
+- **Initials get their own screen** (they didn't fit under the recap on small phones): made the board? `#entry-screen` shows the score in big type, "New high score" and the entry; once saved, the regular game-over screen comes back with "Saved · 3rd place on the board" (`#saved-note`, `hud.entryDone`, replacing `showBoard`). Fits a 375×560 phone with room to spare and scrolls if not. Tested with the network blocked and the queued test score removed, so nothing reached the live board.
+- **Focus fire** (`CFG.FOCUS`, `focusFire()`, `enemies.nearestTargets` / `hitUnit`, `Lasers` in fx.js): unlocked after level 2's boss (story level 3; from the start in Challenge), and works like the bomb: one charge that refills as enemies are shot down (3 squads' worth; a mini-boss down refills it). Tap its button (bottom right, the bomb's cyan twin with a crosshair) or press F: for 4s up to 5 lasers lock onto the nearest enemies within 16 units ahead, each landing 10 hits/s (one bullet's damage), retargeting as targets die; a shielded mini-boss blocks them. Lasers are thin glowing cyan beams (three lines each: 1px lines alone read as threads). While firing, the ring drains with the time left. Level banners now queue several follow-ups (level 3: "Attack speed increased", "Focus fire unlocked", "New enemy:"). The bomb button's styles became shared power-button styles (`--pc`). Bot, level 3: one burst destroyed 107 enemies.
+- **Both power-ups halved** (user: too powerful): focus fire lands 5 hits/s per laser (was 10); the bomb destroys each enemy in its blast with a 50% chance (`BOMB.kill`; was every one) and takes 12.5% of a mini-boss's hp (was 25%). The blast keeps its size and look.
