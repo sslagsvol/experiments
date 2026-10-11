@@ -740,7 +740,7 @@ function focusUpdate(dt) {
     for (const { i, s } of targets) {
       if (!enemies.alive[i] || enemies.owner[i] !== s.id) continue;
       const hit = enemies.hitUnit(i, s), x = enemies.x[i], w = enemies.w[i];
-      sparks.emit(x, 0.25, w, COLORS.you, hit.killed ? 4 : 1, 2);
+      sparks.emit(x, 0.25, w, COLORS.laser, hit.killed ? 4 : 1, 2);
       if (!hit.killed) continue;
       G.stats.kills[hit.t.id]++;
       sfx.play('pop');

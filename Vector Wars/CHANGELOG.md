@@ -23,7 +23,8 @@ Round-by-round history of playtest feedback and what changed, grouped by release
 | 0.11.3 | round 46 | direct push to main (`3d3fdcb`, no PR) |
 | 0.11.4 | round 47 | PR #19 |
 | 0.12.0 | round 48 | PR #20 |
-| 0.13.0 | rounds 49–50 | `vw/v0.13.0` |
+| 0.13.0 | rounds 49–51 | PR #21 |
+| 0.13.1 | round 52 | `vw/v0.13.1` |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
@@ -461,3 +462,8 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Initials get their own screen** (they didn't fit under the recap on small phones): made the board? `#entry-screen` shows the score in big type, "New high score" and the entry; once saved, the regular game-over screen comes back with "Saved · 3rd place on the board" (`#saved-note`, `hud.entryDone`, replacing `showBoard`). Fits a 375×560 phone with room to spare and scrolls if not. Tested with the network blocked and the queued test score removed, so nothing reached the live board.
 - **Focus fire** (`CFG.FOCUS`, `focusFire()`, `enemies.nearestTargets` / `hitUnit`, `Lasers` in fx.js): unlocked after level 2's boss (story level 3; from the start in Challenge), and works like the bomb: one charge that refills as enemies are shot down (3 squads' worth; a mini-boss down refills it). Tap its button (bottom right, the bomb's cyan twin with a crosshair) or press F: for 4s up to 5 lasers lock onto the nearest enemies within 16 units ahead, each landing 10 hits/s (one bullet's damage), retargeting as targets die; a shielded mini-boss blocks them. Lasers are thin glowing cyan beams (three lines each: 1px lines alone read as threads). While firing, the ring drains with the time left. Level banners now queue several follow-ups (level 3: "Attack speed increased", "Focus fire unlocked", "New enemy:"). The bomb button's styles became shared power-button styles (`--pc`). Bot, level 3: one burst destroyed 107 enemies.
 - **Both power-ups halved** (user: too powerful): focus fire lands 5 hits/s per laser (was 10); the bomb destroys each enemy in its blast with a 50% chance (`BOMB.kill`; was every one) and takes 12.5% of a mini-boss's hp (was 25%). The blast keeps its size and look.
+
+## Round 52 — v0.13.1: deadlier bullets, shorter red lasers (2026-10-11)
+- **Bullet enemies hit harder:** their lane is wider and deadlier (`lane` radius 0.3 → 0.4, 85% → 95% at the center, up to 22 units, was 10; `est` 6 → 12).
+- **Focus fire lasts 2.5s** (was 4).
+- **Lasers are red:** new `COLORS.laser` (a hot red, close to `dying`), hotter at the target end; their hit sparks match. The button stays cyan.

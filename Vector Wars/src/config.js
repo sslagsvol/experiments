@@ -8,7 +8,7 @@
 
 // The game's version: 0.MINOR.PATCH while in beta. Bump it on the release
 // branch (vw/vX.Y.Z) and add a matching heading in CHANGELOG.md. See PLAN.md.
-export const VERSION = '0.13.0';
+export const VERSION = '0.13.1';
 
 export const CFG = {
   TW: 2.0,                 // track half-width (world units)
@@ -202,7 +202,7 @@ export const CFG = {
   // are shot down (`earn` squads' worth). For `time` s, up to `beams` lasers lock
   // onto the nearest enemies within `range` ahead, each landing `rate` hits/s
   // (a hit = one bullet's damage), retargeting as targets die.
-  FOCUS: { unlockAt: 3, earn: 3, time: 4, beams: 5, rate: 5, range: 16 },   // rate halved in round 51 (too strong at 10)
+  FOCUS: { unlockAt: 3, earn: 3, time: 2.5, beams: 5, rate: 5, range: 16 },   // rate halved in round 51 (too strong at 10); time 4 → 2.5 in round 52
   BOMB: { unlockAt: 5, cost: 0.2, ahead: [2, 7], radius: 2.8, kill: 0.5, bossDamage: 0.125, earn: 5 },   // kill / bossDamage halved in round 51
   COMBO_CHANCE: 0.25,      // a regular squad is a set piece instead: shields guarding bombers, or grunts screening brutes
   // Bullet enemies (v0.11.0): immune to fire. A warning line marks the lane,
@@ -351,6 +351,7 @@ export const COLORS = {
   steel: [0.75, 0.85, 1.25],  // shield enemies: a cool steel, bluer-grey than any red enemy, dimmer than your cyan
   bolt: [2.0, 1.1, 1.9],      // bullet enemies and their warning line: a hot white-violet
   burn: [2.0, 0.6, 0.08],     // burning brutes and mini-bosses, and their fire sparks
+  laser: [1.9, 0.16, 0.1],    // focus-fire lasers and their hit sparks: a hot red
 };
 
 // Bullets needed for a × gate's next 0.1 step at multiplier m.

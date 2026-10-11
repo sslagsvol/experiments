@@ -33,7 +33,7 @@ export const ENEMY_TYPES = {
   // Placed by main.js, never mixed into squads (squadMix):
   shield: { id: 4, shape: 4, size: 2.0, hp: 30, damage: 2, est: 0.4, speed: 1.0, homing: 0.6, hitW: 1.0, color: 'steel',
             label: 'Shield', note: 'Wide steel chevron, 30 hit points. Guards the specialists (drones, bombers, brutes), never grunts: rushes in front of them and holds a stiff line there; near the army it hovers just in front of it, still blocking shots (CFG.SHIELD_HOVER); the moment the units it guards are gone it charges (each takes out 2 units on contact).' },
-  bolt:   { id: 5, shape: 5, size: 2.0, hp: 3, damage: 0, lane: { radius: 0.3, peak: 0.85, max: 10 }, est: 6, speed: 1.0, homing: 0, immune: true, color: 'bolt',
+  bolt:   { id: 5, shape: 5, size: 2.0, hp: 3, damage: 0, lane: { radius: 0.4, peak: 0.95, max: 22 }, est: 12, speed: 1.0, homing: 0, immune: true, color: 'bolt',
             label: 'Bullet', note: 'A white-violet streak, immune to fire. A blinking warning line marks its lane for a second, then it crosses the track at bullet speed and cuts through a small group. Dodge it (a dodge scores like a kill).' },
 };
 export const TYPE_LIST = Object.values(ENEMY_TYPES);
