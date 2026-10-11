@@ -768,7 +768,7 @@ function detonate() {
   G.bomb.charge = 0;
   const cost = Math.floor(army.N * B.cost);
   if (cost > 0) { army.kill(cost, unitLost); noteLoss(cost); G.stats.bombed = (G.stats.bombed || 0) + cost; }
-  for (const hit of enemies.blast(x, w, B.radius, B.bossDamage)) {
+  for (const hit of enemies.blast(x, w, B.radius, B.bossDamage, B.kill)) {
     if (hit.boss) bossDown(hit.s, x, w);
     else { G.stats.kills[hit.t.id]++; if (hit.s.n === 0) squadWiped(hit.s); }
   }

@@ -265,10 +265,10 @@ export class EnemyForce {
     return best;
   }
 
-  // The bomb: every enemy within r of (x, w) dies, except bullet enemies
-  // (immune); a mini-boss loses bossDamage of its hp instead. Returns
+  // The bomb: each enemy within r of (x, w) dies with chance `kill`, except
+  // bullet enemies (immune); a mini-boss loses bossDamage of its hp instead. Returns
   // [{ t, s, boss }] for each unit destroyed.
-  blast(x, w, r, bossDamage) {
+  blast(x, w, r, bossDamage, kill = 1) {
     const out = [];
     for (const s of this.squads) {
       if (s.n <= 0 || s.bolt) continue;
@@ -279,6 +279,7 @@ export class EnemyForce {
         const t = TYPE_LIST[this.type[i]];
         this.flash[i] = 1;
         if (s.boss) { this.hp[i] -= s.hpMax * bossDamage; if (this.hp[i] > 0) continue; }
+        else if (Math.random() >= kill) continue;   // survived the blast (it still flashes)
         this.kill(i, s);
         out.push({ t, s, boss: !!s.boss });
       }
