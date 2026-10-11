@@ -246,7 +246,7 @@ function newRun() {
     danger: 0,       // incoming enemy strength ÷ army size, smoothed
     timeScale: 1,    // slow motion when the danger is high
     overAt: 0,
-    stats: { peak: startUnits(mode), lostEnemy: 0, leaked: 0, lostGate: 0, fell: 0, gateHits: 0, kills: TYPE_LIST.map(() => 0), bossPts: 0 },
+    stats: { peak: startUnits(mode), lostEnemy: 0, leaked: 0, lostGate: 0, fell: 0, gateHits: 0, kills: TYPE_LIST.map(() => 0), bossPts: 0, levelPts: 0 },
     ui: 0,                       // real-time clock for HUD fades
     gain: { n: 0, t: -9 },       // running gain total shown left of the count
     loss: { n: 0, t: -9 },       // running loss total shown right of the count
@@ -290,7 +290,7 @@ function jumpToLevel(n) {
 function runStats() {
   const distPts = Math.floor(G.dist * CFG.SCORE_PER_DIST);
   const killPts = TYPE_LIST.map((t, i) => G.stats.kills[i] * t.hp * CFG.SCORE_PER_HP);
-  const score = distPts + killPts.reduce((a, b) => a + b, 0) + G.stats.bossPts;
+  const score = distPts + killPts.reduce((a, b) => a + b, 0) + G.stats.bossPts + G.stats.levelPts;
   return { ...G.stats, distPts, killPts, score, newBest: false };
 }
 
@@ -505,7 +505,9 @@ function projectedArmy(wz) {
 // Squad size tracks the projected army plus a "par" curve from gates
 // passed, so battles stay a real threat. Tuned in batch E.
 // n units of one type: a share of the team's headcount (× difficulty).
-const typeCount = (share, lo, hi) => Math.max(lo, Math.min(hi, Math.round(army.N * share * CFG.DIFFICULTY)));
+// Difficulty now: CFG.DIFFICULTY in Challenge, CFG.LEVEL_DIFFICULTY by level in story.
+const difficulty = () => CLASSIC() ? CFG.DIFFICULTY : CFG.LEVEL_DIFFICULTY[Math.min(G.level, CFG.LEVEL_DIFFICULTY.length - 1)];
+const typeCount = (share, lo, hi) => Math.max(lo, Math.min(hi, Math.round(army.N * share * difficulty())));
 const only = (key) => ({ back: [], mix: [[key, 1]] });
 
 // The army you'd have at wz from the better side of every gate this level
@@ -525,7 +527,7 @@ function spawnSquad({ wz, spec, boss, cluster, bonus, challenge, wave }) {
     const shots = Math.min(CFG.FIRE_MAX, CFG.FIRE_BASE + CFG.FIRE_K * Math.sqrt(Math.max(1, army.N))) * fireMul();
     enemies.spawnSquad('wall', typeCount(CFG.SCREEN_SHARE, 6, 45), 0, wz - 9, G.rng, G.level, only('grunt'));   // grunts in front take the first shots
     const escort = enemies.spawnSquad('wall', typeCount(CFG.ESCORT_SHARE[boss], 3, 18), 0, wz - 4, G.rng, G.level, only(boss));
-    const s = enemies.spawnBoss(boss, Math.max(12, Math.round(shots * CFG.BOSS_HP_SECONDS * CFG.BOSS_HP_MUL[boss] * CFG.DIFFICULTY)), 0, wz + 2);
+    const s = enemies.spawnBoss(boss, Math.max(12, Math.round(shots * CFG.BOSS_HP_SECONDS * CFG.BOSS_HP_MUL[boss] * difficulty())), 0, wz + 2);
     s.escort = escort;
     return;
   }
@@ -534,13 +536,16 @@ function spawnSquad({ wz, spec, boss, cluster, bonus, challenge, wave }) {
     // to show what it does before the boss arrives.
     const x = (G.rng() < 0.5 ? -1 : 1) * CFG.TW * 0.5;
     enemies.spawnSquad('wall', typeCount(CFG.SCREEN_SHARE * 0.6, 5, 30), x, wz - 2.5, G.rng, G.level, only('grunt'));   // a grunt screen in front
-    enemies.spawnSquad('blob', typeCount(CFG.CLUSTER_SHARE[cluster], 2, 9), x, wz, G.rng, G.level, only(cluster));
+    const c = enemies.spawnSquad('blob', typeCount(CFG.CLUSTER_SHARE[cluster], 2, 9), x, wz, G.rng, G.level, only(cluster));
+    // Brutes riding with a strike team arrive without their outer shell: no fire.
+    const ct = ENEMY_TYPES[cluster];
+    if (ct.burns) for (const i of c.units) enemies.hp[i] = Math.floor(ct.hp * CFG.BURN.shell);
     return;
   }
   if (wave) {
     // A sprint's finale wave: sized against the best case through the level's gates.
     const mix = { back: [], mix: wave.mix };
-    const n = Math.max(8, Math.round(bestCase(wz) * wave.threat / mixEst(mix) * CFG.DIFFICULTY));
+    const n = Math.max(8, Math.round(bestCase(wz) * wave.threat / mixEst(mix) * difficulty()));
     const sq = enemies.spawnSquad(wave.kind, n, 0, wz, G.rng, G.level, mix);
     if (wave.shields) addShields(sq);
     G.enemyIdx++;
@@ -563,7 +568,7 @@ function spawnSquad({ wz, spec, boss, cluster, bonus, challenge, wave }) {
     // The squad guarding a level gate is a skill check: full strength.
     const threat = challenge ? CFG.LEVEL_GUARD_THREAT : CFG.ENEMY_THREAT_MIN + G.rng() * (CFG.ENEMY_THREAT_MAX - CFG.ENEMY_THREAT_MIN);
     // Size by strength, not headcount: a squad with brutes or bombers has fewer units.
-    const grow = CLASSIC() ? 1 + CFG.CHALLENGE_SQUAD_GROWTH * Math.max(0, G.gateIdx - 15) : CFG.DIFFICULTY * endlessMul();
+    const grow = CLASSIC() ? 1 + CFG.CHALLENGE_SQUAD_GROWTH * Math.max(0, G.gateIdx - 15) : difficulty() * endlessMul();
     n = Math.round(Math.max(8, ref * threat / mixEst(squadMix(kind, unlockIdx()))) * grow * (bonus ? CFG.BONUS_SQUAD_SCALE : 1));
   }
   const x = challenge ? 0 : (G.rng() * 2 - 1) * CFG.TW;
@@ -590,8 +595,10 @@ function spawnSquad({ wz, spec, boss, cluster, bonus, challenge, wave }) {
 function addShields(sq) {
   const lvl = CLASSIC() ? 99 : G.level;
   const per = Math.max(2, Math.min(CFG.SHIELD_PER_ROW, Math.round((sq.maxX - sq.minX) / CFG.SHIELD_SPACING) + 1));
-  const s = enemies.spawnShields(sq, per * (lvl >= CFG.SHIELD_FULL_AT ? CFG.SHIELD_ROWS : 1), G.rng);
-  if (lvl >= CFG.SHIELD_MID_AT && sq.maxW - sq.minW >= CFG.SHIELD_MID_DEPTH) enemies.spawnShields(sq, per, G.rng, true);
+  const front = Math.min(CFG.SHIELD_MAX, per * (lvl >= CFG.SHIELD_FULL_AT ? CFG.SHIELD_ROWS : 1));
+  const s = enemies.spawnShields(sq, front, G.rng);
+  const mid = Math.min(per, CFG.SHIELD_MAX - front);   // never more than SHIELD_MAX in all
+  if (mid > 0 && lvl >= CFG.SHIELD_MID_AT && sq.maxW - sq.minW >= CFG.SHIELD_MID_DEPTH) enemies.spawnShields(sq, mid, G.rng, true);
   return s;
 }
 
@@ -617,6 +624,15 @@ function spawnCombo(strength, x, wz) {
 // type, with a few grunts in front (CFG.BOSS_SPAWN).
 function bossSpew(dt) {
   const b = enemies.boss;
+  // Warning: a pulsing fire ring around a mini-boss close enough to burn
+  // (and to touch, which ends the run).
+  if (b && b.charging && army.N > 0) {
+    const bi = b.units[0], gap = enemies.w[bi] - G.dist + army.front;
+    if (gap < CFG.BOSS_BURN.range && (b.warnT = (b.warnT ?? 0) - dt) <= 0) {
+      b.warnT = 0.45;
+      sparks.ring(enemies.x[bi], 0.05, enemies.w[bi], CFG.BOSS_BURN.radius, COLORS.burn, 32);
+    }
+  }
   if (!b || !b.charging || (b.escort && b.escort.n > 0) || army.N <= 0) return;
   const sp = CFG.BOSS_SPAWN[b.bossType], i = b.units[0], bx = enemies.x[i], bw = enemies.w[i];
   b.spewT = (b.spewT ?? sp.every * 0.5) - dt;
@@ -870,6 +886,7 @@ function levelUp(g) {
   if (!G.rampArmy) G.rampArmy = Math.max(30, army.N);   // the ramp starts from the army at the end of level 1
   if (G.bonus) leaveBonus();
   const fireBefore = fireMul();
+  if (!CLASSIC() && g.S.n > G.level) G.stats.levelPts += CFG.LEVEL_BONUS * (g.S.n - 1);   // the level just cleared
   G.level = g.S.n;
   G.best = army.N;
   const def = levelDef(G.level);
@@ -1195,7 +1212,7 @@ function update(dt, realDt) {
   }
 
   if (G.state === 'play') {
-    G.tx += dx / window.innerWidth * (2 * CFG.TW) / CFG.DRAG_SPAN;
+    if (dx) G.tx += dx / Math.max(1, window.innerWidth) * (2 * CFG.TW) / CFG.DRAG_SPAN;   // (a zero-width background tab would make this NaN)
     // Keyboard: a tap nudges, a hold ramps up to a steady sweep.
     const kd = keys.dir;
     G.keyHold = kd ? G.keyHold + realDt : 0;

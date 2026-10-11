@@ -28,7 +28,7 @@ export const ENEMY_TYPES = {
             label: 'Drone', note: 'Triangle. Strafes side to side; hard to dodge.' },
   bomber: { id: 2, shape: 2, size: 1.4, hp: 2, damage: 0, aoe: { radius: 0.7, peak: 0.95, max: 45 }, est: 35, speed: 1.35, homing: 3.5, converge: true, jumps: true, color: 'enemyHot',
             label: 'Bomber', note: 'Pulsing ring. Jumps toward the army every second or two, ghosted and untouchable mid-air (CFG.BOMBER_JUMP), until it is close; then homes in on the center and explodes: a tight, deadly blast.' },
-  brute:  { id: 3, shape: 3, size: 2.3, hp: 14, damage: 0, aoe: { radius: 1.2, peak: 0.5, max: 60 }, est: 45, speed: 0.7, homing: 0.8, burns: true, color: 'enemyHeavy',
+  brute:  { id: 3, shape: 3, size: 2.3, hp: 14, damage: 0, aoe: { radius: 1.2, peak: 0.5, max: 30 }, est: 60, speed: 0.7, homing: 0.8, burns: true, color: 'enemyHeavy',
             label: 'Brute', note: 'Big double hexagon, 14 hit points. Close to the army it burns (orange flicker), setting fire to units around it (CFG.BURN). Shot down to half, it loses its outer hexagon and stops burning. Stomps a wide area on contact: half the units near it, fewer at the edge.' },
   // Placed by main.js, never mixed into squads (squadMix):
   shield: { id: 4, shape: 4, size: 2.0, hp: 30, damage: 2, est: 0.4, speed: 1.0, homing: 0.6, hitW: 1.0, color: 'steel',

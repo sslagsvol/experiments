@@ -288,6 +288,7 @@ export function renderRecap(el, stats, label = 'Score') {
     <div class="kills">${rows}</div>
     <div class="row"><span>Distance</span><span>+${commas(stats.distPts)}</span></div>
     ${stats.bossPts ? `<div class="row"><span>Mini-bosses</span><span>+${commas(stats.bossPts)}</span></div>` : ''}
+    ${stats.levelPts ? `<div class="row"><span>Levels cleared</span><span>+${commas(stats.levelPts)}</span></div>` : ''}
     <div class="row"><span>Peak swarm</span><span>${fmt(stats.peak)}</span></div>
     <div class="row small"><span>Lost</span><span>${lost}</span></div>`;
 

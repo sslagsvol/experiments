@@ -8,7 +8,7 @@
 
 // The game's version: 0.MINOR.PATCH while in beta. Bump it on the release
 // branch (vw/vX.Y.Z) and add a matching heading in CHANGELOG.md. See PLAN.md.
-export const VERSION = '0.12.0';
+export const VERSION = '0.13.0';
 
 export const CFG = {
   TW: 2.0,                 // track half-width (world units)
@@ -62,9 +62,14 @@ export const CFG = {
   ENDLESS_GROWTH: 1.3,
   ENDLESS_SPEED: 0.05,
   ENDLESS_SPEED_MAX: 1.4,
-  // Difficulty: squad sizes (random and authored) and mini-boss hp × this.
+  // Difficulty: squad sizes, grunt screens, clusters and mini-boss hp × this.
+  // Challenge uses DIFFICULTY; story uses LEVEL_DIFFICULTY, one entry per
+  // level (index = level; the last one carries on past World 1, where
+  // ENDLESS_GROWTH stacks on top). Levels 6–9 were the wall (round 49): eased.
   DIFFICULTY: 1.6,
   DIFFICULTY_LEVEL_1: 1.35, // level 1's authored squads: still a skill check, but most people should pass
+  LEVEL_DIFFICULTY: [0, 1.35, 1.5, 1.55, 1.6, 1.6, 1.35, 1.4, 1.45, 1.5, 1.55],
+  LEVEL_BONUS: 5000,       // story: points for clearing a level, × the level cleared (level 6 → 30,000)
   // Small armies: below SMALL_ARMY_FROM units the dots (and their spacing)
   // grow, reaching SMALL_ARMY_SCALE× at SMALL_ARMY_FULL units or fewer.
   SMALL_ARMY_FROM: 80,
@@ -169,7 +174,8 @@ export const CFG = {
   SHIELD_ROWS: 2,          // staggered rows in front from level SHIELD_FULL_AT (one row before)…
   SHIELD_FULL_AT: 5,
   SHIELD_MID_DEPTH: 1.5,   // …plus a row through the middle of squads at least this deep, from level SHIELD_MID_AT
-  SHIELD_MID_AT: 7,
+  SHIELD_MID_AT: 9,
+  SHIELD_MAX: 8,           // shields in a squad's lines, at most
   SHIELD_HOVER: 1.2,       // shields never come closer than this in front of the army: they hover there, blocking
   SHIELD_LINGER: 0,        // s they keep hovering after their squad is gone, then charge (0: at once)
   SHIELD_RUSH: 5,          // units/s while rushing to the front
