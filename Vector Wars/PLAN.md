@@ -96,6 +96,39 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 8. **Batch B: firepower rework.** Volley fire from the front ranks, linear damage with capped visible bullets: keeps big armies fast on phones and makes damage readable.
 9. **Phone pass.** Profile a 5,000-unit battle on a mid-range phone; check the HUD, bomb button and gates at phone sizes; haptics.
 
+### Current plan (round 49): the wall, the level-complete screen, separate boards
+Picked by the user as the three most important (items 1, 5 and 6 above). Order: the wall first (it's what blocks playtesters, and mostly tuning); the boards second (one SQL step from the user, so start it early); the level-complete screen last (the most new UI).
+
+**A. Break the level 6–7 wall** (target v0.13.0)
+1. **Baseline harness.** A `?debug` bot helper that plays full runs from level 1 on 5 seeds and reports, per run, the level and cause of death (boss touch, wiped, fell) and the score. Record today's numbers in `CHANGELOG.md` before changing anything.
+2. **Level 6:** strike team 40 → 55; the brute clusters riding with its squads arrive shell-less (no fire), like the boss's own; a pulsing warning ring on the floor while the mini-boss is within burn range, so "its touch ends the run" is readable before it happens.
+3. **Brutes in squads (level 7+):** fewer (`est` 45 → 60) and a smaller stomp (`aoe.max` 60 → 30).
+4. **Shields:** at most 8 a squad (`SHIELD_MAX`), the middle row from level 9 (was 7).
+5. **Score rewards progress:** a level-clear bonus (5,000 × the level cleared), a "Levels" row in the recap, so getting further beats farming kills.
+6. **Re-measure:** the bot should reach level 8 on most seeds (it's weaker than a person), then a human playtest. Tune with the debug panel's sliders; record before / after.
+
+**B. Separate Story and Challenge boards** (target v0.13.1)
+1. **User runs one SQL statement** in Supabase (the existing policies already allow any columns, so nothing else changes):
+   ```sql
+   alter table public.vector_wars_scores
+     add column mode text not null default 'story' check (mode in ('story', 'challenge'));
+   create index vector_wars_scores_mode_top on public.vector_wars_scores (mode, score desc, created_at);
+   ```
+   Every existing score becomes a Story score; the Challenge board starts empty (CPU entries fill it). Safe in either order: an old cached client posts without `mode` (it defaults to story); a new client that posts before the column exists is queued and sent once it does.
+2. **`scores.js`:** every call takes a mode: fetch with `mode=eq.<mode>`, post with `mode`, a cache and an offline queue per mode, CPU seed entries per board (lower for Challenge).
+3. **UI:** the title's board alternates Story / Challenge (labelled); pause and game over show the current mode's board and placement; "Hi" in the HUD is the current mode's best. Style guide: board cards with the mode label.
+
+**C. Level-complete screen** (target v0.14.0; `LEVELS.md` section 8)
+1. **When:** after the level-gate crescendo (about 0.6s), the game holds on a pause-menu-style screen, not on every new-enemy hand-off (the "Army level up" moment stays as it is).
+2. **What's on it:** "Level 3 complete"; the **army snapshot**: the swarm's actual dot formation drawn into a canvas, glowing cyan, with its count; this level's recap: enemies defeated by type, units gained and lost, best gate (e.g. ×2.6), the level-clear bonus; the run score; what's next (the next level's name or the new enemy's sprite); one big button, **"Go to Level 4"** (Space / tap).
+3. **Per-level stats:** a `G.levelStats` reset at each level gate (kills by type, gained, lost, best gate, time).
+4. **Built on** the pause screen's layout, so it scrolls on short phones; style guide card; debug panel's "Next level" skips it.
+
+**Decisions for the user before starting:**
+- Boards: existing scores move to Story (recommended), or reset both boards?
+- Level-complete screen: wait for a tap (recommended; it's a breather), or auto-continue after a few seconds?
+- Level-clear bonus: 5,000 × level, or something else?
+
 ### Ideas parked for later
 - **Track hazards:** saws, rollers, spike strips; narrow bridges and gaps; rail breaks.
 - **Gates:** locked gates (N hits to open), order-of-operations runs, gates that flip sign on a timer.
