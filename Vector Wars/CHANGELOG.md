@@ -24,7 +24,8 @@ Round-by-round history of playtest feedback and what changed, grouped by release
 | 0.11.4 | round 47 | PR #19 |
 | 0.12.0 | round 48 | PR #20 |
 | 0.13.0 | rounds 49–51 | PR #21 |
-| 0.13.1 | round 52 | `vw/v0.13.1` |
+| 0.13.1 | round 52 | PR #22 |
+| 0.13.2 | round 53 | `vw/v0.13.2` |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
@@ -467,3 +468,6 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Bullet enemies hit harder:** their lane is wider and deadlier (`lane` radius 0.3 → 0.4, 85% → 95% at the center, up to 22 units, was 10; `est` 6 → 12).
 - **Focus fire lasts 2.5s** (was 4).
 - **Lasers are red:** new `COLORS.laser` (a hot red, close to `dying`), hotter at the target end; their hit sparks match. The button stays cyan.
+
+## Round 53 — v0.13.2: fine tuning in the debug panel (2026-10-12)
+- Every debug-panel slider (game speed included) has a − and + beside it: one tap moves it by its smallest increment, holding repeats (after 0.35s, every 70ms). They go through the slider's own handler, so changes save, highlight and copy the same. Rows are no longer labels (a click on a row's text would have pressed its first button).
