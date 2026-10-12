@@ -15,6 +15,11 @@ const TWEAKS = [
   ['cfg', 'GATE_DURABILITY_STEP', 0, 0.4, 0.01, 'gates: + toughness per level past the 1st'],
   ['cfg', 'ENDLESS_GROWTH', 1, 1.6, 0.02, 'past World 1: squads × this per level'],
   ['cfg', 'LEVEL_BONUS', 0, 20000, 500, 'points for clearing a level, × the level'],
+  ['Bloom'],
+  ['bloom', 'strength', 0, 2, 0.05, 'glow strength'],
+  ['bloom', 'radius', 0, 1, 0.05, 'glow spread'],
+  ['bloom', 'threshold', 0, 1.5, 0.05, 'brightness where glow starts (higher: fewer things glow)'],
+  ['bloom', 'msaa', 0, 8, 4, 'anti-aliasing samples for the image bloom reads (0 = off, 4 = on)'],
   ['Pace'],
   ['cfg', 'SPEED', 4, 10, 0.1, 'forward speed (units/s)'],
   ['cfg', 'CHALLENGE_SPEED', 0.8, 2, 0.05, 'Challenge: track speed × at the start'],
@@ -60,6 +65,7 @@ export function createDebugPanel(objs, actions) {
     if (objs[o] && k.split('.')[0] in objs[o]) setV(objs[o], k, v);
   }
   saved.tweaks = saved.tweaks || {};
+  if (actions.onTweak) actions.onTweak('bloom');   // saved bloom tweaks take effect at once
 
   const root = document.createElement('div');
   root.id = 'dbg';
@@ -68,8 +74,8 @@ export function createDebugPanel(objs, actions) {
     <div class="dbg-body">
       <div class="dbg-head"><b>Debug</b><span class="dbg-live"></span></div>
       <div class="dbg-sec">Run</div>
-      <label class="dbg-row"><span>Game speed <i class="dbg-v" data-v="speed">1.00×</i></span>
-        <input type="range" data-act="speed" min="0.1" max="3" step="0.05" value="1"></label>
+      <div class="dbg-row"><span>Game speed <i class="dbg-v" data-v="speed">1.00×</i></span>
+        <input type="range" data-act="speed" min="0.1" max="3" step="0.05" value="1"></div>
       <div class="dbg-btns">
         <button type="button" data-act="speed1">1×</button><button type="button" data-act="speedHalf">0.25×</button>
         <button type="button" data-act="speed2">2×</button>
@@ -102,7 +108,7 @@ export function createDebugPanel(objs, actions) {
   for (const [o, k, min, max, step, note] of TWEAKS) {
     if (!k) { tweaksEl.insertAdjacentHTML('beforeend', `<div class="dbg-sec">${o}</div>`); continue; }
     const id = `${o}.${k}`;
-    const row = document.createElement('label');
+    const row = document.createElement('div');   // (not a label: a click on it would press its first − button)
     row.className = 'dbg-row';
     row.title = note;
     // Array entries get a short label: LEVEL_DIFFICULTY.6 → "Difficulty L6", FIRE_LEVELS.0 → "Fire L1".
@@ -118,6 +124,7 @@ export function createDebugPanel(objs, actions) {
     };
     input.addEventListener('input', () => {
       setV(objs[o], k, parseFloat(input.value));
+      if (actions.onTweak) actions.onTweak(o, k);
       saved.tweaks[id] = getV(objs[o], k);
       if (Math.abs(saved.tweaks[id] - defaults[id]) <= step / 2) delete saved.tweaks[id];
       save();
@@ -126,6 +133,35 @@ export function createDebugPanel(objs, actions) {
     inputs.push(show);
     show();
     tweaksEl.appendChild(row);
+  }
+
+  // Fine tuning: a − and + beside every slider, one step (its smallest
+  // increment) a tap; hold to repeat. They go through the slider's own input
+  // handler, so saving, highlighting and Copy values work the same.
+  for (const input of root.querySelectorAll('input[type=range]')) {
+    const box = document.createElement('div');
+    box.className = 'dbg-ctl';
+    input.replaceWith(box);
+    const btn = (d) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'dbg-nudge';
+      b.textContent = d < 0 ? '−' : '+';
+      b.setAttribute('aria-label', d < 0 ? 'Decrease' : 'Increase');
+      const nudge = () => {
+        const st = parseFloat(input.step), lo = parseFloat(input.min), hi = parseFloat(input.max);
+        const places = Math.max(0, -Math.floor(Math.log10(st)) + 1);
+        const v = Math.min(hi, Math.max(lo, Math.round((parseFloat(input.value) + d * st) / st) * st));
+        input.value = v.toFixed(places);
+        input.dispatchEvent(new Event('input'));
+      };
+      let hold = 0, rep = 0;
+      const stop = () => { clearTimeout(hold); clearInterval(rep); };
+      b.addEventListener('pointerdown', (e) => { e.preventDefault(); nudge(); hold = setTimeout(() => { rep = setInterval(nudge, 70); }, 350); });
+      for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(ev, stop);
+      return b;
+    };
+    box.append(btn(-1), input, btn(1));
   }
 
   const $ = (act) => root.querySelector(`[data-act="${act}"]`);
@@ -146,6 +182,7 @@ export function createDebugPanel(objs, actions) {
   if (saved.low) actions.setLowGfx(true);
   $('reset').onclick = () => {
     for (const [id, v] of Object.entries(defaults)) { const [o, k] = splitId(id); setV(objs[o], k, v); }
+    if (actions.onTweak) actions.onTweak('bloom');
     saved.tweaks = {};
     save();
     inputs.forEach((f) => f());
@@ -155,7 +192,7 @@ export function createDebugPanel(objs, actions) {
     const lines = [], arrays = new Set();
     for (const id of Object.keys(saved.tweaks)) {
       const [o, k] = splitId(id), [name, i] = k.split('.');
-      if (i === undefined) lines.push(`  ${name}: ${saved.tweaks[id]},   // ${o === 'anim' ? 'ANIM' : 'CFG'} (was ${defaults[id]})`);
+      if (i === undefined) lines.push(`  ${name}: ${saved.tweaks[id]},   // ${o === 'anim' ? 'ANIM' : o === 'bloom' ? 'BLOOM' : 'CFG'} (was ${defaults[id]})`);
       else if (!arrays.has(name)) { arrays.add(name); lines.push(`  ${name}: [${objs[o][name].join(', ')}],   // ${o === 'anim' ? 'ANIM' : 'CFG'}`); }
     }
     const text = lines.length ? lines.join('\n') : '// no tweaks: everything matches config.js';

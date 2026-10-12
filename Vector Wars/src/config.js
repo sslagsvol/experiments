@@ -8,7 +8,7 @@
 
 // The game's version: 0.MINOR.PATCH while in beta. Bump it on the release
 // branch (vw/vX.Y.Z) and add a matching heading in CHANGELOG.md. See PLAN.md.
-export const VERSION = '0.13.1';
+export const VERSION = '0.13.2';
 
 export const CFG = {
   TW: 2.0,                 // track half-width (world units)
@@ -68,8 +68,9 @@ export const CFG = {
   // ENDLESS_GROWTH stacks on top). Levels 6–9 were the wall (round 49): eased.
   DIFFICULTY: 1.6,
   DIFFICULTY_LEVEL_1: 1.35, // level 1's authored squads: still a skill check, but most people should pass
-  LEVEL_DIFFICULTY: [0, 1.35, 1.5, 1.55, 1.6, 1.6, 1.35, 1.4, 1.45, 1.5, 1.55],
-  LEVEL_BONUS: 5000,       // story: points for clearing a level, × the level cleared (level 6 → 30,000)
+  LEVEL_DIFFICULTY: [0, 1.35, 1.5, 1.6, 1.6, 1.6, 1.6, 1.6, 1.55, 1.45, 1.4],   // user playtest tuning (round 54)
+  LEVEL_BONUS: 5000,       // points for clearing a level, × the level cleared (level 6 → 30,000); Challenge too
+  CHALLENGE_LEVEL_GATES: 8, // Challenge: a "level" is this many gates passed (the bonus, the banner, gate toughness)
   // Small armies: below SMALL_ARMY_FROM units the dots (and their spacing)
   // grow, reaching SMALL_ARMY_SCALE× at SMALL_ARMY_FULL units or fewer.
   SMALL_ARMY_FROM: 80,
@@ -81,12 +82,13 @@ export const CFG = {
   // …and it climbs with progress: × (1 + GATE_DURABILITY_STEP per level past
   // the 1st), up to GATE_DURABILITY_MAX. Challenge counts every 8 gates as a level.
   GATE_DURABILITY_STEP: 0.12,
-  GATE_DURABILITY_MAX: 2.0,
+  GATE_DURABILITY_MAX: 2.2,
 
   DRAG_SPAN: 0.6,          // fraction of screen width that sweeps the full track
   STEER_RESPONSE: 14,      // higher = snappier follow
 
   GATE_H: 0.8,             // panel height (round 44 halved it to 0.625; round 48 back up a little for legibility)
+  RAIL_TAPER: 0.03,        // rails widen by this × their distance (×4.6 at the far end): no dotted rails far away
   GATE_TEXT: { short: 0.6, long: 0.48 },  // label height × the panel's (labels of 5+ characters use long)
   ADD_HITS_PER_STEP: 4,    // bullets to raise a + / − gate by one
   MULT_START: 1.0,         // × gates start doing nothing…
@@ -129,7 +131,7 @@ export const CFG = {
   // to a small team for a fight against a mini-boss, one giant unit of the
   // next enemy type.
   BOSS_SIZE: 4,            // × its type's size
-  BOSS_SPEED: 0.3,         // × ENEMY_CHARGE_SPEED: it advances slowly
+  BOSS_SPEED: 0.35,        // × ENEMY_CHARGE_SPEED: it advances slowly
   BOSS_HP_SECONDS: 4,      // hp = the strike team's shots per second × this
   BOSS_SWAY: 0.45,         // × its type's side-to-side sway and turning
   BOSS_HP_MUL: { drone: 0.8, bomber: 1.25, brute: 1.0 },
@@ -207,7 +209,7 @@ export const CFG = {
   COMBO_CHANCE: 0.25,      // a regular squad is a set piece instead: shields guarding bombers, or grunts screening brutes
   // Bullet enemies (v0.11.0): immune to fire. A warning line marks the lane,
   // then it crosses at player-bullet speed and cuts through a small group.
-  BOLT_WARN: 1.1,          // s of warning line before it flies
+  BOLT_WARN: 0.9,          // s of warning line before it flies
   BOLT_AHEAD: 24,          // it waits this far ahead of the army
   BOLT_EVERY: [5, 9],      // s between volleys (random in this range)
   BOLT_VOLLEY_MAX: 3,      // up to this many per volley (more at higher levels)
@@ -329,7 +331,7 @@ export const ANIM = {
 };
 
 // Bloom post-process (UnrealBloomPass). Threshold keeps gate text readable.
-export const BLOOM = { strength: 0.85, radius: 0.35, threshold: 0.55 };
+export const BLOOM = { strength: 0.7, radius: 0.1, threshold: 0.15, msaa: 0 };   // msaa: samples for the image bloom reads (0 = off); user playtest tuning (round 54)
 
 // Linear HDR colors (values > 1 feed the bloom pass). Shown in style-guide.html.
 export const COLORS = {

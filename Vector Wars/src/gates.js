@@ -137,7 +137,9 @@ class Gate {
   sync(dist, time) {
     const z = -(this.wz - dist);
     this.group.position.z = z;
-    const fade = this.done ? 0.3 : Math.min(1, (CFG.VIEW_AHEAD + z) / 14);
+    // Fades in over the first 30 units: a far gate at full brightness is a few
+    // very bright pixels that bloom smears into a block.
+    const fade = this.done ? 0.3 : Math.min(1, (CFG.VIEW_AHEAD + z) / 30);
     const shatter = this.primary ? Math.min(1, (time - this.doneAt) / ANIM.gateShatter) : 0;
     this.left.mesh.visible = this.right.mesh.visible = !this.S;
     for (const p of this.singles.values()) p.mesh.visible = false;

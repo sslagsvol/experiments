@@ -24,7 +24,8 @@ Round-by-round history of playtest feedback and what changed, grouped by release
 | 0.11.4 | round 47 | PR #19 |
 | 0.12.0 | round 48 | PR #20 |
 | 0.13.0 | rounds 49–51 | PR #21 |
-| 0.13.1 | round 52 | `vw/v0.13.1` |
+| 0.13.1 | round 52 | PR #22 |
+| 0.13.2 | round 53 | `vw/v0.13.2` |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
@@ -467,3 +468,14 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - **Bullet enemies hit harder:** their lane is wider and deadlier (`lane` radius 0.3 → 0.4, 85% → 95% at the center, up to 22 units, was 10; `est` 6 → 12).
 - **Focus fire lasts 2.5s** (was 4).
 - **Lasers are red:** new `COLORS.laser` (a hot red, close to `dying`), hotter at the target end; their hit sparks match. The button stays cyan.
+
+## Round 53 — v0.13.2: fine tuning in the debug panel (2026-10-12)
+- Every debug-panel slider (game speed included) has a − and + beside it: one tap moves it by its smallest increment, holding repeats (after 0.35s, every 70ms). They go through the slider's own handler, so changes save, highlight and copy the same. Rows are no longer labels (a click on a row's text would have pressed its first button).
+- **Blocky bloom on distant elements** (user report): the scene now renders into a multisampled (MSAA ×4) target before bloom (`BLOOM.msaa`). Without anti-aliasing, thin far lines and points (grid, rails, gate edges, dense far squads) shimmer into single very bright pixels, and bloom's low-resolution blur passes blow those up into visible blocks. The debug panel gained a **Bloom** section (strength, radius, threshold, msaa) applied live, for comparing on the device that shows it. No frame-rate change on desktop (60 fps either way); couldn't reproduce the blocks here (a 2× screen hides aliasing), so it's to be confirmed on the user's device.
+- **Phone graphics (screenshots from a Pixel 6 Pro, `Assets/screenshots/v0.13.0`):** far gates smeared into glowing slabs, rails broke into dotted dashes near the horizon, distant enemies read as pink pixel noise, and the hex floor aliased into stripes. On a 3.5×-density screen the game renders at 2× at best, and the adaptive quality could drop it to 1×, scaling everything up 3.5×. Fixes, each checked at phone size (375×812, including 1×): the floor pattern fades out where its cells shrink below a few pixels (shader `cellPx`); gates fade in over 30 units (was 14); rails taper wider with distance (`RAIL_TAPER` 0.03) so they stay about a pixel wide; enemy outlines never get thinner than about a pixel (`vPx` in the enemy shader) and sprites under 12px glow a little less; adaptive quality drops the MSAA first, then resolution, and never below 1.5× on screens of 2.5× density or more. The debug hook exposes `world`.
+
+## Round 54 — v0.13.2 (cont.): user tuning (2026-10-12)
+- From the debug panel's Copy values: `LEVEL_DIFFICULTY` levels 2–10 → 1.5, 1.6, 1.6, 1.6, 1.6, 1.6, 1.55, 1.45, 1.4 (levels 6–7 back up to 1.6, tapering off from level 8); `BLOOM` strength 0.85 → 0.7, radius 0.35 → 0.1, threshold 0.55 → 0.15, msaa 4 → 0.
+- Debug panel: **Copy values** and **Reset tweaks** are a sticky footer, always visible while the sliders scroll.
+- More user tuning: `BOLT_WARN` 1.1 → 0.9 (bullet enemies' warning line is shorter), `BOSS_SPEED` 0.3 → 0.35 (mini-bosses close in a little faster), `GATE_DURABILITY_MAX` 2.0 → 2.2 (late-level gates a little tougher).
+- **Challenge levels and bonus:** Challenge has no level gates, so every 8 gates passed (`CHALLENGE_LEVEL_GATES`) is a level: a "Level 2" banner, a small ripple and the level-up sound, and the same bonus as story (`LEVEL_BONUS` 5,000 × the level finished), shown in the "Levels cleared" recap row. The HUD tag reads "Level 2 · Gate 12" (gates actually passed; it used to count gates generated ahead). Gate toughness uses the same 8-gate level. Bot: level 2 at gate 8 (42s, +5,000), level 3 at gate 16 (96s, 15,000 in all).

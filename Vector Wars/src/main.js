@@ -1,7 +1,7 @@
 // Game loop and rules. URL params: ?units=800 (start size), ?seed=42,
 // ?debug (FPS / unit counts overlay).
 
-import { CFG, COLORS, ANIM, GRID_PATTERNS, mulberry32, multHitsForStep } from './config.js';
+import { CFG, COLORS, ANIM, BLOOM, GRID_PATTERNS, mulberry32, multHitsForStep } from './config.js';
 import { createWorld } from './world.js';
 import { Army } from './crowd.js';
 import { EnemyForce } from './enemies.js';
@@ -239,6 +239,7 @@ function newRun() {
     bomb: { on: mode === 'challenge', charge: 1, readyAt: -9 },   // the bomb power-up: charge 0..1, ready at 1
     focus: { on: mode === 'challenge', charge: 1, readyAt: -9, until: -1, acc: 0 },   // focus fire: charge 0..1; firing while time < until
     edge: { t: -9, n: 0, of: 1 },   // units fallen off the edge in the current window
+    gatesPassed: 0,  // Challenge: gates crossed (every CHALLENGE_LEVEL_GATES of them is a level)
     edgeWarned: false,
     held: false,     // the extra-life prompt is up (the game is frozen)   // s until the next bullet-enemy volley (once they're unlocked)
     rng: mulberry32(SEED),
@@ -870,6 +871,7 @@ function spill(n) {
 // pass through it are affected, and it only shatters if someone did.
 function crossGate(g) {
   if (g.S && g.S.op === 'level') { levelUp(g); return; }
+  if (CLASSIC()) challengeGate();
   if (G.best) {
     const gain = (s, n) => s.op === 'x' ? n * s.m : s.op === '/' ? n / s.d : Math.max(0, n + s.v);
     G.best = Math.min(CFG.CAPACITY, g.S ? Math.max(G.best, gain(g.S, G.best)) : Math.max(gain(g.L, G.best), gain(g.R, G.best)));
@@ -918,6 +920,20 @@ function crossGate(g) {
     army.shake(ANIM.shakeNegGate);
     G.shake = 0.12;
   }
+}
+
+// Challenge has no level gates: every CHALLENGE_LEVEL_GATES gates passed is a
+// level, with the same bonus as story (LEVEL_BONUS × the level finished), a
+// short banner and a small ripple.
+function challengeGate() {
+  G.gatesPassed++;
+  const lvl = 1 + Math.floor(G.gatesPassed / CFG.CHALLENGE_LEVEL_GATES);
+  if (lvl <= G.level) return;
+  G.stats.levelPts += CFG.LEVEL_BONUS * G.level;
+  G.level = lvl;
+  hud.levelBanner(`Level ${lvl}`, null);
+  sfx.play('levelUp', { gain: 0.5 });
+  world.addRipple(army.cx, G.dist, ANIM.rippleGate, time);
 }
 
 // Crossing a level gate: the biggest ripple, a burst along the line, and a
@@ -1081,7 +1097,7 @@ function shatterSparks(g) {
 
 // Gates get tougher as you progress: by level in Story, every 8 gates in Challenge.
 function gateDurability() {
-  const lvl = CLASSIC() ? 1 + G.gateIdx / 8 : G.level;
+  const lvl = CLASSIC() ? 1 + G.gateIdx / CFG.CHALLENGE_LEVEL_GATES : G.level;
   return CFG.GATE_DURABILITY * Math.min(CFG.GATE_DURABILITY_MAX, 1 + CFG.GATE_DURABILITY_STEP * Math.max(0, lvl - 1));
 }
 
@@ -1428,7 +1444,7 @@ function syncHud(realDt) {
   const score = G.state === 'title' ? 0 : runStats().score;
   const rank = G.state === 'play' ? rankFor(score, board) : -1;
   if (hud.setScore(score, rank <= 2 ? rank : -1)) sfx.play('maxMult');
-  hud.setLevel(G.state === 'title' ? '' : CLASSIC() ? `Gate ${G.gateIdx}` : `Level ${G.level}`);
+  hud.setLevel(G.state === 'title' ? '' : CLASSIC() ? `Level ${G.level} · Gate ${G.gatesPassed}` : `Level ${G.level}`);
   // The bomb button under it, once unlocked: its ring fills, then it lights up.
   hud.setBomb(G.state !== 'title' && G.bomb.on ? { charge: G.bomb.charge, fresh: G.ui - G.bomb.readyAt < 1 } : null);
   // Focus fire's button (bottom right): while firing, its ring drains with the time left.
@@ -1471,13 +1487,19 @@ function frame(now) {
   const sim = Math.min(raw, 1 / 30) * dbg.speed, sub = Math.ceil(dbg.speed - 1e-6);
   for (let k = 1; k <= sub; k++) step(sim / sub, k === sub);
 
-  // Adaptive quality: drop render resolution if frames run long.
-  // Ignore long gaps (tab switches, throttled background frames).
+  // Adaptive quality, when frames run long: first drop the anti-aliasing,
+  // then the render resolution, a step at a time, but not below 1.5× on very
+  // dense screens (at 1× a 3×+ phone scales the image up so far it goes
+  // blocky). Ignore long gaps (tab switches, throttled background frames).
   if (raw < 0.1) { perfAcc += raw; perfFrames++; perfWindow += raw; }
   if (perfWindow > 2) {
     const avg = perfAcc / perfFrames;
     fps = Math.round(1 / avg);
-    if (avg > 0.019 && world.pixelRatio > 1 && !dbg.low) world.setPixelRatio(Math.max(1, world.pixelRatio - 0.25));
+    const prFloor = (window.devicePixelRatio || 1) >= 2.5 ? 1.5 : 1;
+    if (avg > 0.019 && !dbg.low) {
+      if (BLOOM.msaa > 0) { BLOOM.msaa = 0; world.setBloom(BLOOM); }
+      else if (world.pixelRatio > prFloor) world.setPixelRatio(Math.max(prFloor, world.pixelRatio - 0.25));
+    }
     perfAcc = perfFrames = perfWindow = 0;
   }
   if (DEBUG) {
@@ -1489,7 +1511,8 @@ function frame(now) {
 
 // Debug panel (` or the gear button): game speed, level skip, low graphics,
 // army size, difficulty sliders.
-const panel = DEBUG ? createDebugPanel({ cfg: CFG, anim: ANIM }, {
+const panel = DEBUG ? createDebugPanel({ cfg: CFG, anim: ANIM, bloom: BLOOM }, {
+  onTweak: (o) => { if (o === 'bloom') world.setBloom(BLOOM); },
   getState: () => ({ level: G.level, timeScale: G.timeScale * dbg.speed, N: army.N, mode: G.mode }),
   setSpeed: (x) => { dbg.speed = x; },
   setSlowMo: (on) => { dbg.slowMo = on; },
@@ -1508,6 +1531,7 @@ const panel = DEBUG ? createDebugPanel({ cfg: CFG, anim: ANIM }, {
 if (DEBUG) {
   window.vectorWars = {
     get state() { return G; },
+    world,
     army,
     enemies,
     sfx,

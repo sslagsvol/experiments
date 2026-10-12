@@ -1,1 +1,9 @@
 .DS_Store
+<<<<<<< Updated upstream
+
+# Vector Wars playtest screenshots (kept locally, not in the repo)
+Vector Wars/Assets/screenshots/
+=======
+Vector Wars/Assets/screenshots/v0.13.0/Screenshot_20261012-112910.png
+Vector Wars/Assets/screenshots/v0.13.0/Screenshot_20261012-113111.png
+>>>>>>> Stashed changes

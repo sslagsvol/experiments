@@ -3,7 +3,7 @@
 A crowd-runner in the style of the "army through gates" mobile ads, redesigned around what those games get wrong: fake choices, hidden numbers, no skill expression, and art that buries the numbers. One thumb, thousands of units, 60fps on a mid-range phone.
 
 - **Play:** `index.html`. The title screen offers **Story mode** (the levels, `LEVELS.md`) and **Challenge mode** (the classic fast random track with nearly every enemy unlocked, for high-score runs; both share the one leaderboard). Challenge is locked until World 1 is beaten in Story mode (open with `?debug`). URL options: `?debug` (overlay plus the `window.vectorWars` test hook), `?units=N` (starting army), `?seed=N` (a different track), `?grid=hex` (a grid pattern), `?classic` (the old fully random track, no level 1), `?debug&level=N` (start just before level N's gate). With `?debug`, the gear button (or the ` key) opens the **debug panel**: game speed, slow motion on/off, level skip, +units, low graphics, and live sliders for the difficulty values (Copy values gives a config.js snippet).
-- **Version:** **v0.13.1 beta** (`VERSION` in `src/config.js`, shown on the title and pause screens). See section 7.
+- **Version:** **v0.13.2 beta** (`VERSION` in `src/config.js`, shown on the title and pause screens). See section 7.
 - **Style guide:** `style-guide.html`, every color, sprite, formation, animation and sound. Visual or animation changes must update it (rule in `CLAUDE.md`).
 - **Sound lab:** `sound-lab.html`, every sound with detune (lower, same speed) and stretch (longer, same pitch), globally or per sound (`SFX.tune` / `SFX.stretch`).
 - **History:** `CHANGELOG.md`, the round-by-round log of playtest feedback and what changed.
@@ -98,7 +98,7 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 
 ### The level 6–7 wall (round 50, v0.13.0)
 Built (the user skipped the measure / playtest steps: tune by feel with the debug panel):
-- **Per-level difficulty for story** (`CFG.LEVEL_DIFFICULTY`, one entry per level, the last carrying on past World 1): squads, grunt screens, clusters and mini-boss hp scale by level instead of one flat `DIFFICULTY` (now Challenge only). Levels 6–9 eased (1.35 / 1.4 / 1.45 / 1.5; levels 2–5: 1.5 / 1.55 / 1.6 / 1.6). The debug panel's **Per level (story)** section has a slider per level for it and for the fire rate (`FIRE_LEVELS`), plus gate durability growth, endless growth and the level bonus; Copy values prints whole arrays.
+- **Per-level difficulty for story** (`CFG.LEVEL_DIFFICULTY`, one entry per level, the last carrying on past World 1): squads, grunt screens, clusters and mini-boss hp scale by level instead of one flat `DIFFICULTY` (now Challenge only). Levels 6–9 eased at first (1.35–1.5); the user then tuned levels 2–10 to 1.5, 1.6, 1.6, 1.6, 1.6, 1.6, 1.55, 1.45, 1.4 (round 54). The debug panel's **Per level (story)** section has a slider per level for it and for the fire rate (`FIRE_LEVELS`), plus gate durability growth, endless growth and the level bonus; Copy values prints whole arrays.
 - **Level 6:** strike team 40 → 55; its brute clusters arrive shell-less (no fire); a pulsing fire ring marks a mini-boss close enough to burn and touch.
 - **Brutes:** fewer per squad (`est` 45 → 60), half the stomp (`aoe.max` 60 → 30).
 - **Shields:** at most 8 a squad (`SHIELD_MAX`), the middle row from level 9.
@@ -182,4 +182,5 @@ The game is in **beta**, so versions are **0.MINOR.PATCH**.
 | 0.11.4 | 2026-10-09 | PR #19 (`e623e7b`) | Level 5 finale waves about 15% smaller; debug mode starts muted |
 | 0.12.0 | 2026-10-11 | PR #20 (`688c9ca`) | The bomb power-up (bottom-left button, ring refills with kills); level tag under the score; legible gate labels; shields hover closer and charge when their squad is gone; the level 6–7 wall analyzed and planned |
 | 0.13.0 | 2026-10-11 | PR #21 (`5f1e456`) | Focus fire; initials on their own screen; the level 6–7 wall: per-level story difficulty (debug sliders), level 6 team 55 with shell-less brutes and a boss warning ring, fewer and softer brutes, shields capped at 8, a level-clear bonus |
-| 0.13.1 | (this branch) | `vw/v0.13.1` | Bullet enemies hit harder; focus fire 2.5s with red lasers |
+| 0.13.1 | 2026-10-12 | PR #22 (`3445b62`) | Bullet enemies hit harder; focus fire 2.5s with red lasers |
+| 0.13.2 | (this branch) | `vw/v0.13.2` | Challenge levels every 8 gates with the level bonus; debug panel: − / + on every slider, sticky footer; user tuning; phone graphics: MSAA before bloom, live bloom sliders, no far moiré, tapered rails, crisp far enemies, gentler adaptive quality |

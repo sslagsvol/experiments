@@ -567,6 +567,9 @@ body.kb .touch-only { display: none; }
 #dbg .dbg-row.changed span { color: var(--hud); }
 #dbg .dbg-v { font-style: normal; opacity: 0.9; }
 #dbg input[type=range] { width: 100%; margin: 2px 0 0; accent-color: var(--you); }
+#dbg .dbg-ctl { display: flex; align-items: center; gap: 5px; margin-top: 2px; }
+#dbg .dbg-ctl input[type=range] { flex: 1; min-width: 0; margin: 0; }
+#dbg .dbg-ctl button.dbg-nudge { flex: none; width: 24px; height: 22px; padding: 0; font-size: 14px; line-height: 1; touch-action: none; }
 #dbg .dbg-check { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
 #dbg .dbg-btns { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
 #dbg button:not(.dbg-toggle), #dbg select {
@@ -578,7 +581,16 @@ body.kb .touch-only { display: none; }
   font: inherit;
   cursor: pointer;
 }
-#dbg .dbg-foot { margin-top: 10px; }
+/* Copy values / Reset tweaks stay pinned to the bottom while the sliders scroll. */
+#dbg .dbg-foot {
+  position: sticky;
+  bottom: -8px;            /* flush with the panel's bottom edge (its padding) */
+  margin: 10px -10px -8px;
+  padding: 8px 10px;
+  background: rgba(4, 5, 26, 0.96);
+  border-top: 1px solid rgba(207, 232, 255, 0.2);
+  z-index: 1;
+}
 
 /* Challenge mode is locked until World 1 is beaten in Story mode: greyed
    out with a lock icon (main.js syncChallengeLock). */
