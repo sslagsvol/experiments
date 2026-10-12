@@ -81,7 +81,7 @@ export const CFG = {
   // …and it climbs with progress: × (1 + GATE_DURABILITY_STEP per level past
   // the 1st), up to GATE_DURABILITY_MAX. Challenge counts every 8 gates as a level.
   GATE_DURABILITY_STEP: 0.12,
-  GATE_DURABILITY_MAX: 2.0,
+  GATE_DURABILITY_MAX: 2.2,
 
   DRAG_SPAN: 0.6,          // fraction of screen width that sweeps the full track
   STEER_RESPONSE: 14,      // higher = snappier follow
@@ -130,7 +130,7 @@ export const CFG = {
   // to a small team for a fight against a mini-boss, one giant unit of the
   // next enemy type.
   BOSS_SIZE: 4,            // × its type's size
-  BOSS_SPEED: 0.3,         // × ENEMY_CHARGE_SPEED: it advances slowly
+  BOSS_SPEED: 0.35,        // × ENEMY_CHARGE_SPEED: it advances slowly
   BOSS_HP_SECONDS: 4,      // hp = the strike team's shots per second × this
   BOSS_SWAY: 0.45,         // × its type's side-to-side sway and turning
   BOSS_HP_MUL: { drone: 0.8, bomber: 1.25, brute: 1.0 },
@@ -208,7 +208,7 @@ export const CFG = {
   COMBO_CHANCE: 0.25,      // a regular squad is a set piece instead: shields guarding bombers, or grunts screening brutes
   // Bullet enemies (v0.11.0): immune to fire. A warning line marks the lane,
   // then it crosses at player-bullet speed and cuts through a small group.
-  BOLT_WARN: 1.1,          // s of warning line before it flies
+  BOLT_WARN: 0.9,          // s of warning line before it flies
   BOLT_AHEAD: 24,          // it waits this far ahead of the army
   BOLT_EVERY: [5, 9],      // s between volleys (random in this range)
   BOLT_VOLLEY_MAX: 3,      // up to this many per volley (more at higher levels)

@@ -477,3 +477,4 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 ## Round 54 — v0.13.2 (cont.): user tuning (2026-10-12)
 - From the debug panel's Copy values: `LEVEL_DIFFICULTY` levels 2–10 → 1.5, 1.6, 1.6, 1.6, 1.6, 1.6, 1.55, 1.45, 1.4 (levels 6–7 back up to 1.6, tapering off from level 8); `BLOOM` strength 0.85 → 0.7, radius 0.35 → 0.1, threshold 0.55 → 0.15, msaa 4 → 0.
 - Debug panel: **Copy values** and **Reset tweaks** are a sticky footer, always visible while the sliders scroll.
+- More user tuning: `BOLT_WARN` 1.1 → 0.9 (bullet enemies' warning line is shorter), `BOSS_SPEED` 0.3 → 0.35 (mini-bosses close in a little faster), `GATE_DURABILITY_MAX` 2.0 → 2.2 (late-level gates a little tougher).
