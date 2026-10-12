@@ -26,6 +26,7 @@ Round-by-round history of playtest feedback and what changed, grouped by release
 | 0.13.0 | rounds 49–51 | PR #21 |
 | 0.13.1 | round 52 | PR #22 |
 | 0.13.2 | rounds 53–54 | PR #23 |
+| 0.13.3 | round 55 | `vw/v0.13.3` |
 
 ## Style guide debt
 Visual or animation changes that haven't been reflected in `style-guide.html` yet. See the rule in `CLAUDE.md`.
@@ -479,3 +480,9 @@ Sprites are drawn by the new `src/sprites.js`, shared by the recap and the style
 - Debug panel: **Copy values** and **Reset tweaks** are a sticky footer, always visible while the sliders scroll.
 - More user tuning: `BOLT_WARN` 1.1 → 0.9 (bullet enemies' warning line is shorter), `BOSS_SPEED` 0.3 → 0.35 (mini-bosses close in a little faster), `GATE_DURABILITY_MAX` 2.0 → 2.2 (late-level gates a little tougher).
 - **Challenge levels and bonus:** Challenge has no level gates, so every 8 gates passed (`CHALLENGE_LEVEL_GATES`) is a level: a "Level 2" banner, a small ripple and the level-up sound, and the same bonus as story (`LEVEL_BONUS` 5,000 × the level finished), shown in the "Levels cleared" recap row. The HUD tag reads "Level 2 · Gate 12" (gates actually passed; it used to count gates generated ahead). Gate toughness uses the same 8-gate level. Bot: level 2 at gate 8 (42s, +5,000), level 3 at gate 16 (96s, 15,000 in all).
+
+## Round 55 — v0.13.3: docs tidy (2026-10-12)
+- **`PLAN.md`** rewritten to describe the game as it is (modes, army, fire and gates, all six enemy types with their story / Challenge unlocks, mini-bosses, power-ups, HUD and screens, graphics, tuning tools), with a document map, a prioritized **What's next** (world boss, endless pacing, phone check, power-up balance, damage over time, firepower rework), a "decided against" list so dropped ideas don't come back, tidied parked ideas, updated art direction and tech table, and the `--no-track` release step.
+- **`LEVELS.md`** rewritten as a current design document: principles and the user's settled rules, the level shapes, World 1 as built (levels 1–10+), level 1 beat by beat, a per-level table (difficulty, fire rate, gate toughness, shields), Challenge compared, remaining open questions, how levels are built. Superseded plans and playtest notes now live only here in the changelog.
+- **`CLAUDE.md`:** the docs' roles, debug panel details, the live-board caution for initials, `--no-track` branches.
+- A stale comment fixed (`SCORE_PER_HP`: brute 70, shield 150).

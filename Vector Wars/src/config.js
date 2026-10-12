@@ -8,7 +8,7 @@
 
 // The game's version: 0.MINOR.PATCH while in beta. Bump it on the release
 // branch (vw/vX.Y.Z) and add a matching heading in CHANGELOG.md. See PLAN.md.
-export const VERSION = '0.13.2';
+export const VERSION = '0.13.3';
 
 export const CFG = {
   TW: 2.0,                 // track half-width (world units)
@@ -223,7 +223,7 @@ export const CFG = {
   KEY_STEER_RAMP: 0.25,
   KEY_STEER_FAST: 1.8,
   SCORE_PER_DIST: 10,      // points per unit of distance
-  SCORE_PER_HP: 5,         // points per hit point of each enemy defeated (grunt 5, brute 40)
+  SCORE_PER_HP: 5,         // points per hit point of each enemy defeated (grunt 5, brute 70, shield 150)
 };
 
 // Sound effects (src/audio.js), synthesized with WebAudio. Volumes 0–1;
