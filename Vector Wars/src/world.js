@@ -107,7 +107,11 @@ export function createWorld(canvas) {
   const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 220);
   const lookAt = new THREE.Vector3();
 
-  const composer = new EffectComposer(renderer);
+  // The scene renders into a multisampled target (MSAA) before bloom: without
+  // it, thin distant lines and points shimmer into single bright pixels that
+  // bloom's low-resolution passes blow up into blocks.
+  const sceneTarget = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: BLOOM.msaa });
+  const composer = new EffectComposer(renderer, sceneTarget);
   composer.addPass(new RenderPass(scene, camera));
   const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), BLOOM.strength, BLOOM.radius, BLOOM.threshold);
   composer.addPass(bloom);
@@ -217,6 +221,14 @@ export function createWorld(canvas) {
     renderer, scene, camera, pointScale,
     get pixelRatio() { return pixelRatio; },
     setPixelRatio(pr) { pixelRatio = pr; resize(); },
+    // Bloom settings (debug panel): strength / radius / threshold from BLOOM, and
+    // MSAA samples (0 = off) for the image bloom reads.
+    setBloom(b) {
+      bloom.strength = b.strength; bloom.radius = b.radius; bloom.threshold = b.threshold;
+      for (const t of [composer.renderTarget1, composer.renderTarget2]) {
+        if (t.samples !== b.msaa) { t.samples = b.msaa; t.dispose(); }
+      }
+    },
     // Low graphics (debug panel): no bloom, render at 0.75× resolution.
     setLowGfx(on) {
       bloom.enabled = !on;

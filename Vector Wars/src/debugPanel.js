@@ -15,6 +15,11 @@ const TWEAKS = [
   ['cfg', 'GATE_DURABILITY_STEP', 0, 0.4, 0.01, 'gates: + toughness per level past the 1st'],
   ['cfg', 'ENDLESS_GROWTH', 1, 1.6, 0.02, 'past World 1: squads × this per level'],
   ['cfg', 'LEVEL_BONUS', 0, 20000, 500, 'points for clearing a level, × the level'],
+  ['Bloom'],
+  ['bloom', 'strength', 0, 2, 0.05, 'glow strength'],
+  ['bloom', 'radius', 0, 1, 0.05, 'glow spread'],
+  ['bloom', 'threshold', 0, 1.5, 0.05, 'brightness where glow starts (higher: fewer things glow)'],
+  ['bloom', 'msaa', 0, 8, 4, 'anti-aliasing samples for the image bloom reads (0 = off, 4 = on)'],
   ['Pace'],
   ['cfg', 'SPEED', 4, 10, 0.1, 'forward speed (units/s)'],
   ['cfg', 'CHALLENGE_SPEED', 0.8, 2, 0.05, 'Challenge: track speed × at the start'],
@@ -60,6 +65,7 @@ export function createDebugPanel(objs, actions) {
     if (objs[o] && k.split('.')[0] in objs[o]) setV(objs[o], k, v);
   }
   saved.tweaks = saved.tweaks || {};
+  if (actions.onTweak) actions.onTweak('bloom');   // saved bloom tweaks take effect at once
 
   const root = document.createElement('div');
   root.id = 'dbg';
@@ -118,6 +124,7 @@ export function createDebugPanel(objs, actions) {
     };
     input.addEventListener('input', () => {
       setV(objs[o], k, parseFloat(input.value));
+      if (actions.onTweak) actions.onTweak(o, k);
       saved.tweaks[id] = getV(objs[o], k);
       if (Math.abs(saved.tweaks[id] - defaults[id]) <= step / 2) delete saved.tweaks[id];
       save();
@@ -175,6 +182,7 @@ export function createDebugPanel(objs, actions) {
   if (saved.low) actions.setLowGfx(true);
   $('reset').onclick = () => {
     for (const [id, v] of Object.entries(defaults)) { const [o, k] = splitId(id); setV(objs[o], k, v); }
+    if (actions.onTweak) actions.onTweak('bloom');
     saved.tweaks = {};
     save();
     inputs.forEach((f) => f());
@@ -184,7 +192,7 @@ export function createDebugPanel(objs, actions) {
     const lines = [], arrays = new Set();
     for (const id of Object.keys(saved.tweaks)) {
       const [o, k] = splitId(id), [name, i] = k.split('.');
-      if (i === undefined) lines.push(`  ${name}: ${saved.tweaks[id]},   // ${o === 'anim' ? 'ANIM' : 'CFG'} (was ${defaults[id]})`);
+      if (i === undefined) lines.push(`  ${name}: ${saved.tweaks[id]},   // ${o === 'anim' ? 'ANIM' : o === 'bloom' ? 'BLOOM' : 'CFG'} (was ${defaults[id]})`);
       else if (!arrays.has(name)) { arrays.add(name); lines.push(`  ${name}: [${objs[o][name].join(', ')}],   // ${o === 'anim' ? 'ANIM' : 'CFG'}`); }
     }
     const text = lines.length ? lines.join('\n') : '// no tweaks: everything matches config.js';

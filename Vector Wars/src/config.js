@@ -329,7 +329,7 @@ export const ANIM = {
 };
 
 // Bloom post-process (UnrealBloomPass). Threshold keeps gate text readable.
-export const BLOOM = { strength: 0.85, radius: 0.35, threshold: 0.55 };
+export const BLOOM = { strength: 0.85, radius: 0.35, threshold: 0.55, msaa: 4 };   // msaa: samples for the image bloom reads (0 = off)
 
 // Linear HDR colors (values > 1 feed the bloom pass). Shown in style-guide.html.
 export const COLORS = {

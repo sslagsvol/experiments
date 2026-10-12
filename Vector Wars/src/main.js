@@ -1,7 +1,7 @@
 // Game loop and rules. URL params: ?units=800 (start size), ?seed=42,
 // ?debug (FPS / unit counts overlay).
 
-import { CFG, COLORS, ANIM, GRID_PATTERNS, mulberry32, multHitsForStep } from './config.js';
+import { CFG, COLORS, ANIM, BLOOM, GRID_PATTERNS, mulberry32, multHitsForStep } from './config.js';
 import { createWorld } from './world.js';
 import { Army } from './crowd.js';
 import { EnemyForce } from './enemies.js';
@@ -1489,7 +1489,8 @@ function frame(now) {
 
 // Debug panel (` or the gear button): game speed, level skip, low graphics,
 // army size, difficulty sliders.
-const panel = DEBUG ? createDebugPanel({ cfg: CFG, anim: ANIM }, {
+const panel = DEBUG ? createDebugPanel({ cfg: CFG, anim: ANIM, bloom: BLOOM }, {
+  onTweak: (o) => { if (o === 'bloom') world.setBloom(BLOOM); },
   getState: () => ({ level: G.level, timeScale: G.timeScale * dbg.speed, N: army.N, mode: G.mode }),
   setSpeed: (x) => { dbg.speed = x; },
   setSlowMo: (on) => { dbg.slowMo = on; },

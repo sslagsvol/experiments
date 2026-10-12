@@ -220,7 +220,7 @@
   <div class="grid" id="sounds"></div>
 
   <h2 class="sg-h">Glow and post-processing <span class="badge live">live · BLOOM</span></h2>
-  <p class="sg-sub">Bloom only picks up pixels brighter than the threshold, which is why HDR colors above 1.0 glow and gate text stays readable. Tone mapping is off; OutputPass converts to sRGB.</p>
+  <p class="sg-sub">Bloom only picks up pixels brighter than the threshold, which is why HDR colors above 1.0 glow and gate text stays readable. The scene renders into a multisampled target first (<span class="var">msaa</span> samples, 0 = off), so thin distant lines and points don't shimmer into single bright pixels that bloom's low-resolution passes blow up into blocks. All four values have live sliders in the debug panel. Tone mapping is off; OutputPass converts to sRGB.</p>
   <div class="card"><table class="cfg" id="bloom"></table></div>
 
   <h2 class="sg-h">All tunables <span class="badge live">live · CFG · ANIM</span></h2>
