@@ -1,6 +1,6 @@
 # Vector Wars
 
-Neon crowd-runner prototype. No build step: plain ES modules + Three.js from a CDN import map. See `PLAN.md` (design as built + roadmap), `LEVELS.md` (level progression plan), `CHANGELOG.md` (round-by-round history), and `style-guide.html`.
+Neon crowd-runner prototype. No build step: plain ES modules + Three.js from a CDN import map. See `PLAN.md` (the game as built, what's next, releases), `LEVELS.md` (level design and World 1 as built), `CHANGELOG.md` (round-by-round history), and `style-guide.html`. Keep `PLAN.md` section 3 and `LEVELS.md` describing the current game; history goes in `CHANGELOG.md`.
 
 ## Style guide rule
 
@@ -20,11 +20,12 @@ How to update:
 ## Testing
 
 - `index.html?debug` shows FPS and unit counts and exposes `window.vectorWars` (`step(frames)`, `steer(x)`, `morph()`, `army`) for driving the sim without `requestAnimationFrame`.
-- With `?debug`, the gear button (or `) opens the debug panel (`src/debugPanel.js`): game speed, level skip, low graphics, +units, difficulty sliders saved in localStorage. `?debug&level=N` starts at level N.
+- With `?debug`, the gear button (or `) opens the debug panel (`src/debugPanel.js`): game speed, level skip, low graphics, +units, per-level and difficulty sliders (− / + for single steps), bloom; tweaks are saved in that browser only, and Copy values gives a `config.js` snippet to commit. `?debug&level=N` starts just before level N's gate. Debug mode starts muted.
+- Saving initials posts to the live Supabase board: block `fetch` and clear the local pending queue when testing it.
 - `?units=N` sets the starting army (capped at `CFG.CAPACITY`); `?seed=N` picks a different track.
 
 ## Version history
 
 - One commit per round of changes, with messages prefixed `Vector Wars:`; log each round in `CHANGELOG.md` and keep the roadmap in `PLAN.md` current.
-- Versions are 0.MINOR.PATCH while in beta (`VERSION` in `src/config.js`). Each release is a branch `vw/vX.Y.Z`: bump `VERSION` first and add it to the Releases table in `CHANGELOG.md`. After the user merges, tag the merge commit `vector-wars-vX.Y.Z` (annotated). Full steps: `PLAN.md` section 7.
+- Versions are 0.MINOR.PATCH while in beta (`VERSION` in `src/config.js`). Each release is a branch `vw/vX.Y.Z`, created from `origin/main` with `--no-track` (a branch tracking `origin/main` publishes straight onto `main` in GitHub Desktop): bump `VERSION` first and add it to the Releases table in `CHANGELOG.md`. After the user merges, tag the merge commit `vector-wars-vX.Y.Z` (annotated). Full steps: `PLAN.md` section 7.
 - Stage only the files you changed (not `git add -A`): other sessions may be editing the repo at the same time.

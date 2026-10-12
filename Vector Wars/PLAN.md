@@ -2,13 +2,21 @@
 
 A crowd-runner in the style of the "army through gates" mobile ads, redesigned around what those games get wrong: fake choices, hidden numbers, no skill expression, and art that buries the numbers. One thumb, thousands of units, 60fps on a mid-range phone.
 
-- **Play:** `index.html`. The title screen offers **Story mode** (the levels, `LEVELS.md`) and **Challenge mode** (the classic fast random track with nearly every enemy unlocked, for high-score runs; both share the one leaderboard). Challenge is locked until World 1 is beaten in Story mode (open with `?debug`). URL options: `?debug` (overlay plus the `window.vectorWars` test hook), `?units=N` (starting army), `?seed=N` (a different track), `?grid=hex` (a grid pattern), `?classic` (the old fully random track, no level 1), `?debug&level=N` (start just before level N's gate). With `?debug`, the gear button (or the ` key) opens the **debug panel**: game speed, slow motion on/off, level skip, +units, low graphics, and live sliders for the difficulty values (Copy values gives a config.js snippet).
-- **Version:** **v0.13.2 beta** (`VERSION` in `src/config.js`, shown on the title and pause screens). See section 7.
-- **Style guide:** `style-guide.html`, every color, sprite, formation, animation and sound. Visual or animation changes must update it (rule in `CLAUDE.md`).
-- **Sound lab:** `sound-lab.html`, every sound with detune (lower, same speed) and stretch (longer, same pitch), globally or per sound (`SFX.tune` / `SFX.stretch`).
-- **History:** `CHANGELOG.md`, the round-by-round log of playtest feedback and what changed.
-- **Levels:** `LEVELS.md`, the level progression plan.
-- **Leaderboard:** Supabase table `vector_wars_scores`, already set up. The setup notes and SQL were removed in v0.6.1; they're in git history (`git show d02685f:"Vector Wars/LEADERBOARD.md"`).
+**Live:** https://sslagsvol.github.io/experiments/ · **Version:** v0.13.3 beta (`VERSION` in `src/config.js`, shown on the title and pause screens).
+
+| Document | What's in it |
+|---|---|
+| `PLAN.md` (this file) | The game as built, what's next, art direction, tech, releases |
+| `LEVELS.md` | Level design: World 1 as built, level shapes, what grows per level |
+| `CHANGELOG.md` | Round-by-round history: every playtest note and what changed |
+| `CLAUDE.md` | Working rules (style guide, testing, versions) |
+| `style-guide.html` | Every color, sprite, formation, HUD element, animation and sound, mostly read live from the code |
+| `sound-lab.html` | Every sound, with detune and stretch |
+| `concepts/` | Early explorations (art directions, gate sounds, style test); not used by the game |
+
+**URL options:** `?debug` (stats line, the debug panel, the `window.vectorWars` test hook; starts muted), `?debug&level=N` (start just before level N's gate), `?units=N` (starting army), `?seed=N` (another track), `?grid=hex` (a grid pattern), `?classic` (preselect Challenge; it stays locked until World 1 is beaten).
+
+**Leaderboard:** one shared top-10 board in Supabase (table `vector_wars_scores`, project `uxwcslorwepzrmpbqmjd`), read and appended with the publishable key, cached locally with an offline queue. Setup SQL: `git show d02685f:"Vector Wars/LEADERBOARD.md"`.
 
 ---
 
@@ -19,7 +27,7 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 | Fake choices ("+5 or ×3") | Gates are shot up or down, split by where the army crosses, and sometimes move. A bad gate can become the best one if you commit fire to it. |
 | The ad and the game differ | The ad *is* the game. |
 | You lose and don't know why | The death recap breaks losses down (squads, slipped past, gates, fell off). Gains and losses show live beside the army count. |
-| No skill | Aim (bullets raise gates and kill enemies), steering (edge spill, dodging moving gates), and gate choice all change the outcome. |
+| No skill | Aim (bullets raise gates and kill enemies), steering (edge spill, dodging moving gates and bullet enemies), gate choice and power-up timing all change the outcome. |
 | Waiting around | Restart in under a second. No interruptions. |
 
 ## 2. Design pillars
@@ -29,100 +37,89 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 3. **The crowd is your health bar and your weapon.** More units means more firepower, but a wider body that spills off the edges.
 4. **60fps with thousands of units on a mid-range phone.**
 5. **Fail fast, understand why, retry instantly.**
+6. **Progression over upgrades.** Levels are the progression: fire rate, new enemies, new gate types, new level shapes, two power-ups. No pick-1-of-3 menus.
 
-## 3. The game as built
+## 3. The game as built (v0.13)
+
+### Modes
+- **Story:** World 1, ten levels with three mini-boss fights, then endless (`LEVELS.md`). One extra life per run.
+- **Challenge:** the fast random track with nearly every enemy from the second squad, a speed ramp (×1.25 +0.04 a gate, to ×3) and capped gate values. Every 8 gates is a level, with the same level bonus. Locked until World 1 is beaten in Story (stored per device; always open with `?debug`).
 
 ### Army
-- **Relative drag:** the army follows the finger's movement, not its position (`CFG.DRAG_SPAN`, `STEER_RESPONSE`). Its center stays on the track, but a wide army hugging an edge loses its outer units over the rail. On a keyboard, ← → or A / D steer (hold to sweep, Shift for fast).
-- **Formations:** sunflower, hex, rings, wedge, diamond and phalanx. Good gates morph to the next one with an outward ripple and a swirl burst; bad gates make it shake.
-- **Size:** every dot is one unit. Full spacing up to 1,200, then progressively tighter, reaching the rails at the 5,000 cap (`CFG.CAPACITY`). Overflow and units pushed past a rail fall into the void below the raised track.
-- **Losses** fizzle cyan → red → black where they died.
+- **Relative drag:** the army follows the finger's movement, not its position. Its center stays on the track; a wide army hugging an edge loses its outer units over the rail ("Watch the edges!" the first time 10% go over). Keyboard: ← → or A / D (hold to sweep, Shift for fast).
+- **Formations:** sunflower, hex, rings, wedge, diamond, phalanx; good gates morph to the next one.
+- **Size:** every dot is one unit. Full spacing up to 1,200, then tighter, reaching the rails at the 5,000 cap. Small armies (under 80) draw bigger dots.
 
 ### Fire and gates
-- Auto-fire from the army, rate `min(50, 3 + 2√N)` × the level's share (`CFG.FIRE_LEVELS`): **25% in level 1**, then 40%, 55%, 70%, 85% and full from level 6. Faster fire is a reward of progression. *(Rework planned: batch B.)*
-- **Gate mix** (`CFG.GATE_MIX`): × 8%, + 32%, − 35%, ÷ 25%. A pair never has two bad options.
-  - Every gate is `CFG.GATE_DURABILITY` (1.25×) tougher than its base hit counts.
-  - **+ / −** fill a charge bar: 5 hits per step (4 × 1.25).
-  - **×** starts at ×1.0 (no effect) and climbs 0.1 per step to ×3.0, costing more hits as it climbs (`multHitsForStep()` × durability, about 140 hits). Maxing it plays the "data stream" cascade and bursts gold.
-  - **÷** starts at ÷2–÷3 and shooting walks it down; at ÷1.0 it flips into a ×1.0 gate and keeps climbing.
-- **Split gates:** each panel applies only to the units that cross it (× multiplies them; + / − scale by their share). The primary panel (where the army's center goes) shatters.
-- **Moving gates** (15% of gate spots): a single 1.5-wide panel sweeping side to side. Mostly good; only the units that pass through it are affected.
+- **Auto-fire:** `min(50, 3 + 2√N)` shots/s × the level's share (`FIRE_LEVELS`): 30%, 45%, 65%, 78%, 90%, then full from level 6. Challenge fires at full rate.
+- **Gate mix:** × 8%, + 32%, − 35%, ÷ 25%; a pair never has two bad sides. + / − take 5 hits a step; × climbs 0.1 a step from ×1.0 to ×3.0 (costlier as it climbs; maxing it plays the data-stream sound); ÷ walks down and flips to × at ÷1.0. Gates get 12% tougher each level past the first, up to 2.2× (`GATE_DURABILITY_*`).
+- **Split gates** apply to the units that cross each panel; **moving gates** (15% of spots) sweep side to side; level gates are full-width finish lines that soak up bullets for a crescendo.
 
 ### Enemies
-- **Every enemy is a unit** in a squad formation: blob, wall, wedge, skirmish, column or waves. All stay 0.45 in from the rails.
-- **Types** (`ENEMY_TYPES`), with grunts 80–90% of every squad:
+Every enemy is a unit in a squad formation (blob, wall, wedge, skirmish, column, waves; shields use a staggered line). Squads are sized as they emerge, against the army you'd have from the best side of every gate before them, at 0.35–0.85× that strength × the level's difficulty (`LEVEL_DIFFICULTY`), by expected damage, not headcount. Grunts are 80–90% of most squads.
 
-| Type | Look | Behavior |
-|---|---|---|
-| Grunt | Diamond | 1 hp, kills ~1.5 nearest units on contact |
-| Drone | Triangle | Strafes side to side; from the 3rd squad |
-| Bomber | Pulsing orange ring | 2 hp, homes on the center; **area blast** r 0.7, 95% at center, max 45; from the 4th squad |
-| Brute | Big hexagon | 8 hp, at the *back* of walls and wedges; **area stomp** r 1.2, 50% at center, max 60; from the 5th squad |
+| Type | Look | Behavior | Story | Challenge |
+|---|---|---|---|---|
+| Grunt | Magenta diamond | 1 hp; takes out ~1.5 units on contact; closes ranks as it nears, screening what's behind | Level 1 | Start |
+| Drone | Triangle | Strafes side to side | Level 3 | 2nd squad |
+| Shield | Steel chevron | 30 hp, guards a squad's specialists (never grunts): rows in front, hovers 1.2 in front of the army blocking shots, charges (2 units each) once its squad is gone; at most 8 a squad | Level 3 | Gate 8 |
+| Bomber | Pulsing orange ring | 2 hp; jumps toward the army (untouchable mid-air) until close, then homes in and blasts (up to 45) | Level 5 | 2nd squad |
+| Brute | Violet double hexagon | 14 hp; burns nearby units when close until shot to half (outer shell breaks); stomps on contact (up to 30) | Level 7 | 2nd squad |
+| Bullet | White-violet streak | Immune; a blinking warning line marks its lane for 0.9s, then it crosses at bullet speed and cuts through up to 22; a dodge scores like a kill | Level 9 | Gate 14 |
 
-- **Battles:** squads charge from 18 units out at 2.2 u/s. The track rolls in at half speed, stops dead for the clash, then surges forward with a big grid ripple and the battle-won sound. Enemies level with the army turn in on its flanks; ones that slip past hit the rear.
-- **Slow motion:** when incoming strength ≥ 0.8× the army, time eases to 0.3× (steering stays real-time), with a danger vignette and a heartbeat on the count. Also for a few seconds as the score closes in on and passes each of 3rd, 2nd and 1st place on the board, once each per run (no vignette; the medal badge and data-stream sound land inside it). Getting all three in one run is rare by design.
-- **Sizing:** squads are sized as they emerge from the fog, against the army you'd have from the *best* side of every gate before them, minus what earlier squads will cost, at 0.35–0.85× that strength, by expected damage (not headcount).
+- **Set pieces:** level guards (a full-strength squad behind a grunt wall in front of every story level gate, `LEVEL_GUARD_THREAT` 0.8), formation combos (bombers behind shields, brutes behind a grunt wall; 25% of squads from level 7).
+- **Battles:** squads charge from 18 units out; the track slows, stops for the clash and surges forward after. Slow motion (×0.4) and a killcam when the army is about to be overwhelmed, and briefly when the score passes 3rd, 2nd and 1st on the board.
 
-### Pacing, HUD and score
-- Track spacing: 18 units after a gate, 28 after a squad.
-- **HUD:** live score (top left; while it's on pace for 1st–3rd on the board it doubles in size with a gold / pink / lime medal badge, and moving up a place plays the max-multiplier sound), "Hi" score, pause and mute (top right), army count at the bottom center with gains (green, left) and losses (red, right) as running totals. The camera is lens-shifted up for thumb room.
-- **Score** = distance × 10 + each enemy defeated × its hp × 5.
-- **Recap:** a big count-up score, each enemy type's idle sprite with kills and points, then distance, peak army and losses.
-- **Pause:** the pause button, Esc / P, or leaving the tab mid-run. A big "Paused" over the recap so far ("Score so far") and the board with where this run would place (tabs on phones, side by side on wide screens). Continue is the main button; Quit goes back to the title screen.
-- **High scores:** an 80s top-10 board with initials entry (▲▼ or typing, specials allowed), and a title attract mode. Global via Supabase (project `uxwcslorwepzrmpbqmjd`), cached locally with an offline queue.
+### Mini-bosses (story levels 2, 4, 6)
+The army condenses into a small strike team ("Army level up", "New enemy:"). The giant drone, bomber or brute arrives behind an escort (shielded until it's gone); then gates ahead shatter, the track stops and it comes in its own way: the drone circles and darts, the bomber hops with landing shockwaves, the brute sways and stomps. It spews small units of its type, burns close units (a fire ring warns you) and **its touch ends the run**. Skinny green reinforcement gates rush in at each 25% of its hp lost and whenever a spew wave is shot down. Wiped team: spend the extra life (the boss keeps its hp, minions clear) or retreat. Kill it and the survivors rejoin your army.
+
+### Power-ups
+- **Focus fire** (unlocked after level 2's boss; Challenge from the start): the bottom-right cyan button. Tap (or F): for 2.5s up to 5 red lasers lock onto the nearest enemies, 5 hits/s each. Its ring refills as you shoot enemies down (3 squads' worth).
+- **Bomb** (unlocked after level 4's boss; Challenge from the start): the bottom-left orange button. Tap (or B): the army spends 20% of itself; each enemy near the closest ones ahead has a 50% chance to be destroyed; a mini-boss loses 12.5%. Refills over 5 squads' worth.
+- Both start full when unlocked; a mini-boss kill refills both.
+
+### HUD, score and screens
+- **HUD:** live score top left (doubles with a medal badge while on pace for the top 3), the level tag under it ("Level 6"; Challenge "Level 2 · Gate 12"), "Hi" score, pause and mute top right, the army count bottom center with gains and losses, the power-up buttons bottom left and right.
+- **Score** = distance × 10 + each enemy defeated × its hp × 5 + mini-bosses + 5,000 × each level cleared.
+- **Screens:** pause (recap so far, the board; Quit asks first), extra life, initials (their own screen when you make the board), game over (recap, tap to retry the same mode, Quit to the title). All scroll on short phones.
 
 ### Feel
-- **Grid ripples:** battle won 2.2, gate 1.6, wipe 1.5, blast 1.6, stomp 2.0, army lost 2.4.
-- **Bloom** is tuned so numbers stay readable.
-- **Sound:** synthesized WebAudio, rate-limited and pitched down in slow motion. Sounds: death fizzle, hit tick, pop, good gate (whoomp and sparkle), bad gate, gate tick, max multiplier (data stream), blast, stomp, battle won (blast plus an echoing crackle), army lost.
+- **Grid ripples** for every event; losses burn cyan → red → black; new units flash white.
+- **Graphics:** bloom tuned in the debug panel (strength 0.7, radius 0.1, threshold 0.15; MSAA available, off by default); for dense phone screens the floor pattern fades with distance, rails taper, far gates fade in, tiny enemies keep a pixel-wide outline; adaptive quality drops MSAA then resolution, never below 1.5× on 2.5×+ screens.
+- **Sound:** synthesized WebAudio (no files), pitched down in slow motion; every sound is in the sound lab.
 
-## 4. Roadmap
+### Tuning tools (`?debug`)
+The gear button (or `) opens the debug panel: game speed, slow motion on/off, next level / go to level, +units, low graphics, and sliders (with − / + for single steps) for per-level difficulty and fire rate, pace, enemies, bosses, gates and bloom. Tweaks are saved in that browser only; **Copy values** gives a `config.js` snippet to commit, **Reset tweaks** goes back to the code's values.
 
-**Built so far (v0.7–v0.12):** parallax and grid patterns, keyboard controls, World 1 (levels 1–10: an authored level 1, new-enemy levels with mini-bosses on 2 / 4 / 6, a sprint-into-gauntlet on 5, a sprint on 8), five enemy types plus bullets (grunt, drone, bomber that jumps, burning brute, shield; immune bullets), mini-boss moves, spawning, burning and reinforcement gates, an extra life, the **bomb** (v0.12.0: unlocked after the bomber fight; one at a time, a big bottom-left button whose ring refills as you shoot enemies down; costs 20% of the army, wipes a small area ahead), **focus fire** (v0.13.0: unlocked after level 2's boss; a bottom-right twin; 2.5s of up to 5 red lasers on the nearest enemies), Challenge mode (locked until World 1), the debug panel. Details by level: `LEVELS.md`; by round: `CHANGELOG.md`.
+## 4. What's next
 
-### Next up (prioritized, round 48)
-1. **The level 6–7 wall.** *Built in v0.13.0 (below); tune by feel.* Playtesters can't get past level 6 and scores plateau around 200k. Bot findings (v0.11.4 / v0.12.0):
-   - **Level 6 strike team** (40 units) reaches the brute boss with about 22: the pre-boss squads carry clusters of 4 burning brutes (14 hp, a stomp that kills up to 60, plus fire), and a team of 40 is one stomp from half dead. Then the boss burns within 6 units and its touch ends the run (no extra life for that).
-   - **Level 7** (gauntlet, brutes join every wall and wedge): a 500-unit army fell to about 110.
-   - **Levels 7–9:** squads with specialists bring up to 12 shields (2 rows + a middle row, 30 hp each) in front of burning brutes; armies bleed out behind them.
-   - **Score** is mostly kills (distance was about 8k of a level-9 run), so stalling at 6–7 caps it, whatever the player does.
-   - **Levers, in order:** (a) level 6: team 40 → 55, strike-team brute clusters arrive shell-less (no fire) like the boss's own; (b) brutes in squads: fewer (est 45 → 60) and a smaller stomp (max 60 → 30); (c) shields: at most 8 a squad, the middle row from level 9; (d) a pulsing warning ring while a mini-boss is within burn range, so the touch-is-game-over rule reads; (e) a level-clear bonus (e.g. 5,000 × level) so progress, not just kills, drives the score. Bot-test a full run from level 1 to 10 after each.
-2. **Bomb follow-ups** (v0.12.0 shipped the core). Playtest the trade (20% for an area wipe) and the refill pace (5 squads' worth); maybe a world-boss reward (a bigger blast); a "last stand" auto-detonate is still open.
-3. **World boss (level 10).** World 1 ends on a banner today. A real finale: a big multi-phase wireframe boss (slams, spawns, a weak point), the world-complete moment, and the bridge into endless.
-4. **Endless pacing (10+).** `ENDLESS_GROWTH` 1.3 a level is still a cliff (bots wiped early in 10–11). Gentler growth plus new mixes per level so endless lasts minutes, not seconds.
-5. ~~**Level-complete menu and army snapshot**~~ *Dropped (user, round 49): levels keep flowing straight into the next.*
-6. ~~**Separate Story and Challenge boards.**~~ *Dropped (user, round 50).*
-7. **Damage over time** (the rest of the old burn-enemy idea): units that keep burning after a hit, put out by moving or a good gate. Brutes and bosses burn the army now; this would make fire linger on units.
-8. **Batch B: firepower rework.** Volley fire from the front ranks, linear damage with capped visible bullets: keeps big armies fast on phones and makes damage readable.
-9. **Phone pass.** Profile a 5,000-unit battle on a mid-range phone; check the HUD, bomb button and gates at phone sizes; haptics.
+**Flagged next, in priority order:**
+1. **World boss (level 10).** World 1 still ends on a banner. A real finale: a big multi-phase wireframe boss (slams, spawns, a weak point, the shatter), the world-complete moment, and the bridge into endless. Biggest missing piece of the 1.0 list.
+2. **Endless pacing (10+).** Squads grow ×1.3 a level (`ENDLESS_GROWTH`) and bots are wiped early in 10–11: gentler growth plus a new mix or shape per level, so endless lasts minutes.
+3. **Phone check.** Confirm the v0.13.2 graphics fixes on the Pixel 6 Pro (`Assets/screenshots/`, local only); profile a 5,000-unit battle on a mid-range phone; watch the `pr` value in the debug stats line.
+4. **Power-up balance.** Both were halved in v0.13.0–0.13.1; playtest the refill pace (3 / 5 squads' worth), focus fire's 2.5s, the bomb's trade, and how both play in Challenge.
+5. **Damage over time on units:** fire that keeps burning after a hit (put out by moving or a good gate). Brutes and bosses burn the army today; this would make it linger.
+6. **Batch B: firepower rework.** Volley fire from the front ranks, linear damage with capped visible bullets: keeps big armies fast on phones and damage readable.
 
-### The level 6–7 wall (round 50, v0.13.0)
-Built (the user skipped the measure / playtest steps: tune by feel with the debug panel):
-- **Per-level difficulty for story** (`CFG.LEVEL_DIFFICULTY`, one entry per level, the last carrying on past World 1): squads, grunt screens, clusters and mini-boss hp scale by level instead of one flat `DIFFICULTY` (now Challenge only). Levels 6–9 eased at first (1.35–1.5); the user then tuned levels 2–10 to 1.5, 1.6, 1.6, 1.6, 1.6, 1.6, 1.55, 1.45, 1.4 (round 54). The debug panel's **Per level (story)** section has a slider per level for it and for the fire rate (`FIRE_LEVELS`), plus gate durability growth, endless growth and the level bonus; Copy values prints whole arrays.
-- **Level 6:** strike team 40 → 55; its brute clusters arrive shell-less (no fire); a pulsing fire ring marks a mini-boss close enough to burn and touch.
-- **Brutes:** fewer per squad (`est` 45 → 60), half the stomp (`aoe.max` 60 → 30).
-- **Shields:** at most 8 a squad (`SHIELD_MAX`), the middle row from level 9.
-- **Level-clear bonus:** 5,000 × the level cleared (`LEVEL_BONUS`), a "Levels cleared" recap row.
-- Bot check: from a level-6 start it cleared level 6 without the extra life and reached level 10 (it used to bleed out in 9).
+**Housekeeping:** release tags are local only (GitHub Desktop doesn't push them); the `concepts/` pages predate the game's current look and could be archived.
 
-**Dropped (user, round 50):** separate Story / Challenge boards (item 6) and the level-complete screen (item 5).
+**Decided against (so they don't come back by accident):** a level-complete screen (levels flow straight into the next); separate Story / Challenge boards; pick-1-of-3 upgrades; more than one bomb at a time; power-up buttons over the middle of the screen.
 
-### Ideas parked for later
+**Ideas parked for later:**
 - **Track hazards:** saws, rollers, spike strips; narrow bridges and gaps; rail breaks.
 - **Gates:** locked gates (N hits to open), order-of-operations runs, gates that flip sign on a timer.
-- **Enemies:** (fire enemy promoted to item 7 above) squads that shoot back; shielded units (immune from the front); splitters that break into grunts; an enemy that steals units on contact.
-- **Run upgrades:** crates and barrels to shoot for spread, pierce or fire rate.
-- **Structure:** (level gates promoted to item 6 above) worlds of levels that each teach one idea (sawtooth difficulty); a boss every 10 levels; a daily seeded challenge with its own board; chunk-based levels in JSON; a headless level validator that plays every level with bot strategies (the `?debug` step hook is the start).
-- **Meta:** coins for small permanent upgrades (diminishing returns; every level beatable without them); stars; settings (drag sensitivity, effects intensity).
-- **Platform:** PWA install; Capacitor builds for iOS haptics and the app stores.
+- **Enemies:** squads that shoot back; splitters that break into grunts; an enemy that steals units on contact.
+- **Structure:** World 2 (its own grid pattern and lessons); a daily seeded challenge; chunk-based levels in JSON; a headless level validator built on the bot (`?debug` step hook).
+- **Meta:** stars per level; settings (drag sensitivity, effects intensity).
+- **Platform:** PWA install; Capacitor builds for haptics and the app stores.
 - **Monetization (if any):** cosmetics only. Never pay-to-win, never interrupt a run.
 
 ## 5. Art direction: "vector arcade"
 
-Chosen from four options (`concepts/art-directions.html`), inspired by Geometry Wars, Defcon, neon arcades and old vector displays.
-- **You:** cyan / white points of light. **Enemies:** outlined shapes, never filled, in magenta (bombers orange, brutes violet).
-- **Gates:** green add, red-pink subtract, deeper red divide, gold multiply. **World:** electric blue, always dimmer than anything interactive. **HUD:** lime, in Share Tech Mono (titles in Audiowide).
-- **The grid reacts to events.** Losses burn red. Big objects (planned: mini-boss, barricades) shatter into glowing segments.
+Chosen from four options (`concepts/art-directions.html`), after Geometry Wars, Defcon and old vector displays.
+- **You:** cyan / white points of light. **Enemies:** outlines, never filled: magenta grunts and drones, orange bombers, violet brutes, steel shields, white-violet bullets. Fire is orange (`COLORS.burn`), lasers red (`COLORS.laser`).
+- **Gates:** green add, red-pink subtract, deeper red divide, gold multiply, white level gates; labels near-white. **World:** electric blue, always dimmer than anything interactive. **HUD:** lime, Share Tech Mono (titles Audiowide); power-ups orange (bomb) and cyan (focus fire).
+- **The grid reacts to events.** Losses burn red; bosses shatter into glowing bursts.
 
 ## 6. Tech
 
@@ -130,36 +127,35 @@ Chosen from four options (`concepts/art-directions.html`), inspired by Geometry 
 
 | File | Responsibility |
 |---|---|
-| `src/config.js` | Tunables (`CFG`), animation timings (`ANIM`), bloom, the HDR palette, sound volumes (`SFX`), seeded RNG |
-| `src/main.js` | Rules, track generation, battles, scoring, loop, adaptive quality, debug hook |
-| `src/world.js` | Renderer, lens-shifted camera, bloom, the warping grid shader, rails, void |
-| `src/crowd.js` / `formations.js` | Player swarm (one `Points` draw call), formation slots, packing |
-| `src/enemies.js` / `enemyFormations.js` | Enemy units (one `Points` draw call, per-unit shape and color); formations, types, squad mixes |
-| `src/gates.js` | Gate panels (pairs or moving singles), labels, pool |
-| `src/fx.js` | Bullets, sparks, spark rings, fizzles, fallers |
-| `src/hud.js` / `sprites.js` | DOM HUD, recap, board and initials entry; 2D enemy sprites |
-| `src/scores.js` | High score board: Supabase REST plus a local cache and offline queue |
+| `src/config.js` | Tunables (`CFG`), animation timings (`ANIM`), `BLOOM`, the HDR palette (`COLORS`), sound volumes (`SFX`), seeded RNG |
+| `src/main.js` | Rules, track generation, levels, battles, bosses, power-ups, scoring, the loop, adaptive quality, the debug hook |
+| `src/levels.js` | Level 1's beats, the level definitions (`LEVELS`), endless |
+| `src/world.js` | Renderer, camera, bloom (MSAA input), the grid shader, rails, void |
+| `src/crowd.js` / `formations.js` | The player swarm (one `Points` draw call), formation slots, packing |
+| `src/enemies.js` / `enemyFormations.js` | Enemy units (one `Points` draw call, per-unit shape and color), boss moves, shields, bullets; formations, types, unlocks |
+| `src/gates.js` | Gate panels (pairs, singles, level gates), labels, pool |
+| `src/fx.js` | Bullets, sparks, rings, fizzles, fallers, focus-fire lasers |
+| `src/hud.js` / `sprites.js` | DOM HUD, banners, recap, board, initials entry, power-up buttons; 2D enemy sprites |
+| `src/debugPanel.js` | The `?debug` panel (sliders, saved tweaks, Copy values) |
+| `src/scores.js` | The board: Supabase REST plus a local cache and offline queue |
 | `src/audio.js` | Synthesized sound effects |
 
-**Performance:** typed arrays and pooling everywhere; no per-frame allocation in hot loops; DPR capped at 2 with an adaptive resolution drop. Measured on desktop: 1,200 units at about 1.5ms/frame. Still to do: profile a full battle at 5,000 units on a real mid-range phone.
+**Performance:** typed arrays and pooling everywhere; no per-frame allocation in hot loops; DPR capped at 2 with adaptive quality (MSAA first, then resolution, floor 1.5× on dense screens). Still to do: profile a 5,000-unit battle on a real mid-range phone.
 
 ## 7. Versions and releases
 
 The game is in **beta**, so versions are **0.MINOR.PATCH**.
-- **MINOR** goes up for a release with anything a player would notice (gameplay, visuals, sound, UI).
-- **PATCH** goes up for a release that only fixes bugs, docs or tools (style guide, sound lab).
-- **1.0.0** leaves beta: levels, the mini-boss and bomb, the balance pass, and a real-phone performance check all done.
-
-**Where it lives:** `VERSION` in `src/config.js`. The title and pause screens show it small along the bottom ("v0.7.0 beta"), and the style guide reads it too.
+- **MINOR** goes up for anything a player would notice (gameplay, visuals, sound, UI).
+- **PATCH** goes up for fixes, tuning, docs or tools.
+- **1.0.0** leaves beta: World 1 with its world boss, the balance pass, and a real-phone performance check done.
 
 **Making a release** (one per merge to `main`):
-1. Work on a branch named for the version: `vw/v0.8.0`.
-2. Bump `VERSION` in `src/config.js` at the start of the branch.
-3. In `CHANGELOG.md`, add the version to the **Releases** table and head its rounds with it.
-4. The user publishes the branch and merges it in GitHub Desktop.
-5. After the merge, Claude tags the merge commit `vector-wars-vX.Y.Z` (annotated). Tags are local for now: GitHub Desktop hasn't pushed them, so `CHANGELOG.md` is the record of truth. To jump back to a version locally: `git checkout vector-wars-v0.5.0`.
+1. Branch from `main` with **no upstream**: `git checkout -b vw/vX.Y.Z origin/main --no-track` (a branch tracking `origin/main` publishes straight onto `main` in GitHub Desktop).
+2. Bump `VERSION` in `src/config.js`; add the version to the Releases table in `CHANGELOG.md` and head its rounds with it.
+3. The user publishes the branch and merges the PR in GitHub Desktop.
+4. Claude tags the merge commit `vector-wars-vX.Y.Z` (annotated; local only) and records the release below on the next branch.
 
-**Released so far** (assigned after the fact; details in `CHANGELOG.md`):
+**Released so far** (details in `CHANGELOG.md`):
 
 | Version | Date | Merge | What |
 |---|---|---|---|
@@ -184,3 +180,4 @@ The game is in **beta**, so versions are **0.MINOR.PATCH**.
 | 0.13.0 | 2026-10-11 | PR #21 (`5f1e456`) | Focus fire; initials on their own screen; the level 6–7 wall: per-level story difficulty (debug sliders), level 6 team 55 with shell-less brutes and a boss warning ring, fewer and softer brutes, shields capped at 8, a level-clear bonus |
 | 0.13.1 | 2026-10-12 | PR #22 (`3445b62`) | Bullet enemies hit harder; focus fire 2.5s with red lasers |
 | 0.13.2 | 2026-10-12 | PR #23 (`993ecf0`) | Challenge levels every 8 gates with the level bonus; debug panel: − / + on every slider, sticky footer; user tuning; phone graphics: MSAA before bloom, live bloom sliders, no far moiré, tapered rails, crisp far enemies, gentler adaptive quality |
+| 0.13.3 | (this branch) | `vw/v0.13.3` | Docs tidy: project documents brought up to date, next steps flagged |
