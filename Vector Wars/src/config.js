@@ -87,6 +87,7 @@ export const CFG = {
   STEER_RESPONSE: 14,      // higher = snappier follow
 
   GATE_H: 0.8,             // panel height (round 44 halved it to 0.625; round 48 back up a little for legibility)
+  RAIL_TAPER: 0.03,        // rails widen by this × their distance (×4.6 at the far end): no dotted rails far away
   GATE_TEXT: { short: 0.6, long: 0.48 },  // label height × the panel's (labels of 5+ characters use long)
   ADD_HITS_PER_STEP: 4,    // bullets to raise a + / − gate by one
   MULT_START: 1.0,         // × gates start doing nothing…

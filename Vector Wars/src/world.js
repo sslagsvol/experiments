@@ -89,6 +89,10 @@ void main() {
     l = uPattern < 0.5 ? max(gridLine(vPos.x / 0.4, 1.3), gridLine(wz, 1.3)) : pattern(vec2(vPos.x, wz) / 0.6, 1.3);
     l *= inT;
   }
+  // Far away, where a pattern cell shrinks to a few pixels, the lines alias
+  // into moiré stripes: fade the pattern out there (the base tint stays).
+  float cellPx = length(fwidth(vec2(vPos.x, -vPos.z) / (uVoid > 0.5 ? 1.6 : 0.6)));
+  l *= 1.0 - smoothstep(0.15, 0.4, cellPx);
   float fade = exp(-max(-vPos.z, 0.0) / 40.0);
   vec3 col = uBg + uGrid * (l * (1.0 + vRip * 5.0) + inT * 0.05) * fade;
   col += vec3(0.5, 0.15, 1.0) * vRip * 0.5 * fade;
@@ -171,6 +175,10 @@ export function createWorld(canvas) {
   const railMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(...COLORS.rail) });
   const railGeo = new THREE.BoxGeometry(0.05, 0.05, 130);
   railGeo.translate(0, 0.03, -55);
+  // Tapered: wider with distance, so far away a rail stays about a pixel wide
+  // instead of shrinking below a pixel and breaking into dots.
+  const rp = railGeo.attributes.position;
+  for (let i = 0; i < rp.count; i++) rp.setX(i, rp.getX(i) * (1 + Math.max(0, -rp.getZ(i)) * CFG.RAIL_TAPER));
   for (const s of [-1, 1]) {
     const rail = new THREE.Mesh(railGeo, railMat);
     rail.position.x = s * CFG.TW;

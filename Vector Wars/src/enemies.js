@@ -16,12 +16,14 @@ uniform float uTime;
 varying float vShape;
 varying vec3 vColor;
 varying float vPulse;
+varying float vPx;
 void main() {
   vShape = aShape;
   vColor = aColor;
   vPulse = 0.5 + 0.5 * sin(uTime * 9.0 + position.x * 7.0);
   vec4 mv = modelViewMatrix * vec4(position, 1.0);
   gl_PointSize = aSize * uScale / -mv.z;
+  vPx = gl_PointSize;
   gl_Position = projectionMatrix * mv;
 }`;
 
@@ -33,7 +35,10 @@ const enemyFS = /* glsl */ `
 varying float vShape;
 varying vec3 vColor;
 varying float vPulse;
-float outline(float d, float r, float w) { return smoothstep(r + w, r, d) * smoothstep(r - w * 2.5, r - w, d); }
+varying float vPx;   // the sprite's size in pixels
+// Outlines never get thinner than about a pixel (2 / vPx in sprite units):
+// tiny distant sprites otherwise break up into pixel noise.
+float outline(float d, float r, float w) { w = max(w, 1.2 / vPx); return smoothstep(r + w, r, d) * smoothstep(r - w * 2.5, r - w, d); }
 void main() {
   vec2 p = gl_PointCoord * 2.0 - 1.0;
   float a;
@@ -69,6 +74,9 @@ void main() {
     float d = max(q.x * 0.866 + q.y * 0.5, q.y);
     a = outline(d, 0.42, 0.08) + smoothstep(0.6, 0.1, d) * 0.06;
   }
+  // Tiny distant sprites glow a little less, so a dense far squad can't stack
+  // into a few very bright pixels (bloom turns those into blocks).
+  a *= mix(0.55, 1.0, smoothstep(4.0, 12.0, vPx));
   if (a < 0.01) discard;
   gl_FragColor = vec4(vColor * a, a);
 }`;

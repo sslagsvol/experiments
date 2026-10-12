@@ -1471,13 +1471,19 @@ function frame(now) {
   const sim = Math.min(raw, 1 / 30) * dbg.speed, sub = Math.ceil(dbg.speed - 1e-6);
   for (let k = 1; k <= sub; k++) step(sim / sub, k === sub);
 
-  // Adaptive quality: drop render resolution if frames run long.
-  // Ignore long gaps (tab switches, throttled background frames).
+  // Adaptive quality, when frames run long: first drop the anti-aliasing,
+  // then the render resolution, a step at a time, but not below 1.5× on very
+  // dense screens (at 1× a 3×+ phone scales the image up so far it goes
+  // blocky). Ignore long gaps (tab switches, throttled background frames).
   if (raw < 0.1) { perfAcc += raw; perfFrames++; perfWindow += raw; }
   if (perfWindow > 2) {
     const avg = perfAcc / perfFrames;
     fps = Math.round(1 / avg);
-    if (avg > 0.019 && world.pixelRatio > 1 && !dbg.low) world.setPixelRatio(Math.max(1, world.pixelRatio - 0.25));
+    const prFloor = (window.devicePixelRatio || 1) >= 2.5 ? 1.5 : 1;
+    if (avg > 0.019 && !dbg.low) {
+      if (BLOOM.msaa > 0) { BLOOM.msaa = 0; world.setBloom(BLOOM); }
+      else if (world.pixelRatio > prFloor) world.setPixelRatio(Math.max(prFloor, world.pixelRatio - 0.25));
+    }
     perfAcc = perfFrames = perfWindow = 0;
   }
   if (DEBUG) {
@@ -1509,6 +1515,7 @@ const panel = DEBUG ? createDebugPanel({ cfg: CFG, anim: ANIM, bloom: BLOOM }, {
 if (DEBUG) {
   window.vectorWars = {
     get state() { return G; },
+    world,
     army,
     enemies,
     sfx,
