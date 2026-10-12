@@ -98,7 +98,7 @@ A crowd-runner in the style of the "army through gates" mobile ads, redesigned a
 
 ### The level 6–7 wall (round 50, v0.13.0)
 Built (the user skipped the measure / playtest steps: tune by feel with the debug panel):
-- **Per-level difficulty for story** (`CFG.LEVEL_DIFFICULTY`, one entry per level, the last carrying on past World 1): squads, grunt screens, clusters and mini-boss hp scale by level instead of one flat `DIFFICULTY` (now Challenge only). Levels 6–9 eased (1.35 / 1.4 / 1.45 / 1.5; levels 2–5: 1.5 / 1.55 / 1.6 / 1.6). The debug panel's **Per level (story)** section has a slider per level for it and for the fire rate (`FIRE_LEVELS`), plus gate durability growth, endless growth and the level bonus; Copy values prints whole arrays.
+- **Per-level difficulty for story** (`CFG.LEVEL_DIFFICULTY`, one entry per level, the last carrying on past World 1): squads, grunt screens, clusters and mini-boss hp scale by level instead of one flat `DIFFICULTY` (now Challenge only). Levels 6–9 eased at first (1.35–1.5); the user then tuned levels 2–10 to 1.5, 1.6, 1.6, 1.6, 1.6, 1.6, 1.55, 1.45, 1.4 (round 54). The debug panel's **Per level (story)** section has a slider per level for it and for the fire rate (`FIRE_LEVELS`), plus gate durability growth, endless growth and the level bonus; Copy values prints whole arrays.
 - **Level 6:** strike team 40 → 55; its brute clusters arrive shell-less (no fire); a pulsing fire ring marks a mini-boss close enough to burn and touch.
 - **Brutes:** fewer per squad (`est` 45 → 60), half the stomp (`aoe.max` 60 → 30).
 - **Shields:** at most 8 a squad (`SHIELD_MAX`), the middle row from level 9.
