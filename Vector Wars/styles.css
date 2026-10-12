@@ -581,7 +581,16 @@ body.kb .touch-only { display: none; }
   font: inherit;
   cursor: pointer;
 }
-#dbg .dbg-foot { margin-top: 10px; }
+/* Copy values / Reset tweaks stay pinned to the bottom while the sliders scroll. */
+#dbg .dbg-foot {
+  position: sticky;
+  bottom: -8px;            /* flush with the panel's bottom edge (its padding) */
+  margin: 10px -10px -8px;
+  padding: 8px 10px;
+  background: rgba(4, 5, 26, 0.96);
+  border-top: 1px solid rgba(207, 232, 255, 0.2);
+  z-index: 1;
+}
 
 /* Challenge mode is locked until World 1 is beaten in Story mode: greyed
    out with a lock icon (main.js syncChallengeLock). */
