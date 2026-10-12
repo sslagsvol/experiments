@@ -69,7 +69,8 @@ export const CFG = {
   DIFFICULTY: 1.6,
   DIFFICULTY_LEVEL_1: 1.35, // level 1's authored squads: still a skill check, but most people should pass
   LEVEL_DIFFICULTY: [0, 1.35, 1.5, 1.6, 1.6, 1.6, 1.6, 1.6, 1.55, 1.45, 1.4],   // user playtest tuning (round 54)
-  LEVEL_BONUS: 5000,       // story: points for clearing a level, × the level cleared (level 6 → 30,000)
+  LEVEL_BONUS: 5000,       // points for clearing a level, × the level cleared (level 6 → 30,000); Challenge too
+  CHALLENGE_LEVEL_GATES: 8, // Challenge: a "level" is this many gates passed (the bonus, the banner, gate toughness)
   // Small armies: below SMALL_ARMY_FROM units the dots (and their spacing)
   // grow, reaching SMALL_ARMY_SCALE× at SMALL_ARMY_FULL units or fewer.
   SMALL_ARMY_FROM: 80,
