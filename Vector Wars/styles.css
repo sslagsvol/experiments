@@ -550,8 +550,12 @@ body.kb .touch-only { display: none; }
   clear: both;
   margin-top: 6px;
   width: min(280px, calc(100vw - 32px));
+  /* Fit the visible viewport: dvh excludes the phone browser's toolbars
+     (100vh doesn't). 112px = the panel's top (64) + gear (30) + gap (6) + a 12px margin below. */
   max-height: calc(100vh - 140px);
+  max-height: calc(100dvh - 112px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   overflow-y: auto;
+  box-sizing: border-box;
   padding: 8px 10px;
   border: 1px solid rgba(207, 232, 255, 0.25);
   border-radius: 8px;
